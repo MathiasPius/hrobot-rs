@@ -40,6 +40,8 @@ impl Robot {
             .json()
     }
 
+    /// URL-encoding the [`Firewall`] configuration specifically is not possible using serde_urlencoding
+    /// so we need this function for posting our manually serialized version
     pub(crate) fn post_raw<T: DeserializeOwned>(
         &self,
         path: &str,

@@ -137,7 +137,7 @@ mod tests {
     #[test]
     pub fn list_servers() {
         let robot = Robot::default();
-
+        println!("{:#?}", robot.list_servers().unwrap());
         assert!(robot.list_servers().unwrap().len() > 0);
     }
 

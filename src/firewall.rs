@@ -125,7 +125,7 @@ pub struct Firewall {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct FirewallResponse {
+struct FirewallResponse {
     pub firewall: Firewall,
 }
 
