@@ -181,6 +181,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     pub fn get_server_cancellation() {
         let robot = Robot::default();
 
