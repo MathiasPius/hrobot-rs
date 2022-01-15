@@ -140,6 +140,7 @@ impl ServerRobot for Robot {
 mod tests {
     use super::*;
     use crate::Robot;
+    use serial_test::serial;
 
     #[test]
     pub fn list_servers() {
@@ -149,6 +150,7 @@ mod tests {
     }
 
     #[test]
+    #[serial(server_name)]
     pub fn get_server() {
         let robot = Robot::default();
 
@@ -164,6 +166,7 @@ mod tests {
     }
 
     #[test]
+    #[serial(server_name)]
     pub fn rename_server() {
         let robot = Robot::default();
 

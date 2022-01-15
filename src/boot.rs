@@ -645,6 +645,7 @@ impl BootRobot for Robot {
 mod tests {
     use super::*;
     use crate::{Robot, ServerRobot};
+    use serial_test::serial;
 
     #[test]
     fn list_server_boot_configuration() {
@@ -675,6 +676,7 @@ mod tests {
     }
 
     #[test]
+    #[serial(boot_configuration)]
     fn set_server_rescue_boot_configuration() {
         let robot = Robot::default();
 
@@ -710,6 +712,7 @@ mod tests {
     }
 
     #[test]
+    #[serial(boot_configuration)]
     fn set_server_linux_boot_configuration() {
         let robot = Robot::default();
 
@@ -747,6 +750,7 @@ mod tests {
     }
 
     #[test]
+    #[serial(boot_configuration)]
     fn set_server_vnc_boot_configuration() {
         let robot = Robot::default();
 

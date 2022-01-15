@@ -18,3 +18,4 @@ features = ["json", "multipart", "rustls-tls", "blocking"]
 
 [dev-dependencies]
 dotenv = "0.15.0"
+serial_test = "0.5.1"
