@@ -4,10 +4,14 @@ use std::net::Ipv4Addr;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TrafficWarnings {
-    pub traffic_warnings: bool,
-    pub traffic_hourly: u32,
-    pub traffic_daily: u32,
-    pub traffic_monthly: u32,
+    #[serde(rename = "traffic_warnings")]
+    pub enabled: bool,
+    #[serde(rename = "traffic_hourly")]
+    pub hourly: u32,
+    #[serde(rename = "traffic_daily")]
+    pub daily: u32,
+    #[serde(rename = "traffic_monthly")]
+    pub monthly: u32,
 }
 
 #[derive(Debug, Deserialize)]
