@@ -13,7 +13,7 @@ pub struct Key {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct KeyResponse {
+struct KeyResponse {
     pub key: Key,
 }
 
