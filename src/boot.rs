@@ -6,9 +6,12 @@ use crate::{Error, SyncRobot};
 
 #[derive(Debug, Deserialize)]
 pub struct RescueConfiguration {
-    pub server_ip: Option<Ipv4Addr>,
-    pub server_ipv6_net: Ipv6Addr,
-    pub server_number: u32,
+    #[serde(rename = "server_ip")]
+    pub ipv4: Option<Ipv4Addr>,
+    #[serde(rename = "server_ipv6_net")]
+    pub ipv6_net: Ipv6Addr,
+    #[serde(rename = "server_number")]
+    pub id: u32,
     #[serde(deserialize_with = "crate::string_or_seq_string")]
     pub os: Vec<String>,
     #[serde(deserialize_with = "crate::num_or_seq_num")]
@@ -21,9 +24,12 @@ pub struct RescueConfiguration {
 
 #[derive(Debug, Deserialize)]
 pub struct LinuxConfiguration {
-    pub server_ip: Option<Ipv4Addr>,
-    pub server_ipv6_net: Ipv6Addr,
-    pub server_number: u32,
+    #[serde(rename = "server_ip")]
+    pub ipv4: Option<Ipv4Addr>,
+    #[serde(rename = "server_ipv6_net")]
+    pub ipv6_net: Ipv6Addr,
+    #[serde(rename = "server_number")]
+    pub id: u32,
     #[serde(deserialize_with = "crate::string_or_seq_string")]
     pub dist: Vec<String>,
     #[serde(deserialize_with = "crate::num_or_seq_num")]
@@ -38,9 +44,12 @@ pub struct LinuxConfiguration {
 
 #[derive(Debug, Deserialize)]
 pub struct VncConfiguration {
-    pub server_ip: Option<Ipv4Addr>,
-    pub server_ipv6_net: Ipv6Addr,
-    pub server_number: u32,
+    #[serde(rename = "server_ip")]
+    pub ipv4: Option<Ipv4Addr>,
+    #[serde(rename = "server_ipv6_net")]
+    pub ipv6_net: Ipv6Addr,
+    #[serde(rename = "server_number")]
+    pub id: u32,
     #[serde(deserialize_with = "crate::string_or_seq_string")]
     pub dist: Vec<String>,
     #[serde(deserialize_with = "crate::num_or_seq_num")]
@@ -53,9 +62,12 @@ pub struct VncConfiguration {
 
 #[derive(Debug, Deserialize)]
 pub struct WindowsConfiguration {
-    pub server_ip: Option<Ipv4Addr>,
-    pub server_ipv6_net: Ipv6Addr,
-    pub server_number: u32,
+    #[serde(rename = "server_ip")]
+    pub ipv4: Option<Ipv4Addr>,
+    #[serde(rename = "server_ipv6_net")]
+    pub ipv6_net: Ipv6Addr,
+    #[serde(rename = "server_number")]
+    pub id: u32,
     #[serde(deserialize_with = "crate::string_or_seq_string")]
     pub dist: Vec<String>,
     #[serde(deserialize_with = "crate::num_or_seq_num")]
@@ -68,9 +80,12 @@ pub struct WindowsConfiguration {
 
 #[derive(Debug, Deserialize)]
 pub struct PleskConfiguration {
-    pub server_ip: Option<Ipv4Addr>,
-    pub server_ipv6_net: Ipv6Addr,
-    pub server_number: u32,
+    #[serde(rename = "server_ip")]
+    pub ipv4: Option<Ipv4Addr>,
+    #[serde(rename = "server_ipv6_net")]
+    pub ipv6_net: Ipv6Addr,
+    #[serde(rename = "server_number")]
+    pub id: u32,
     #[serde(deserialize_with = "crate::string_or_seq_string")]
     pub dist: Vec<String>,
     #[serde(deserialize_with = "crate::num_or_seq_num")]
@@ -84,9 +99,12 @@ pub struct PleskConfiguration {
 
 #[derive(Debug, Deserialize)]
 pub struct CPanelConfiguration {
-    pub server_ip: Option<Ipv4Addr>,
-    pub server_ipv6_net: Ipv6Addr,
-    pub server_number: u32,
+    #[serde(rename = "server_ip")]
+    pub ipv4: Option<Ipv4Addr>,
+    #[serde(rename = "server_ipv6_net")]
+    pub ipv6_net: Ipv6Addr,
+    #[serde(rename = "server_number")]
+    pub id: u32,
     #[serde(deserialize_with = "crate::string_or_seq_string")]
     pub dist: Vec<String>,
     #[serde(deserialize_with = "crate::num_or_seq_num")]
@@ -593,7 +611,7 @@ mod tests {
         let servers = robot.list_servers().unwrap();
         assert!(servers.len() > 0);
 
-        let configs = robot.list_server_boot_configurations(servers[0].server_number);
+        let configs = robot.list_server_boot_configurations(servers[0].id);
 
         assert!(configs.is_ok());
         println!("{:#?}", configs.unwrap());
@@ -608,7 +626,7 @@ mod tests {
         assert!(servers.len() > 0);
 
         let config = robot
-            .get_server_rescue_boot_configuration(servers[0].server_number)
+            .get_server_rescue_boot_configuration(servers[0].id)
             .unwrap();
 
         println!("{:#?}", config);
@@ -625,13 +643,13 @@ mod tests {
         assert!(servers.len() > 0);
 
         let config = robot
-            .get_server_rescue_boot_configuration(servers[0].server_number)
+            .get_server_rescue_boot_configuration(servers[0].id)
             .unwrap()
             .unwrap();
 
         robot
             .set_server_rescue_boot_configuration(
-                servers[0].server_number,
+                servers[0].id,
                 &config.os[0],
                 Some(config.arch[0]),
                 &[],
@@ -639,7 +657,7 @@ mod tests {
             .unwrap();
 
         let config = robot
-            .get_server_rescue_boot_configuration(servers[0].server_number)
+            .get_server_rescue_boot_configuration(servers[0].id)
             .unwrap()
             .unwrap();
 
@@ -648,7 +666,7 @@ mod tests {
         assert_eq!(config.arch, vec![64]);
 
         robot
-            .delete_server_rescue_boot_configuration(servers[0].server_number)
+            .delete_server_rescue_boot_configuration(servers[0].id)
             .unwrap();
     }
 
@@ -662,13 +680,13 @@ mod tests {
         assert!(servers.len() > 0);
 
         let config = robot
-            .get_server_linux_boot_configuration(servers[0].server_number)
+            .get_server_linux_boot_configuration(servers[0].id)
             .unwrap()
             .unwrap();
 
         robot
             .set_server_linux_boot_configuration(
-                servers[0].server_number,
+                servers[0].id,
                 &config.dist[0],
                 Some(config.arch[0]),
                 &config.lang[0],
@@ -677,7 +695,7 @@ mod tests {
             .unwrap();
 
         let config = robot
-            .get_server_linux_boot_configuration(servers[0].server_number)
+            .get_server_linux_boot_configuration(servers[0].id)
             .unwrap()
             .unwrap();
 
@@ -687,7 +705,7 @@ mod tests {
         assert_eq!(config.lang, vec![config.lang[0].clone()]);
 
         robot
-            .delete_server_linux_boot_configuration(servers[0].server_number)
+            .delete_server_linux_boot_configuration(servers[0].id)
             .unwrap();
     }
 
@@ -701,13 +719,13 @@ mod tests {
         assert!(servers.len() > 0);
 
         let config = robot
-            .get_server_vnc_boot_configuration(servers[0].server_number)
+            .get_server_vnc_boot_configuration(servers[0].id)
             .unwrap()
             .unwrap();
 
         robot
             .set_server_vnc_boot_configuration(
-                servers[0].server_number,
+                servers[0].id,
                 &config.dist[0],
                 Some(config.arch[0]),
                 &config.lang[0],
@@ -715,7 +733,7 @@ mod tests {
             .unwrap();
 
         let config = robot
-            .get_server_vnc_boot_configuration(servers[0].server_number)
+            .get_server_vnc_boot_configuration(servers[0].id)
             .unwrap()
             .unwrap();
 
@@ -725,7 +743,7 @@ mod tests {
         assert_eq!(config.lang, vec![config.lang[0].clone()]);
 
         robot
-            .delete_server_vnc_boot_configuration(servers[0].server_number)
+            .delete_server_vnc_boot_configuration(servers[0].id)
             .unwrap();
     }
 }

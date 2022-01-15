@@ -4,17 +4,24 @@ use std::net::Ipv4Addr;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TrafficWarnings {
-    pub traffic_warnings: bool,
-    pub traffic_hourly: u32,
-    pub traffic_daily: u32,
-    pub traffic_monthly: u32,
+    #[serde(rename = "traffic_warnings")]
+    pub enabled: bool,
+    #[serde(rename = "traffic_hourly")]
+    pub hourly: u32,
+    #[serde(rename = "traffic_daily")]
+    pub daily: u32,
+    #[serde(rename = "traffic_monthly")]
+    pub monthly: u32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Ip {
-    pub ip: Ipv4Addr,
-    pub server_ip: Ipv4Addr,
-    pub server_number: u32,
+    #[serde(rename = "ip")]
+    pub ips: Ipv4Addr,
+    #[serde(rename = "server_ip")]
+    pub ipv4: Ipv4Addr,
+    #[serde(rename = "server_number")]
+    pub id: u32,
     pub locked: bool,
     pub separate_mac: Option<String>,
     #[serde(flatten)]
@@ -94,6 +101,6 @@ mod tests {
 
         let ips = robot.list_ips().unwrap();
         assert!(ips.len() > 0);
-        assert_eq!(robot.get_ip(ips[0].ip).unwrap().ip, ips[0].ip);
+        assert_eq!(robot.get_ip(ips[0].ips).unwrap().ips, ips[0].ips);
     }
 }

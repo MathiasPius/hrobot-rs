@@ -14,7 +14,8 @@ pub enum Status {
 /// Reference to a Subnet. More information about the subnet can be retrieved using the [SubnetRobot](crate::subnet::SubnetRobot) interface.
 #[derive(Debug, Deserialize)]
 pub struct SubnetReference {
-    pub ip: IpAddr,
+    #[serde(rename = "ip")]
+    pub ipv4: IpAddr,
     pub mask: String,
 }
 
@@ -34,20 +35,24 @@ pub struct ServerFlags {
 
 #[derive(Debug, Deserialize)]
 pub struct Server {
-    pub server_ip: Option<Ipv4Addr>,
-    pub server_ipv6_net: Ipv6Addr,
-    pub server_number: u32,
-    pub server_name: String,
+    #[serde(rename = "server_ip")]
+    pub ipv4: Option<Ipv4Addr>,
+    #[serde(rename = "server_ipv6_net")]
+    pub ipv6_net: Ipv6Addr,
+    #[serde(rename = "server_number")]
+    pub id: u32,
+    #[serde(rename = "server_name")]
+    pub name: String,
     pub product: String,
     pub dc: String,
     pub traffic: String,
     pub status: Status,
     pub cancelled: bool,
     pub paid_until: String,
-    #[serde(default)]
-    pub ip: Vec<String>,
-    #[serde(default)]
-    pub subnet: Vec<SubnetReference>,
+    #[serde(rename = "ip", default)]
+    pub ips: Vec<String>,
+    #[serde(rename = "subnet", default)]
+    pub subnets: Vec<SubnetReference>,
     #[serde(flatten)]
     pub extended: Option<ServerFlags>,
 }
@@ -68,9 +73,12 @@ impl From<ServerResponse> for Server {
 /// the server upon cancellation is possible
 #[derive(Debug, Deserialize)]
 pub struct Cancellation {
-    pub server_ip: Option<Ipv4Addr>,
-    pub server_number: u32,
-    pub server_name: String,
+    #[serde(rename = "server_ip")]
+    pub ipv4: Option<Ipv4Addr>,
+    #[serde(rename = "server_number")]
+    pub id: u32,
+    #[serde(rename = "server_name")]
+    pub name: String,
     pub earliest_cancellation_date: String,
     pub cancelled: bool,
     pub reservation_possible: bool,
@@ -94,7 +102,7 @@ impl From<CancellationResponse> for Cancellation {
 pub trait ServerRobot {
     fn list_servers(&self) -> Result<Vec<Server>, Error>;
     fn get_server(&self, id: u32) -> Result<Server, Error>;
-    fn rename_server(&self, id: u32, server_name: &str) -> Result<Server, Error>;
+    fn rename_server(&self, id: u32, name: &str) -> Result<Server, Error>;
     fn get_server_cancellation(&self, id: u32) -> Result<Cancellation, Error>;
 }
 
@@ -112,7 +120,7 @@ where
             .map(Server::from)
     }
 
-    fn rename_server(&self, server_number: u32, server_name: &str) -> Result<Server, Error> {
+    fn rename_server(&self, server_number: u32, name: &str) -> Result<Server, Error> {
         #[derive(Serialize)]
         struct RenameServerRequest<'a> {
             pub server_name: &'a str,
@@ -120,7 +128,7 @@ where
 
         self.post::<ServerResponse, RenameServerRequest>(
             &format!("/server/{}", server_number),
-            RenameServerRequest { server_name },
+            RenameServerRequest { server_name: name },
         )
         .map(Server::from)
     }
@@ -154,11 +162,8 @@ mod tests {
         let servers = robot.list_servers().unwrap();
         assert!(servers.len() > 0);
         assert_eq!(
-            robot
-                .get_server(servers[0].server_number)
-                .unwrap()
-                .server_name,
-            servers[0].server_name
+            robot.get_server(servers[0].id).unwrap().name,
+            servers[0].name
         );
     }
 
@@ -171,16 +176,12 @@ mod tests {
         let servers = robot.list_servers().unwrap();
         assert!(servers.len() > 0);
 
-        let old_name = &servers[0].server_name;
-        robot
-            .rename_server(servers[0].server_number, "test_name")
-            .unwrap();
+        let old_name = &servers[0].name;
+        robot.rename_server(servers[0].id, "test_name").unwrap();
 
-        let new_server = robot.get_server(servers[0].server_number).unwrap();
-        assert_eq!(new_server.server_name, "test_name");
-        robot
-            .rename_server(servers[0].server_number, old_name)
-            .unwrap();
+        let new_server = robot.get_server(servers[0].id).unwrap();
+        assert_eq!(new_server.name, "test_name");
+        robot.rename_server(servers[0].id, old_name).unwrap();
     }
 
     #[test]
@@ -190,11 +191,9 @@ mod tests {
 
         let servers = robot.list_servers().unwrap();
         assert!(servers.len() > 0);
-        let cancellation = robot
-            .get_server_cancellation(servers[0].server_number)
-            .unwrap();
+        let cancellation = robot.get_server_cancellation(servers[0].id).unwrap();
 
-        assert_eq!(cancellation.server_number, servers[0].server_number);
+        assert_eq!(cancellation.id, servers[0].id);
         if cancellation.cancelled {
             assert!(cancellation.cancellation_date.is_some());
         } else {

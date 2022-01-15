@@ -6,9 +6,12 @@ use crate::{Error, SyncRobot};
 
 #[derive(Debug, Deserialize)]
 pub struct WakeOnLan {
-    pub server_ip: Ipv4Addr,
+    #[serde(rename = "server_ip")]
+    pub server_ipv4: Ipv4Addr,
+    #[serde(rename = "server_ipv6_net")]
     pub server_ipv6_net: Ipv6Addr,
-    pub server_number: u32,
+    #[serde(rename = "server_number")]
+    pub server_id: u32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -39,5 +42,22 @@ where
     fn trigger_wol(&self, server_number: u32) -> Result<WakeOnLan, Error> {
         self.post::<WakeOnLanResponse, ()>(&format!("/wol/{}", server_number), ())
             .map(WakeOnLan::from)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::WakeOnLanRobot;
+    use crate::{Robot, ServerRobot};
+
+    #[test]
+    #[ignore]
+    fn get_wol() {
+        let robot = Robot::default();
+
+        let servers = robot.list_servers().unwrap();
+
+        let wol = robot.get_wol(servers[0].id).unwrap();
+        assert_eq!(wol.server_id, servers[0].id);
     }
 }

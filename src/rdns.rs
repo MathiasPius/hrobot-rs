@@ -5,7 +5,7 @@ use crate::{Error, SyncRobot};
 
 #[derive(Debug, Deserialize)]
 pub struct ReverseDNS {
-    pub ip: Ipv4Addr,
+    pub ipv4: Ipv4Addr,
     pub ptr: String,
 }
 

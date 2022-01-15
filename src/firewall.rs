@@ -116,8 +116,10 @@ impl Display for Action {
 
 #[derive(Debug, Deserialize)]
 pub struct Firewall {
-    pub server_ip: Ipv4Addr,
-    pub server_number: u32,
+    #[serde(rename = "server_ip")]
+    pub ipv4: Ipv4Addr,
+    #[serde(rename = "server_number")]
+    pub id: u32,
     pub status: State,
     pub whitelist_hos: bool,
     pub port: Port,
@@ -301,7 +303,7 @@ mod tests {
         let servers = robot.list_servers().unwrap();
         assert!(servers.len() > 0);
 
-        let firewall = robot.get_firewall(servers[0].server_number).unwrap();
+        let firewall = robot.get_firewall(servers[0].id).unwrap();
         println!("{:#?}", firewall);
     }
 
@@ -315,12 +317,12 @@ mod tests {
 
         println!("{:#?}", servers[0]);
 
-        let firewall = robot.get_firewall(servers[0].server_number).unwrap();
+        let firewall = robot.get_firewall(servers[0].id).unwrap();
         println!("{:#?}", firewall);
 
         let new_firewall = robot
             .set_firewall_rules(
-                servers[0].server_number,
+                servers[0].id,
                 Some(firewall.rules),
                 Some(firewall.whitelist_hos),
                 firewall.status,
