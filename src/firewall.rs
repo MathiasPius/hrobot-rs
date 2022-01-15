@@ -291,6 +291,7 @@ mod tests {
     use crate::{Robot, ServerRobot};
 
     #[test]
+    #[ignore]
     fn get_firewall() {
         let robot = Robot::default();
 

@@ -72,6 +72,7 @@ mod tests {
     use crate::Robot;
 
     #[test]
+    #[ignore]
     pub fn list_resets() {
         let robot = Robot::default();
 
@@ -79,6 +80,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     pub fn get_reset() {
         let robot = Robot::default();
 
@@ -93,6 +95,7 @@ mod tests {
     /*
     /// This was tested once, but it's obviously kinda disruptive...
     #[test]
+    #[ignore]
     pub fn reset_server() {
         let robot = Robot::default();
 

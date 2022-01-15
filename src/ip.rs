@@ -77,6 +77,7 @@ mod tests {
     use crate::robot::Robot;
 
     #[test]
+    #[ignore]
     pub fn list_ips() {
         let robot = Robot::default();
 
@@ -84,6 +85,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     pub fn get_server() {
         let robot = Robot::default();
 

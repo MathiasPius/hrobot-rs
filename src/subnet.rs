@@ -51,6 +51,7 @@ mod tests {
     use crate::Robot;
 
     #[test]
+    #[ignore]
     fn list_subnets() {
         let robot = Robot::default();
 
@@ -59,6 +60,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn get_subnet() {
         let robot = Robot::default();
 

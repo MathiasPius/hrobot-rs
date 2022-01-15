@@ -583,6 +583,7 @@ mod tests {
     use serial_test::serial;
 
     #[test]
+    #[ignore]
     fn list_server_boot_configuration() {
         let robot = Robot::default();
 
@@ -596,6 +597,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn get_server_rescue_boot_configuration() {
         let robot = Robot::default();
 
@@ -611,6 +613,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     #[serial(boot_configuration)]
     fn set_server_rescue_boot_configuration() {
         let robot = Robot::default();
@@ -647,6 +650,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     #[serial(boot_configuration)]
     fn set_server_linux_boot_configuration() {
         let robot = Robot::default();
@@ -685,6 +689,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     #[serial(boot_configuration)]
     fn set_server_vnc_boot_configuration() {
         let robot = Robot::default();

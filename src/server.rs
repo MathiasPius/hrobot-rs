@@ -135,6 +135,7 @@ mod tests {
     use serial_test::serial;
 
     #[test]
+    #[ignore]
     pub fn list_servers() {
         let robot = Robot::default();
         println!("{:#?}", robot.list_servers().unwrap());
@@ -142,6 +143,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     #[serial(server_name)]
     pub fn get_server() {
         let robot = Robot::default();
@@ -158,6 +160,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     #[serial(server_name)]
     pub fn rename_server() {
         let robot = Robot::default();

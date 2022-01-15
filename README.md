@@ -34,3 +34,8 @@ Uses the blocking Reqwest client and rustls under the hood.
 * ✅ [Boot Configuration](https://robot.your-server.de/doc/webservice/en.html#boot-configuration): All functionality implemented (but some untested due to costs of add-ons).
 * ✅ [Reverse DNS](https://robot.your-server.de/doc/webservice/en.html#reverse-dns): All functionality implemented.
 * ✅ [SSH Keys](https://robot.your-server.de/doc/webservice/en.html#ssh-keys): All functionality implemented.
+
+# Testing
+Testing relies on `$HROBOT_USERNAME` and `$HROBOT_PASSWORD` being defined in the environment, corresponding to a Hetzner WebService/app login.
+
+Some of the tests which interact with the Hetzner API can be disruptive, and therefore any test which interacts with Hetzner is marked as `#[ignore]` just in case `cargo test` is accidentally run while the `HROBOT_USERNAME` and `HROBOT_PASSWORD` environment variables are available. To explicitly run these potentially disruptive tests, either use `cargo test -- --ignored` to run all of them, or run the test explicitly using `cargo test server::tests::list_servers -- --ignored`
