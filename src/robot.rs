@@ -56,7 +56,7 @@ impl Robot {
             )
             .body(form)
             .send()?
-            //.error_for_status()?
+            .error_for_status()?
             .json()
     }
 
