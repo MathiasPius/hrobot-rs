@@ -2,7 +2,7 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{Error, Robot};
+use crate::{Error, SyncRobot};
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -40,7 +40,10 @@ pub trait ResetRobot {
     fn reset_server(&self, server_number: u32, method: ResetOption) -> Result<Reset, Error>;
 }
 
-impl ResetRobot for Robot {
+impl<T> ResetRobot for T
+where
+    T: SyncRobot,
+{
     fn list_resets(&self) -> Result<Vec<Reset>, Error> {
         self.get::<Vec<ResetResponse>>("/reset")
             .map(|r| r.into_iter().map(Reset::from).collect())

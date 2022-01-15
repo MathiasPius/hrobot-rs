@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{Error, Robot};
+use crate::{Error, SyncRobot};
 
 #[derive(Debug, Deserialize)]
 pub struct Key {
@@ -31,7 +31,10 @@ pub trait KeyRobot {
     fn delete_key(&self, fingerprint: &str) -> Result<(), Error>;
 }
 
-impl KeyRobot for Robot {
+impl<T> KeyRobot for T
+where
+    T: SyncRobot,
+{
     fn list_keys(&self) -> Result<Vec<Key>, Error> {
         self.get::<Vec<KeyResponse>>("/key")
             .map(|k| k.into_iter().map(Key::from).collect())

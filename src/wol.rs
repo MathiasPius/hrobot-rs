@@ -2,7 +2,7 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 
 use serde::Deserialize;
 
-use crate::{Error, Robot};
+use crate::{Error, SyncRobot};
 
 #[derive(Debug, Deserialize)]
 pub struct WakeOnLan {
@@ -27,7 +27,10 @@ pub trait WakeOnLanRobot {
     fn trigger_wol(&self, server_number: u32) -> Result<WakeOnLan, Error>;
 }
 
-impl WakeOnLanRobot for Robot {
+impl<T> WakeOnLanRobot for T
+where
+    T: SyncRobot,
+{
     fn get_wol(&self, server_number: u32) -> Result<WakeOnLan, Error> {
         self.get::<WakeOnLanResponse>(&format!("/wol/{}", server_number))
             .map(WakeOnLan::from)

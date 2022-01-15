@@ -2,7 +2,7 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{Error, Robot};
+use crate::{Error, SyncRobot};
 
 #[derive(Debug, Deserialize)]
 pub struct RescueConfiguration {
@@ -291,7 +291,10 @@ pub trait BootRobot {
     ) -> Result<Option<CPanelConfiguration>, Error>;
 }
 
-impl BootRobot for Robot {
+impl<T> BootRobot for T
+where
+    T: SyncRobot,
+{
     fn list_server_boot_configurations(
         &self,
         server_number: u32,
