@@ -96,13 +96,13 @@ impl<T> From<APIResult<T>> for Result<T, Error> {
 
 #[derive(Debug)]
 pub enum Error {
-    Reqwest(reqwest::Error),
+    Transport(Box<dyn std::error::Error>),
     API(APIError),
 }
 
 impl From<reqwest::Error> for Error {
     fn from(e: reqwest::Error) -> Self {
-        Error::Reqwest(e)
+        Error::Transport(Box::new(e))
     }
 }
 
