@@ -9,16 +9,19 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 pub enum Status {
     #[serde(rename = "ready")]
     Ready,
+    /// Server is being provisioned or otherwise unavailable
     #[serde(rename = "in progress")]
     InProgress,
 }
 
+/// Reference to a Subnet. More information about the subnet can be retrieved using the [SubnetRobot](crate::subnet::SubnetRobot) interface.
 #[derive(Debug, Deserialize)]
 pub struct SubnetReference {
     pub ip: IpAddr,
     pub mask: String,
 }
 
+/// Flags describe availability of a service or add-on for the server.
 #[derive(Debug, Deserialize)]
 pub struct ServerFlags {
     pub reset: bool,
@@ -57,6 +60,9 @@ struct ServerResponse {
     pub server: Server,
 }
 
+/// If the server has been cancelled the struct will reflect this status, otherwise it will
+/// contain information about when the earliest possible cancellation is, and whether reserving
+/// the server upon cancellation is possible
 #[derive(Debug, Deserialize)]
 pub struct Cancellation {
     pub server_ip: Option<Ipv4Addr>,
@@ -75,6 +81,7 @@ struct CancellationResponse {
     pub cancellation: Cancellation,
 }
 
+/// Trait defining the server-related API endpoints of the Hetzner API. Implemented by [`Robot`]
 pub trait ServerRobot {
     fn list_servers(&self) -> Result<Vec<Server>, Error>;
     fn get_server(&self, id: u32) -> Result<Server, Error>;

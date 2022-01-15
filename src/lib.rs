@@ -1,5 +1,7 @@
 //! `hrobot` is an unofficial synchronous Rust client for interacting with the [Hetzner Robot API](https://robot.your-server.de/doc/webservice/en.html)
 //!
+//! See the trait implementations for [`Robot`] for a complete list of supported API Endpoints.
+//!
 //! **Disclaimer:** the authors are not associated with Hetzner (except as customers), and the crate is in no way endorsed or supported by Hetzner Online GmbH.
 //!
 //! # Requirements for usage
@@ -31,7 +33,6 @@
 //! ```text
 //! foobar: AX51-NVMe in FSN1-DC18
 //! ```
-//!
 pub mod boot;
 pub mod error;
 pub mod firewall;
@@ -44,12 +45,17 @@ pub mod server;
 pub mod subnet;
 pub mod wol;
 
+pub use boot::*;
 pub use error::*;
+pub use firewall::*;
 pub use ip::*;
+pub use keys::*;
+pub use rdns::*;
 pub use reset::*;
 pub use robot::*;
 pub use server::*;
 pub use subnet::*;
+pub use wol::*;
 
 /// Utility function for coercing a string or list of strings into a Vec<String> during deserialization
 /// Source: https://stackoverflow.com/questions/41151080/deserialize-a-json-string-or-array-of-strings-into-a-vec
