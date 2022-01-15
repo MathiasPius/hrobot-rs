@@ -1,7 +1,4 @@
-use crate::{
-    error::{APIResult, Error},
-    robot::Robot,
-};
+use crate::{error::Error, robot::Robot};
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
 
@@ -25,8 +22,14 @@ pub struct Ip {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct IpResponse {
+struct IpResponse {
     pub ip: Ip,
+}
+
+impl From<IpResponse> for Ip {
+    fn from(i: IpResponse) -> Self {
+        i.ip
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -36,8 +39,14 @@ pub struct Mac {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct MacResponse {
+struct MacResponse {
     pub mac: Mac,
+}
+
+impl From<MacResponse> for Mac {
+    fn from(m: MacResponse) -> Self {
+        m.mac
+    }
 }
 
 pub trait IpRobot {
@@ -48,30 +57,17 @@ pub trait IpRobot {
 
 impl IpRobot for Robot {
     fn list_ips(&self) -> Result<Vec<Ip>, Error> {
-        let result: APIResult<Vec<IpResponse>> = self.get("/ip")?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.into_iter().map(|s| s.ip).collect()),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<Vec<IpResponse>>("/ip")
+            .map(|i| i.into_iter().map(Ip::from).collect())
     }
 
     fn get_ip(&self, ip: Ipv4Addr) -> Result<Ip, Error> {
-        let result: APIResult<IpResponse> = self.get(&format!("/ip/{}", ip))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.ip),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<IpResponse>(&format!("/ip/{}", ip)).map(Ip::from)
     }
 
     fn get_mac(&self, ip: Ipv4Addr) -> Result<Mac, Error> {
-        let result: APIResult<MacResponse> = self.get(&format!("/ip/{}/mac", ip))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.mac),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<MacResponse>(&format!("/ip/{}/mac", ip))
+            .map(Mac::from)
     }
 }
 

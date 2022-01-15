@@ -2,7 +2,7 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{APIResult, Error, Robot};
+use crate::{Error, Robot};
 
 #[derive(Debug, Deserialize)]
 pub struct RescueConfiguration {
@@ -166,6 +166,12 @@ struct BootConfigurationResponse {
     pub boot: BootConfiguration,
 }
 
+impl From<BootConfigurationResponse> for BootConfiguration {
+    fn from(b: BootConfigurationResponse) -> Self {
+        b.boot
+    }
+}
+
 pub trait BootRobot {
     fn list_server_boot_configurations(
         &self,
@@ -290,13 +296,8 @@ impl BootRobot for Robot {
         &self,
         server_number: u32,
     ) -> Result<BootConfiguration, Error> {
-        let result: APIResult<BootConfigurationResponse> =
-            self.get(&format!("/boot/{}", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.boot),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<BootConfigurationResponse>(&format!("/boot/{}", server_number))
+            .map(BootConfiguration::from)
     }
 
     fn get_server_active_boot_configuration(
@@ -310,26 +311,18 @@ impl BootRobot for Robot {
         &self,
         server_number: u32,
     ) -> Result<Option<RescueConfiguration>, Error> {
-        let result: APIResult<BootConfiguration> =
-            self.get(&format!("/boot/{}/rescue", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.rescue),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .get::<BootConfiguration>(&format!("/boot/{}/rescue", server_number))?
+            .rescue)
     }
 
     fn delete_server_rescue_boot_configuration(
         &self,
         server_number: u32,
     ) -> Result<Option<RescueConfiguration>, Error> {
-        let result: APIResult<BootConfiguration> =
-            self.delete(&format!("/boot/{}/rescue", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.rescue),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .delete::<BootConfiguration>(&format!("/boot/{}/rescue", server_number))?
+            .rescue)
     }
 
     fn set_server_rescue_boot_configuration(
@@ -348,45 +341,34 @@ impl BootRobot for Robot {
             pub authorized_key: &'a [&'a str],
         }
 
-        let result: APIResult<BootConfiguration> = self.post(
-            &format!("/boot/{}/rescue", server_number),
-            SetRescueConfigurationRequest {
-                os,
-                arch,
-                authorized_key: authorized_keys,
-            },
-        )?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.rescue),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .post::<BootConfiguration, SetRescueConfigurationRequest>(
+                &format!("/boot/{}/rescue", server_number),
+                SetRescueConfigurationRequest {
+                    os,
+                    arch,
+                    authorized_key: authorized_keys,
+                },
+            )?
+            .rescue)
     }
 
     fn get_server_linux_boot_configuration(
         &self,
         server_number: u32,
     ) -> Result<Option<LinuxConfiguration>, Error> {
-        let result: APIResult<BootConfiguration> =
-            self.get(&format!("/boot/{}/linux", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.linux),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .get::<BootConfiguration>(&format!("/boot/{}/linux", server_number))?
+            .linux)
     }
 
     fn delete_server_linux_boot_configuration(
         &self,
         server_number: u32,
     ) -> Result<Option<LinuxConfiguration>, Error> {
-        let result: APIResult<BootConfiguration> =
-            self.delete(&format!("/boot/{}/linux", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.linux),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .delete::<BootConfiguration>(&format!("/boot/{}/linux", server_number))?
+            .linux)
     }
 
     fn set_server_linux_boot_configuration(
@@ -407,46 +389,35 @@ impl BootRobot for Robot {
             pub authorized_key: &'a [&'a str],
         }
 
-        let result: APIResult<BootConfiguration> = self.post(
-            &format!("/boot/{}/linux", server_number),
-            SetLinuxConfigurationRequest {
-                dist,
-                lang,
-                arch,
-                authorized_key: authorized_keys,
-            },
-        )?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.linux),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .post::<BootConfiguration, SetLinuxConfigurationRequest>(
+                &format!("/boot/{}/linux", server_number),
+                SetLinuxConfigurationRequest {
+                    dist,
+                    lang,
+                    arch,
+                    authorized_key: authorized_keys,
+                },
+            )?
+            .linux)
     }
 
     fn get_server_vnc_boot_configuration(
         &self,
         server_number: u32,
     ) -> Result<Option<VncConfiguration>, Error> {
-        let result: APIResult<BootConfiguration> =
-            self.get(&format!("/boot/{}/vnc", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.vnc),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .get::<BootConfiguration>(&format!("/boot/{}/vnc", server_number))?
+            .vnc)
     }
 
     fn delete_server_vnc_boot_configuration(
         &self,
         server_number: u32,
     ) -> Result<Option<VncConfiguration>, Error> {
-        let result: APIResult<BootConfiguration> =
-            self.delete(&format!("/boot/{}/vnc", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.vnc),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .delete::<BootConfiguration>(&format!("/boot/{}/vnc", server_number))?
+            .vnc)
     }
 
     fn set_server_vnc_boot_configuration(
@@ -464,41 +435,30 @@ impl BootRobot for Robot {
             pub arch: Option<u64>,
         }
 
-        let result: APIResult<BootConfiguration> = self.post(
-            &format!("/boot/{}/vnc", server_number),
-            SetVncConfigurationRequest { dist, lang, arch },
-        )?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.vnc),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .post::<BootConfiguration, SetVncConfigurationRequest>(
+                &format!("/boot/{}/vnc", server_number),
+                SetVncConfigurationRequest { dist, lang, arch },
+            )?
+            .vnc)
     }
 
     fn get_server_windows_boot_configuration(
         &self,
         server_number: u32,
     ) -> Result<Option<WindowsConfiguration>, Error> {
-        let result: APIResult<BootConfiguration> =
-            self.get(&format!("/boot/{}/windows", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.windows),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .get::<BootConfiguration>(&format!("/boot/{}/windows", server_number))?
+            .windows)
     }
 
     fn delete_server_windows_boot_configuration(
         &self,
         server_number: u32,
     ) -> Result<Option<WindowsConfiguration>, Error> {
-        let result: APIResult<BootConfiguration> =
-            self.delete(&format!("/boot/{}/windows", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.windows),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .delete::<BootConfiguration>(&format!("/boot/{}/windows", server_number))?
+            .windows)
     }
 
     fn set_server_windows_boot_configuration(
@@ -511,41 +471,30 @@ impl BootRobot for Robot {
             pub lang: &'a str,
         }
 
-        let result: APIResult<BootConfiguration> = self.post(
-            &format!("/boot/{}/windows", server_number),
-            SetWindowsConfigurationRequest { lang },
-        )?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.windows),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .post::<BootConfiguration, SetWindowsConfigurationRequest>(
+                &format!("/boot/{}/windows", server_number),
+                SetWindowsConfigurationRequest { lang },
+            )?
+            .windows)
     }
 
     fn get_server_plesk_boot_configuration(
         &self,
         server_number: u32,
     ) -> Result<Option<PleskConfiguration>, Error> {
-        let result: APIResult<BootConfiguration> =
-            self.get(&format!("/boot/{}/plesk", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.plesk),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .get::<BootConfiguration>(&format!("/boot/{}/plesk", server_number))?
+            .plesk)
     }
 
     fn delete_server_plesk_boot_configuration(
         &self,
         server_number: u32,
     ) -> Result<Option<PleskConfiguration>, Error> {
-        let result: APIResult<BootConfiguration> =
-            self.delete(&format!("/boot/{}/plesk", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.plesk),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .delete::<BootConfiguration>(&format!("/boot/{}/plesk", server_number))?
+            .plesk)
     }
 
     fn set_server_plesk_boot_configuration(
@@ -565,46 +514,35 @@ impl BootRobot for Robot {
             pub hostname: &'a str,
         }
 
-        let result: APIResult<BootConfiguration> = self.post(
-            &format!("/boot/{}/plesk", server_number),
-            SetPleskConfigurationRequest {
-                dist,
-                lang,
-                arch,
-                hostname,
-            },
-        )?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.plesk),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .post::<BootConfiguration, SetPleskConfigurationRequest>(
+                &format!("/boot/{}/plesk", server_number),
+                SetPleskConfigurationRequest {
+                    dist,
+                    lang,
+                    arch,
+                    hostname,
+                },
+            )?
+            .plesk)
     }
 
     fn get_server_cpanel_boot_configuration(
         &self,
         server_number: u32,
     ) -> Result<Option<CPanelConfiguration>, Error> {
-        let result: APIResult<BootConfiguration> =
-            self.get(&format!("/boot/{}/cpanel", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.cpanel),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .get::<BootConfiguration>(&format!("/boot/{}/cpanel", server_number))?
+            .cpanel)
     }
 
     fn delete_server_cpanel_boot_configuration(
         &self,
         server_number: u32,
     ) -> Result<Option<CPanelConfiguration>, Error> {
-        let result: APIResult<BootConfiguration> =
-            self.delete(&format!("/boot/{}/cpanel", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.cpanel),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .delete::<BootConfiguration>(&format!("/boot/{}/cpanel", server_number))?
+            .cpanel)
     }
 
     fn set_server_cpanel_boot_configuration(
@@ -624,20 +562,17 @@ impl BootRobot for Robot {
             pub hostname: &'a str,
         }
 
-        let result: APIResult<BootConfiguration> = self.post(
-            &format!("/boot/{}/cpanel", server_number),
-            SetCpanelConfigurationRequest {
-                dist,
-                lang,
-                arch,
-                hostname,
-            },
-        )?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.cpanel),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        Ok(self
+            .post::<BootConfiguration, SetCpanelConfigurationRequest>(
+                &format!("/boot/{}/cpanel", server_number),
+                SetCpanelConfigurationRequest {
+                    dist,
+                    lang,
+                    arch,
+                    hostname,
+                },
+            )?
+            .cpanel)
     }
 }
 

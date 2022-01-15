@@ -2,7 +2,7 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 
 use serde::Deserialize;
 
-use crate::{APIResult, Error, Robot};
+use crate::{Error, Robot};
 
 #[derive(Debug, Deserialize)]
 pub struct WakeOnLan {
@@ -12,8 +12,14 @@ pub struct WakeOnLan {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct WakeOnLanResponse {
+struct WakeOnLanResponse {
     pub wol: WakeOnLan,
+}
+
+impl From<WakeOnLanResponse> for WakeOnLan {
+    fn from(w: WakeOnLanResponse) -> Self {
+        w.wol
+    }
 }
 
 pub trait WakeOnLanRobot {
@@ -23,21 +29,12 @@ pub trait WakeOnLanRobot {
 
 impl WakeOnLanRobot for Robot {
     fn get_wol(&self, server_number: u32) -> Result<WakeOnLan, Error> {
-        let result: APIResult<WakeOnLanResponse> = self.get(&format!("/wol/{}", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.wol),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<WakeOnLanResponse>(&format!("/wol/{}", server_number))
+            .map(WakeOnLan::from)
     }
 
     fn trigger_wol(&self, server_number: u32) -> Result<WakeOnLan, Error> {
-        let result: APIResult<WakeOnLanResponse> =
-            self.post(&format!("/wol/{}", server_number), ())?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.wol),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.post::<WakeOnLanResponse, ()>(&format!("/wol/{}", server_number), ())
+            .map(WakeOnLan::from)
     }
 }

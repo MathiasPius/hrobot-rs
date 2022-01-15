@@ -5,7 +5,7 @@ use std::{
     net::Ipv4Addr,
 };
 
-use crate::{APIResult, Error, Robot};
+use crate::{Error, Robot};
 
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -127,6 +127,12 @@ pub struct Firewall {
 #[derive(Debug, Deserialize)]
 struct FirewallResponse {
     pub firewall: Firewall,
+}
+
+impl From<FirewallResponse> for Firewall {
+    fn from(f: FirewallResponse) -> Self {
+        f.firewall
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -254,13 +260,8 @@ pub trait FirewallRobot {
 
 impl FirewallRobot for Robot {
     fn get_firewall(&self, server_number: u32) -> Result<Firewall, Error> {
-        let result: APIResult<FirewallResponse> =
-            self.get(&format!("/firewall/{}", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.firewall),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<FirewallResponse>(&format!("/firewall/{}", server_number))
+            .map(Firewall::from)
     }
 
     fn set_firewall_rules(
@@ -276,15 +277,11 @@ impl FirewallRobot for Robot {
             rules,
         };
 
-        let result: APIResult<FirewallResponse> = self.post_raw(
+        self.post_raw::<FirewallResponse>(
             &format!("/firewall/{}", server_number),
             request.into_urlencoded().unwrap(),
-        )?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.firewall),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        )
+        .map(Firewall::from)
     }
 }
 

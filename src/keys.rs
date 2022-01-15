@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{APIResult, Error, Robot};
+use crate::{Error, Robot};
 
 #[derive(Debug, Deserialize)]
 pub struct Key {
@@ -17,6 +17,12 @@ pub struct KeyResponse {
     pub key: Key,
 }
 
+impl From<KeyResponse> for Key {
+    fn from(k: KeyResponse) -> Self {
+        k.key
+    }
+}
+
 pub trait KeyRobot {
     fn list_keys(&self) -> Result<Vec<Key>, Error>;
     fn add_key(&self, name: &str, openssh_key: &str) -> Result<Key, Error>;
@@ -27,12 +33,8 @@ pub trait KeyRobot {
 
 impl KeyRobot for Robot {
     fn list_keys(&self) -> Result<Vec<Key>, Error> {
-        let result: APIResult<Vec<KeyResponse>> = self.get("/key")?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.into_iter().map(|s| s.key).collect()),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<Vec<KeyResponse>>("/key")
+            .map(|k| k.into_iter().map(Key::from).collect())
     }
 
     fn add_key(&self, name: &str, openssh_key: &str) -> Result<Key, Error> {
@@ -42,27 +44,19 @@ impl KeyRobot for Robot {
             pub data: &'a str,
         }
 
-        let result: APIResult<KeyResponse> = self.post(
+        self.post::<KeyResponse, AddKeyRequest>(
             "/key",
             AddKeyRequest {
                 name,
                 data: openssh_key,
             },
-        )?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.key),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        )
+        .map(Key::from)
     }
 
     fn get_key(&self, fingerprint: &str) -> Result<Key, Error> {
-        let result: APIResult<KeyResponse> = self.get(&format!("/key/{}", fingerprint))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.key),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<KeyResponse>(&format!("/key/{}", fingerprint))
+            .map(Key::from)
     }
 
     fn rename_key(&self, fingerprint: &str, name: &str) -> Result<Key, Error> {
@@ -71,21 +65,14 @@ impl KeyRobot for Robot {
             pub name: &'a str,
         }
 
-        let result: APIResult<KeyResponse> =
-            self.post(&format!("/key/{}", fingerprint), RenameKeyRequest { name })?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.key),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.post::<KeyResponse, RenameKeyRequest>(
+            &format!("/key/{}", fingerprint),
+            RenameKeyRequest { name },
+        )
+        .map(Key::from)
     }
 
     fn delete_key(&self, fingerprint: &str) -> Result<(), Error> {
-        let result: APIResult<()> = self.delete(&format!("/key/{}", fingerprint))?;
-
-        match result {
-            APIResult::Ok(_) => Ok(()),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.delete::<()>(&format!("/key/{}", fingerprint))
     }
 }

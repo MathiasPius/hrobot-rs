@@ -1,11 +1,7 @@
 use serde::Deserialize;
 use std::net::{IpAddr, Ipv4Addr};
 
-use crate::{
-    error::{APIResult, Error},
-    ip::TrafficWarnings,
-    robot::Robot,
-};
+use crate::{error::Error, ip::TrafficWarnings, robot::Robot};
 
 #[derive(Debug, Deserialize)]
 pub struct Subnet {
@@ -26,6 +22,12 @@ struct SubnetResponse {
     subnet: Subnet,
 }
 
+impl From<SubnetResponse> for Subnet {
+    fn from(s: SubnetResponse) -> Self {
+        s.subnet
+    }
+}
+
 pub trait SubnetRobot {
     fn list_subnets(&self) -> Result<Vec<Subnet>, Error>;
     fn get_subnet(&self, subnet: IpAddr) -> Result<Subnet, Error>;
@@ -33,21 +35,13 @@ pub trait SubnetRobot {
 
 impl SubnetRobot for Robot {
     fn list_subnets(&self) -> Result<Vec<Subnet>, Error> {
-        let result: APIResult<Vec<SubnetResponse>> = self.get("/subnet")?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.into_iter().map(|s| s.subnet).collect()),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<Vec<SubnetResponse>>("/subnet")
+            .map(|s| s.into_iter().map(Subnet::from).collect())
     }
 
     fn get_subnet(&self, subnet: IpAddr) -> Result<Subnet, Error> {
-        let result: APIResult<SubnetResponse> = self.get(&format!("/subnet/{}", subnet))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.subnet),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<SubnetResponse>(&format!("/subnet/{}", subnet))
+            .map(Subnet::from)
     }
 }
 

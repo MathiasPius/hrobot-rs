@@ -1,7 +1,4 @@
-use crate::{
-    error::{APIResult, Error},
-    robot::Robot,
-};
+use crate::{error::Error, robot::Robot};
 use serde::{Deserialize, Serialize};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
@@ -60,6 +57,12 @@ struct ServerResponse {
     pub server: Server,
 }
 
+impl From<ServerResponse> for Server {
+    fn from(s: ServerResponse) -> Self {
+        s.server
+    }
+}
+
 /// If the server has been cancelled the struct will reflect this status, otherwise it will
 /// contain information about when the earliest possible cancellation is, and whether reserving
 /// the server upon cancellation is possible
@@ -81,6 +84,12 @@ struct CancellationResponse {
     pub cancellation: Cancellation,
 }
 
+impl From<CancellationResponse> for Cancellation {
+    fn from(c: CancellationResponse) -> Self {
+        c.cancellation
+    }
+}
+
 /// Trait defining the server-related API endpoints of the Hetzner API. Implemented by [`Robot`]
 pub trait ServerRobot {
     fn list_servers(&self) -> Result<Vec<Server>, Error>;
@@ -91,21 +100,13 @@ pub trait ServerRobot {
 
 impl ServerRobot for Robot {
     fn list_servers(&self) -> Result<Vec<Server>, Error> {
-        let result: APIResult<Vec<ServerResponse>> = self.get("/server")?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.into_iter().map(|s| s.server).collect()),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<Vec<ServerResponse>>("/server")
+            .map(|s| s.into_iter().map(Server::from).collect())
     }
 
     fn get_server(&self, server_number: u32) -> Result<Server, Error> {
-        let result: APIResult<ServerResponse> = self.get(&format!("/server/{}", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.server),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<ServerResponse>(&format!("/server/{}", server_number))
+            .map(Server::from)
     }
 
     fn rename_server(&self, server_number: u32, server_name: &str) -> Result<Server, Error> {
@@ -114,25 +115,16 @@ impl ServerRobot for Robot {
             pub server_name: &'a str,
         }
 
-        let result: APIResult<ServerResponse> = self.post(
+        self.post::<ServerResponse, RenameServerRequest>(
             &format!("/server/{}", server_number),
             RenameServerRequest { server_name },
-        )?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.server),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        )
+        .map(Server::from)
     }
 
     fn get_server_cancellation(&self, server_number: u32) -> Result<Cancellation, Error> {
-        let result: APIResult<CancellationResponse> =
-            self.get(&format!("/server/{}/cancellation", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.cancellation),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<CancellationResponse>(&format!("/server/{}/cancellation", server_number))
+            .map(Cancellation::from)
     }
 }
 

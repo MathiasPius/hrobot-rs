@@ -2,7 +2,7 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{APIResult, Error, Robot};
+use crate::{Error, Robot};
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -28,6 +28,12 @@ struct ResetResponse {
     pub reset: Reset,
 }
 
+impl From<ResetResponse> for Reset {
+    fn from(r: ResetResponse) -> Self {
+        r.reset
+    }
+}
+
 pub trait ResetRobot {
     fn list_resets(&self) -> Result<Vec<Reset>, Error>;
     fn get_reset(&self, server_number: u32) -> Result<Reset, Error>;
@@ -36,21 +42,13 @@ pub trait ResetRobot {
 
 impl ResetRobot for Robot {
     fn list_resets(&self) -> Result<Vec<Reset>, Error> {
-        let result: APIResult<Vec<ResetResponse>> = self.get("/reset")?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.into_iter().map(|s| s.reset).collect()),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<Vec<ResetResponse>>("/reset")
+            .map(|r| r.into_iter().map(Reset::from).collect())
     }
 
     fn get_reset(&self, server_number: u32) -> Result<Reset, Error> {
-        let result: APIResult<ResetResponse> = self.get(&format!("/reset/{}", server_number))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.reset),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<ResetResponse>(&format!("/reset/{}", server_number))
+            .map(Reset::from)
     }
 
     fn reset_server(&self, server_number: u32, method: ResetOption) -> Result<Reset, Error> {
@@ -60,15 +58,11 @@ impl ResetRobot for Robot {
             pub method: ResetOption,
         }
 
-        let result: APIResult<ResetResponse> = self.post(
+        self.post::<ResetResponse, ResetServerRequest>(
             &format!("/reset/{}", server_number),
             ResetServerRequest { method },
-        )?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.reset),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        )
+        .map(Reset::from)
     }
 }
 

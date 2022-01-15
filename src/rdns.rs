@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
 
-use crate::{APIResult, Error, Robot};
+use crate::{Error, Robot};
 
 #[derive(Debug, Deserialize)]
 pub struct ReverseDNS {
@@ -10,8 +10,14 @@ pub struct ReverseDNS {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct ReverseDNSResponse {
+struct ReverseDNSResponse {
     pub rdns: ReverseDNS,
+}
+
+impl From<ReverseDNSResponse> for ReverseDNS {
+    fn from(r: ReverseDNSResponse) -> Self {
+        r.rdns
+    }
 }
 
 #[derive(Serialize)]
@@ -21,57 +27,35 @@ struct PtrRecord<'a> {
 
 pub trait ReverseDNSRobot {
     fn list_rdns(&self) -> Result<Vec<ReverseDNS>, Error>;
-    fn get_rdns(&self, ip: Ipv4Addr) -> Result<Option<ReverseDNS>, Error>;
-    fn create_rdns(&self, ip: Ipv4Addr, ptr: &str) -> Result<Option<ReverseDNS>, Error>;
-    fn update_rdns(&self, ip: Ipv4Addr, ptr: &str) -> Result<Option<ReverseDNS>, Error>;
-    fn delete_rdns(&self, ip: Ipv4Addr) -> Result<Option<ReverseDNS>, Error>;
+    fn get_rdns(&self, ip: Ipv4Addr) -> Result<ReverseDNS, Error>;
+    fn create_rdns(&self, ip: Ipv4Addr, ptr: &str) -> Result<ReverseDNS, Error>;
+    fn update_rdns(&self, ip: Ipv4Addr, ptr: &str) -> Result<ReverseDNS, Error>;
+    fn delete_rdns(&self, ip: Ipv4Addr) -> Result<ReverseDNS, Error>;
 }
 
 impl ReverseDNSRobot for Robot {
     fn list_rdns(&self) -> Result<Vec<ReverseDNS>, Error> {
-        let result: APIResult<Vec<ReverseDNSResponse>> = self.get("/rdns")?;
-
-        match result {
-            APIResult::Ok(s) => Ok(s.into_iter().map(|s| s.rdns).collect()),
-            APIResult::Error(e) => Err(e.into()),
-        }
+        self.get::<Vec<ReverseDNSResponse>>("/rdns")
+            .map(|r| r.into_iter().map(ReverseDNS::from).collect())
     }
 
-    fn get_rdns(&self, ip: Ipv4Addr) -> Result<Option<ReverseDNS>, Error> {
-        let result: APIResult<ReverseDNSResponse> = self.get(&format!("/rdns/{}", ip))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(Some(s.rdns)),
-            APIResult::Error(e) => Err(e.into()),
-        }
+    fn get_rdns(&self, ip: Ipv4Addr) -> Result<ReverseDNS, Error> {
+        self.get::<ReverseDNSResponse>(&format!("/rdns/{}", ip))
+            .map(ReverseDNS::from)
     }
 
-    fn create_rdns(&self, ip: Ipv4Addr, ptr: &str) -> Result<Option<ReverseDNS>, Error> {
-        let result: APIResult<ReverseDNSResponse> =
-            self.put(&format!("/rdns/{}", ip), PtrRecord { ptr })?;
-
-        match result {
-            APIResult::Ok(s) => Ok(Some(s.rdns)),
-            APIResult::Error(e) => Err(e.into()),
-        }
+    fn create_rdns(&self, ip: Ipv4Addr, ptr: &str) -> Result<ReverseDNS, Error> {
+        self.put::<ReverseDNSResponse, PtrRecord>(&format!("/rdns/{}", ip), PtrRecord { ptr })
+            .map(ReverseDNS::from)
     }
 
-    fn update_rdns(&self, ip: Ipv4Addr, ptr: &str) -> Result<Option<ReverseDNS>, Error> {
-        let result: APIResult<ReverseDNSResponse> =
-            self.post(&format!("/rdns/{}", ip), PtrRecord { ptr })?;
-
-        match result {
-            APIResult::Ok(s) => Ok(Some(s.rdns)),
-            APIResult::Error(e) => Err(e.into()),
-        }
+    fn update_rdns(&self, ip: Ipv4Addr, ptr: &str) -> Result<ReverseDNS, Error> {
+        self.post::<ReverseDNSResponse, PtrRecord>(&format!("/rdns/{}", ip), PtrRecord { ptr })
+            .map(ReverseDNS::from)
     }
 
-    fn delete_rdns(&self, ip: Ipv4Addr) -> Result<Option<ReverseDNS>, Error> {
-        let result: APIResult<ReverseDNSResponse> = self.delete(&format!("/rdns/{}", ip))?;
-
-        match result {
-            APIResult::Ok(s) => Ok(Some(s.rdns)),
-            APIResult::Error(e) => Err(e.into()),
-        }
+    fn delete_rdns(&self, ip: Ipv4Addr) -> Result<ReverseDNS, Error> {
+        self.delete::<ReverseDNSResponse>(&format!("/rdns/{}", ip))
+            .map(ReverseDNS::from)
     }
 }

@@ -2,6 +2,8 @@ use reqwest::{blocking::Client, Url};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
+use crate::Error;
+
 pub struct Robot {
     client: Client,
     base_url: Url,
@@ -17,27 +19,29 @@ impl Robot {
         }
     }
 
-    pub(crate) fn get<T: DeserializeOwned>(&self, path: &str) -> reqwest::Result<T> {
-        self.client
+    pub(crate) fn get<T: DeserializeOwned>(&self, path: &str) -> Result<T, Error> {
+        Ok(self
+            .client
             .get(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .send()?
             .error_for_status()?
-            .json()
+            .json()?)
     }
 
     pub(crate) fn post<T: DeserializeOwned, U: Serialize>(
         &self,
         path: &str,
         form: U,
-    ) -> reqwest::Result<T> {
-        self.client
+    ) -> Result<T, Error> {
+        Ok(self
+            .client
             .post(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .form(&form)
             .send()?
             .error_for_status()?
-            .json()
+            .json()?)
     }
 
     /// URL-encoding the [Firewall](`crate::Firewall`) configuration specifically is not possible using serde_urlencoding
@@ -46,8 +50,9 @@ impl Robot {
         &self,
         path: &str,
         form: String,
-    ) -> reqwest::Result<T> {
-        self.client
+    ) -> Result<T, Error> {
+        Ok(self
+            .client
             .post(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .header(
@@ -57,30 +62,32 @@ impl Robot {
             .body(form)
             .send()?
             .error_for_status()?
-            .json()
+            .json()?)
     }
 
     pub(crate) fn put<T: DeserializeOwned, U: Serialize>(
         &self,
         path: &str,
         form: U,
-    ) -> reqwest::Result<T> {
-        self.client
+    ) -> Result<T, Error> {
+        Ok(self
+            .client
             .put(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .form(&form)
             .send()?
             .error_for_status()?
-            .json()
+            .json()?)
     }
 
-    pub(crate) fn delete<T: DeserializeOwned>(&self, path: &str) -> reqwest::Result<T> {
-        self.client
+    pub(crate) fn delete<T: DeserializeOwned>(&self, path: &str) -> Result<T, Error> {
+        Ok(self
+            .client
             .delete(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .send()?
             .error_for_status()?
-            .json()
+            .json()?)
     }
 }
 
