@@ -12,9 +12,12 @@ pub struct TrafficWarnings {
 
 #[derive(Debug, Deserialize)]
 pub struct Ip {
-    pub ip: Ipv4Addr,
-    pub server_ip: Ipv4Addr,
-    pub server_number: u32,
+    #[serde(rename = "ip")]
+    pub ips: Ipv4Addr,
+    #[serde(rename = "server_ip")]
+    pub ipv4: Ipv4Addr,
+    #[serde(rename = "server_number")]
+    pub id: u32,
     pub locked: bool,
     pub separate_mac: Option<String>,
     #[serde(flatten)]
@@ -91,6 +94,6 @@ mod tests {
 
         let ips = robot.list_ips().unwrap();
         assert!(ips.len() > 0);
-        assert_eq!(robot.get_ip(ips[0].ip).unwrap().ip, ips[0].ip);
+        assert_eq!(robot.get_ip(ips[0].ips).unwrap().ips, ips[0].ips);
     }
 }

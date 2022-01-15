@@ -15,9 +15,12 @@ pub enum ResetOption {
 
 #[derive(Debug, Deserialize)]
 pub struct Reset {
-    pub server_ip: Option<Ipv4Addr>,
-    pub server_ipv6_net: Ipv6Addr,
-    pub server_number: u32,
+    #[serde(rename = "server_ip")]
+    pub ipv4: Option<Ipv4Addr>,
+    #[serde(rename = "server_ipv6_net")]
+    pub ipv6_net: Ipv6Addr,
+    #[serde(rename = "server_number")]
+    pub id: u32,
     #[serde(rename = "type")]
     pub options: Vec<ResetOption>,
     pub operating_status: Option<String>,
@@ -86,10 +89,7 @@ mod tests {
 
         let resets = robot.list_resets().unwrap();
         assert!(resets.len() > 0);
-        assert_eq!(
-            robot.get_reset(resets[0].server_number).unwrap().server_ip,
-            resets[0].server_ip
-        );
+        assert_eq!(robot.get_reset(resets[0].id).unwrap().ipv4, resets[0].ipv4);
     }
 
     /*
@@ -100,7 +100,7 @@ mod tests {
         let robot = Robot::default();
 
         let resets = robot.list_resets().unwrap();
-        robot.reset_server(resets[0].server_number, ResetOption::HW).unwrap();
+        robot.reset_server(resets[0].id, ResetOption::HW).unwrap();
     }
     */
 }

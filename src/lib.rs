@@ -22,7 +22,7 @@
 //!
 //! for server in client.list_servers().unwrap() {
 //!     println!("{name}: {product} in {location}",
-//!         name = server.server_name,
+//!         name = server.name,
 //!         product = server.product,
 //!         location = server.dc
 //!     );

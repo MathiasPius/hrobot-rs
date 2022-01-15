@@ -6,9 +6,12 @@ use crate::{Error, Robot};
 
 #[derive(Debug, Deserialize)]
 pub struct WakeOnLan {
-    pub server_ip: Ipv4Addr,
-    pub server_ipv6_net: Ipv6Addr,
-    pub server_number: u32,
+    #[serde(rename = "server_ip")]
+    pub ip: Ipv4Addr,
+    #[serde(rename = "server_ipv6_net")]
+    pub ipv6_net: Ipv6Addr,
+    #[serde(rename = "server_number")]
+    pub id: u32,
 }
 
 #[derive(Debug, Deserialize)]
