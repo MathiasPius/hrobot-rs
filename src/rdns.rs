@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
 
-use crate::{Error, Robot};
+use crate::{Error, SyncRobot};
 
 #[derive(Debug, Deserialize)]
 pub struct ReverseDNS {
@@ -33,7 +33,10 @@ pub trait ReverseDNSRobot {
     fn delete_rdns(&self, ip: Ipv4Addr) -> Result<ReverseDNS, Error>;
 }
 
-impl ReverseDNSRobot for Robot {
+impl<T> ReverseDNSRobot for T
+where
+    T: SyncRobot,
+{
     fn list_rdns(&self) -> Result<Vec<ReverseDNS>, Error> {
         self.get::<Vec<ReverseDNSResponse>>("/rdns")
             .map(|r| r.into_iter().map(ReverseDNS::from).collect())

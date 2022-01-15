@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::net::{IpAddr, Ipv4Addr};
 
-use crate::{error::Error, ip::TrafficWarnings, robot::Robot};
+use crate::{error::Error, ip::TrafficWarnings, SyncRobot};
 
 #[derive(Debug, Deserialize)]
 pub struct Subnet {
@@ -34,7 +34,10 @@ pub trait SubnetRobot {
     fn get_subnet(&self, subnet: IpAddr) -> Result<Subnet, Error>;
 }
 
-impl SubnetRobot for Robot {
+impl<T> SubnetRobot for T
+where
+    T: SyncRobot,
+{
     fn list_subnets(&self) -> Result<Vec<Subnet>, Error> {
         self.get::<Vec<SubnetResponse>>("/subnet")
             .map(|s| s.into_iter().map(Subnet::from).collect())

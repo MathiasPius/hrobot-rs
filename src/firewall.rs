@@ -5,7 +5,7 @@ use std::{
     net::Ipv4Addr,
 };
 
-use crate::{Error, Robot};
+use crate::{Error, SyncRobot};
 
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -39,7 +39,7 @@ pub enum State {
     Active,
     #[serde(rename = "in process")]
     InProcess,
-    #[serde(rename = "discabled")]
+    #[serde(rename = "disabled")]
     Disabled,
 }
 
@@ -260,7 +260,10 @@ pub trait FirewallRobot {
     ) -> Result<Firewall, Error>;
 }
 
-impl FirewallRobot for Robot {
+impl<T> FirewallRobot for T
+where
+    T: SyncRobot,
+{
     fn get_firewall(&self, server_number: u32) -> Result<Firewall, Error> {
         self.get::<FirewallResponse>(&format!("/firewall/{}", server_number))
             .map(Firewall::from)

@@ -1,4 +1,4 @@
-use crate::{error::Error, robot::Robot};
+use crate::{error::Error, SyncRobot};
 use serde::{Deserialize, Serialize};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
@@ -105,7 +105,10 @@ pub trait ServerRobot {
     fn get_server_cancellation(&self, id: u32) -> Result<Cancellation, Error>;
 }
 
-impl ServerRobot for Robot {
+impl<T> ServerRobot for T
+where
+    T: SyncRobot,
+{
     fn list_servers(&self) -> Result<Vec<Server>, Error> {
         self.get::<Vec<ServerResponse>>("/server")
             .map(|s| s.into_iter().map(Server::from).collect())

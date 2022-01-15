@@ -1,4 +1,4 @@
-use crate::{error::Error, robot::Robot};
+use crate::{error::Error, SyncRobot};
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
 
@@ -58,7 +58,10 @@ pub trait IpRobot {
     fn get_mac(&self, ip: Ipv4Addr) -> Result<Mac, Error>;
 }
 
-impl IpRobot for Robot {
+impl<T> IpRobot for T
+where
+    T: SyncRobot,
+{
     fn list_ips(&self) -> Result<Vec<Ip>, Error> {
         self.get::<Vec<IpResponse>>("/ip")
             .map(|i| i.into_iter().map(Ip::from).collect())
