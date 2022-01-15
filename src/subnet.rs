@@ -10,7 +10,7 @@ pub struct Subnet {
     pub gateway: IpAddr,
     pub server_ip: Option<Ipv4Addr>,
     #[serde(rename = "server_number")]
-    pub id: u32,
+    pub server_id: u32,
     pub failover: bool,
     pub locked: bool,
     pub vswitch_id: Option<u32>,
