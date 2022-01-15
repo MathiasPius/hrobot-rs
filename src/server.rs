@@ -14,6 +14,7 @@ pub enum Status {
 /// Reference to a Subnet. More information about the subnet can be retrieved using the [SubnetRobot](crate::subnet::SubnetRobot) interface.
 #[derive(Debug, Deserialize)]
 pub struct SubnetReference {
+    #[serde(rename = "ip")]
     pub ipv4: IpAddr,
     pub mask: String,
 }
