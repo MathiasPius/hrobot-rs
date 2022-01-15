@@ -104,6 +104,7 @@ pub trait ServerRobot {
     fn get_server(&self, id: u32) -> Result<Server, Error>;
     fn rename_server(&self, id: u32, name: &str) -> Result<Server, Error>;
     fn get_server_cancellation(&self, id: u32) -> Result<Cancellation, Error>;
+    fn withdraw_server_order(&self, id: u32, reason: Option<&str>) -> Result<Cancellation, Error>;
 }
 
 impl<T> ServerRobot for T
@@ -136,6 +137,22 @@ where
     fn get_server_cancellation(&self, server_number: u32) -> Result<Cancellation, Error> {
         self.get::<CancellationResponse>(&format!("/server/{}/cancellation", server_number))
             .map(Cancellation::from)
+    }
+
+    fn withdraw_server_order(&self, id: u32, reason: Option<&str>) -> Result<Cancellation, Error> {
+        #[derive(Serialize)]
+        struct WithdrawalRequest<'a> {
+            #[serde(skip_serializing_if = "Option::is_none")]
+            reversal_reason: Option<&'a str>,
+        }
+
+        self.post::<CancellationResponse, WithdrawalRequest>(
+            &format!("/server/{}/reversal", id),
+            WithdrawalRequest {
+                reversal_reason: reason,
+            },
+        )
+        .map(Cancellation::from)
     }
 }
 

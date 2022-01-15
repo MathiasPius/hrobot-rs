@@ -17,10 +17,6 @@ Uses the blocking Reqwest client and rustls under the hood.
 * ❌ [Traffic](https://robot.your-server.de/doc/webservice/en.html#traffic): Not implemented.
 * ❌ [Server Ordering](https://robot.your-server.de/doc/webservice/en.html#server-ordering): Not implemented. I'm not made of money!
 * ❌ [Storage Box](https://robot.your-server.de/doc/webservice/en.html#storage-box): Not implemented.
-* ⚠️ [Server](https://robot.your-server.de/doc/webservice/en.html#server)
-    * ✅ list, get, and rename servers.
-    * ✅ view cancellation status and options.
-    * ❌ revoke server order.
 * ⚠️ [Firewall](https://robot.your-server.de/doc/webservice/en.html#firewall)
     * ✅ get & update firewall rules & configuration directly.
     * ❌ create, modify or delete firewall templates.
@@ -37,6 +33,7 @@ Uses the blocking Reqwest client and rustls under the hood.
     * ❌ update subnet MAC.
     * ❌ delete subnet MAC.
 * ❌ [vSwitch](https://robot.your-server.de/doc/webservice/en.html#vswitch): Not implemented.
+* ✅ [Server](https://robot.your-server.de/doc/webservice/en.html#server): All functionality implemented.
 * ✅ [Reset](https://robot.your-server.de/doc/webservice/en.html#reset): All functionality implemented.
 * ✅ [Wake On Lan](https://robot.your-server.de/doc/webservice/en.html#wake-on-lan): All functionality implemented.
 * ✅ [Boot Configuration](https://robot.your-server.de/doc/webservice/en.html#boot-configuration): All functionality implemented (but some untested due to costs of add-ons).
