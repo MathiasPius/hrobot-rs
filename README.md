@@ -3,6 +3,8 @@ Hetzner Robot API Client library for Rust.
 
 Uses the blocking Reqwest client and rustls under the hood.
 
+**Disclaimer:** the authors are not associated with Hetzner (except as customers), and the crate is in no way endorsed or supported by Hetzner Online GmbH.
+
 # API Endpoint Implementation Progress
 
 * ❌ [Failover](https://robot.your-server.de/doc/webservice/en.html#failover): Not implemented.

@@ -1,7 +1,10 @@
 [package]
 name = "hrobot"
 description = "Unofficial Hetzner Robot API client"
+keywords = ["hetzner", "robot", "api", "client"]
+repository = "https://github.com/MathiasPius/hrobot-rs"
 version = "0.1.0"
+license = "MIT"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
