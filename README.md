@@ -1,4 +1,10 @@
-# hrobot-rs
+# hrobot-rs [![Latest Version]][crates.io] [![Docs]][docs.rs]
+
+[Latest Version]: https://img.shields.io/crates/v/hrobot
+[crates.io]: https://crates.io/crates/hrobot
+[Docs]: https://docs.rs/hrobot/badge.svg
+[docs.rs]: https://docs.rs/hrobot
+
 Hetzner Robot API Client library for Rust.
 
 Uses the blocking Reqwest client and rustls under the hood.
