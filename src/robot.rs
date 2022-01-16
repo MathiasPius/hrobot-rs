@@ -2,7 +2,7 @@ use reqwest::{blocking::Client, Url};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-use crate::Error;
+use crate::{APIResult, Error};
 
 pub trait SyncRobot {
     fn new(username: &str, password: &str) -> Self;
@@ -31,29 +31,28 @@ impl SyncRobot for Robot {
     }
 
     fn get<T: DeserializeOwned>(&self, path: &str) -> Result<T, Error> {
-        Ok(self
-            .client
+        self.client
             .get(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .send()?
-            .json()?)
+            .json::<APIResult<T>>()?
+            .into()
     }
 
     fn post<T: DeserializeOwned, U: Serialize>(&self, path: &str, form: U) -> Result<T, Error> {
-        Ok(self
-            .client
+        self.client
             .post(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .form(&form)
             .send()?
-            .json()?)
+            .json::<APIResult<T>>()?
+            .into()
     }
 
     /// URL-encoding the [Firewall](`crate::Firewall`) configuration specifically is not possible using serde_urlencoding
     /// so we need this function for posting our manually serialized version
     fn post_raw<T: DeserializeOwned>(&self, path: &str, form: String) -> Result<T, Error> {
-        Ok(self
-            .client
+        self.client
             .post(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .header(
@@ -62,26 +61,27 @@ impl SyncRobot for Robot {
             )
             .body(form)
             .send()?
-            .json()?)
+            .json::<APIResult<T>>()?
+            .into()
     }
 
     fn put<T: DeserializeOwned, U: Serialize>(&self, path: &str, form: U) -> Result<T, Error> {
-        Ok(self
-            .client
+        self.client
             .put(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .form(&form)
             .send()?
-            .json()?)
+            .json::<APIResult<T>>()?
+            .into()
     }
 
     fn delete<T: DeserializeOwned>(&self, path: &str) -> Result<T, Error> {
-        Ok(self
-            .client
+        self.client
             .delete(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .send()?
-            .json()?)
+            .json::<APIResult<T>>()?
+            .into()
     }
 }
 

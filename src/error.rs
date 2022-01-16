@@ -215,9 +215,20 @@ pub struct GenericError {
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
-enum MaybeTyped {
+pub(crate) enum MaybeTyped {
     Typed(APIError),
     Untyped(GenericError),
+}
+
+#[derive(Debug, Deserialize)]
+pub(crate) struct MaybeTypedResponse {
+    pub error: MaybeTyped,
+}
+
+impl From<MaybeTypedResponse> for MaybeTyped {
+    fn from(m: MaybeTypedResponse) -> Self {
+        m.error
+    }
 }
 
 #[cfg(test)]
@@ -241,16 +252,16 @@ impl From<MaybeTyped> for APIError {
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
-enum APIResult<T> {
+pub(crate) enum APIResult<T> {
     Ok(T),
-    Error(MaybeTyped),
+    Error(MaybeTypedResponse),
 }
 
 impl<T> From<APIResult<T>> for Result<T, Error> {
     fn from(result: APIResult<T>) -> Self {
         match result {
             APIResult::Ok(inner) => Ok(inner),
-            APIResult::Error(e) => Err(Error::API(e.into())),
+            APIResult::Error(e) => Err(Error::API(e.error.into())),
         }
     }
 }
@@ -258,7 +269,14 @@ impl<T> From<APIResult<T>> for Result<T, Error> {
 #[derive(Debug)]
 pub enum Error {
     Transport(Box<dyn std::error::Error>),
+    Decode(serde_json::Error),
     API(APIError),
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(e: serde_json::Error) -> Self {
+        Error::Decode(e)
+    }
 }
 
 impl From<reqwest::Error> for Error {

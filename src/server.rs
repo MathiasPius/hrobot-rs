@@ -159,7 +159,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Robot;
+    use crate::{APIError, Robot};
     use serial_test::serial;
 
     #[test]
@@ -182,6 +182,17 @@ mod tests {
             robot.get_server(servers[0].id).unwrap().name,
             servers[0].name
         );
+    }
+
+    #[test]
+    #[ignore]
+    pub fn get_nonexistent_server() {
+        let robot = Robot::default();
+
+        assert!(matches!(
+            robot.get_server(1),
+            Err(Error::API(APIError::ServerNotFound { .. }))
+        ));
     }
 
     #[test]
