@@ -1,13 +1,7 @@
 use serde::Deserialize;
 
-#[derive(Debug)]
-pub enum Addon {
-    Windows,
-    Plesk,
-    CPanel,
-}
-
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
+#[serde(tag = "code", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum APIError {
     Unavailable,
     NotFound {
@@ -16,35 +10,40 @@ pub enum APIError {
     ServerNotFound {
         message: String,
     },
-    IPNotFound {
+    IpNotFound {
         message: String,
     },
     SubnetNotFound {
         message: String,
     },
-    MACNotFound {
+    MacNotFound {
         message: String,
     },
-    MACNotAvailable {
+    MacNotAvailable {
         message: String,
     },
-    MACAlreadySet {
+    MacAlreadySet {
         message: String,
     },
-    MACFailed {
+    MacFailed {
         message: String,
     },
-    WOLNotAvailable {
+    WolNotAvailable {
         message: String,
     },
-    WOLFailed {
+    WolFailed {
         message: String,
     },
-    WindowsOutdated {
+    WindowsOutdatedVersion {
         message: String,
     },
-    MissingAddon {
-        addon: Addon,
+    WindowsMissingAddon {
+        message: String,
+    },
+    PleskMissingAddon {
+        message: String,
+    },
+    CpanelMissingAddon {
         message: String,
     },
     RateLimitExceeded {
@@ -59,6 +58,9 @@ pub enum APIError {
         message: String,
     },
     StorageboxSubaccountNotFound {
+        message: String,
+    },
+    StorageboxSubaccountLimitExceeded {
         message: String,
     },
     SnapshotNotFound {
@@ -79,22 +81,25 @@ pub enum APIError {
     FirewallInProcess {
         message: String,
     },
-    VSwitchLimitReached {
+    VswitchLimitReached {
         message: String,
     },
-    VSwitchServerLimitReached {
+    VswitchNotAvailable {
         message: String,
     },
-    VSwitchPerServerLimitReached {
+    VswitchServerLimitReached {
         message: String,
     },
-    VSwitchInProcess {
+    VswitchPerServerLimitReached {
         message: String,
     },
-    VSwitchVlanNotUnique {
+    VswitchInProcess {
         message: String,
     },
-    ManualResetActive {
+    VswitchVlanNotUnique {
+        message: String,
+    },
+    ResetManualActive {
         message: String,
     },
     KeyUpdateFailed {
@@ -109,19 +114,19 @@ pub enum APIError {
     KeyAlreadyExists {
         message: String,
     },
-    RDNSNotFound {
+    RdnsNotFound {
         message: String,
     },
-    RDNSCreateFailed {
+    RdnsCreateFailed {
         message: String,
     },
-    RDNSUpdateFailed {
+    RdnsUpdateFailed {
         message: String,
     },
-    RDNSDeleteFailed {
+    RdnsDeleteFailed {
         message: String,
     },
-    RDNSAlreadyExists {
+    RdnsAlreadyExists {
         message: String,
     },
     ResetFailed {
@@ -129,13 +134,15 @@ pub enum APIError {
     },
     InvalidInput {
         message: String,
+        #[serde(default)]
         missing: Vec<String>,
+        #[serde(default)]
         invalid: Vec<String>,
     },
     Conflict {
         message: String,
     },
-    ServerReservationFailed {
+    ServerCancellationReserveLocationFalseOnly {
         message: String,
     },
     TrafficWarningUpdateFailed {
@@ -159,7 +166,10 @@ pub enum APIError {
     FailoverNotComplete {
         message: String,
     },
-    WithdrawalFailed {
+    FailoverNewServerNotFound {
+        message: String,
+    },
+    ServerReversalNotPossible {
         message: String,
     },
     BootActivationFailed {
@@ -174,15 +184,12 @@ pub enum APIError {
     BootBlocked {
         message: String,
     },
-    Generic {
-        status: u32,
-        code: String,
-        message: String,
-    },
+    #[serde(skip_deserializing)]
+    Generic(GenericError),
 }
 
 #[derive(Debug, Deserialize)]
-struct InvalidInputError {
+pub struct InvalidInputError {
     #[serde(default)]
     pub missing: Vec<String>,
     #[serde(default)]
@@ -190,13 +197,13 @@ struct InvalidInputError {
 }
 
 #[derive(Debug, Deserialize)]
-struct RateLimitError {
+pub struct RateLimitError {
     pub interval: u32,
     pub max_request: u32,
 }
 
 #[derive(Debug, Deserialize)]
-struct GenericAPIError {
+pub struct GenericError {
     pub status: u32,
     pub code: String,
     pub message: String,
@@ -206,197 +213,28 @@ struct GenericAPIError {
     pub rate_limit: Option<RateLimitError>,
 }
 
-impl From<GenericAPIError> for APIError {
-    fn from(err: GenericAPIError) -> Self {
-        match (err.status, err.code.as_str()) {
-            (403, "RATE_LIMIT_EXCEEDED") => {
-                let rate_limit = err.rate_limit.expect("API returned RATE_LIMIT_EXCEEDED error, but did not include information about max_requests or intervals");
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum MaybeTyped {
+    Typed(APIError),
+    Untyped(GenericError),
+}
 
-                APIError::RateLimitExceeded {
-                    message: err.message,
-                    max_request: rate_limit.max_request,
-                    interval: rate_limit.interval,
-                }
-            }
-            (400, "INVALID_INPUT") => {
-                let invalid_input = err.invalid_input.expect("API returned INVALID_INPUT error, but did not include any information regarding missing input");
+#[cfg(test)]
+impl MaybeTyped {
+    pub fn is_typed(&self) -> bool {
+        match self {
+            MaybeTyped::Typed(_) => true,
+            MaybeTyped::Untyped(_) => false,
+        }
+    }
+}
 
-                APIError::InvalidInput {
-                    message: err.message,
-                    missing: invalid_input.missing,
-                    invalid: invalid_input.invalid,
-                }
-            }
-            (409, "CONFLICT") => APIError::Conflict {
-                message: err.message,
-            },
-            (404, "NOT_FOUND") => APIError::NotFound {
-                message: err.message,
-            },
-            (404, "SERVER_NOT_FOUND") => APIError::ServerNotFound {
-                message: err.message,
-            },
-            (404, "IP_NOT_FOUND") => APIError::IPNotFound {
-                message: err.message,
-            },
-            (404, "SUBNET_NOT_FOUND") => APIError::SubnetNotFound {
-                message: err.message,
-            },
-            (404, "MAC_NOT_FOUND") => APIError::MACNotFound {
-                message: err.message,
-            },
-            (404, "MAC_NOT_AVAILABLE") => APIError::MACNotAvailable {
-                message: err.message,
-            },
-            (404, "RDNS_NOT_FOUND") => APIError::RDNSNotFound {
-                message: err.message,
-            },
-            (404, "FAILOVER_NEW_SERVER_NOT_FOUND") => APIError::ServerNotFound {
-                message: err.message,
-            },
-            (404, "WOL_NOT_AVAILABLE") => APIError::WOLNotAvailable {
-                message: err.message,
-            },
-            (404, "BOOT_NOT_AVAILABLE") => APIError::BootNotAvailable {
-                message: err.message,
-            },
-            (404, "WINDOWS_OUTDATED_VERSION") => APIError::WindowsOutdated {
-                message: err.message,
-            },
-            (404, "WINDOWS_MISSING_ADDON") => APIError::MissingAddon {
-                addon: Addon::Windows,
-                message: err.message,
-            },
-            (404, "PLESK_MISSING_ADDON") => APIError::MissingAddon {
-                addon: Addon::Plesk,
-                message: err.message,
-            },
-            (404, "CPANEL_MISSING_ADDON") => APIError::MissingAddon {
-                addon: Addon::CPanel,
-                message: err.message,
-            },
-            (404, "STORAGEBOX_NOT_FOUND") => APIError::StorageboxNotFound {
-                message: err.message,
-            },
-            (404, "STORAGEBOX_SUBACCOUNT_NOT_FOUND") => APIError::StorageboxSubaccountNotFound {
-                message: err.message,
-            },
-            (404, "SNAPSHOT_NOT_FOUND") => APIError::SnapshotNotFound {
-                message: err.message,
-            },
-            (404, "FIREWALL_PORT_NOT_FOUND") => APIError::FirewallPortNotFound {
-                message: err.message,
-            },
-            (404, "FIREWALL_NOT_AVAILABLE") => APIError::FirewallNotAvailable {
-                message: err.message,
-            },
-            (404, "FIREWALL_TEMPLATE_NOT_FOUND") => APIError::FirewallTemplateNotFound {
-                message: err.message,
-            },
-            (409, "FIREWALL_IN_PROCESS") => APIError::FirewallInProcess {
-                message: err.message,
-            },
-            (409, "VSWITCH_LIMIT_REACHED") => APIError::VSwitchLimitReached {
-                message: err.message,
-            },
-            (409, "VSWITCH_SERVER_LIMIT_REACHED") => APIError::VSwitchServerLimitReached {
-                message: err.message,
-            },
-            (409, "VSWITCH_PER_SERVER_LIMIT_REACHED") => APIError::VSwitchPerServerLimitReached {
-                message: err.message,
-            },
-            (409, "VSWITCH_IN_PROCESS") => APIError::VSwitchInProcess {
-                message: err.message,
-            },
-            (409, "VSWITCH_VLAN_NOT_UNIQUE") => APIError::VSwitchVlanNotUnique {
-                message: err.message,
-            },
-            (409, "RDNS_ALREADY_EXISTS") => APIError::RDNSAlreadyExists {
-                message: err.message,
-            },
-            (409, "FAILOVER_LOCKED") => APIError::FailoverLocked {
-                message: err.message,
-            },
-            (409, "SNAPSHOT_LIMIT_EXCEEDED") => APIError::SnapshotLimitExceeded {
-                message: err.message,
-            },
-            (409, "FAILOVER_ALREADY_ROUTED") => APIError::FailoverAlreadyRouted {
-                message: err.message,
-            },
-            (409, "RESET_MANUAL_ACTIVE") => APIError::ManualResetActive {
-                message: err.message,
-            },
-            (409, "MAC_ALREADY_SET") => APIError::MACAlreadySet {
-                message: err.message,
-            },
-            (409, "KEY_ALREADY_EXISTS") => APIError::KeyAlreadyExists {
-                message: err.message,
-            },
-            (409, "SERVER_CANCELLATION_RESERVE_LOCATION_FALSE_ONLY") => {
-                APIError::ServerReservationFailed {
-                    message: err.message,
-                }
-            }
-            (409, "SERVER_REVERSAL_NOT_POSSIBLE") => APIError::WithdrawalFailed {
-                message: err.message,
-            },
-            (500, "KEY_UPDATE_FAILED") => APIError::KeyUpdateFailed {
-                message: err.message,
-            },
-            (500, "KEY_CREATE_FAILED") => APIError::KeyCreateFailed {
-                message: err.message,
-            },
-            (500, "KEY_DELETE_FAILED") => APIError::KeyDeleteFailed {
-                message: err.message,
-            },
-            (500, "RNDS_CREATE_FAILED") => APIError::RDNSCreateFailed {
-                message: err.message,
-            },
-            (500, "RNDS_UPDATE_FAILED") => APIError::RDNSUpdateFailed {
-                message: err.message,
-            },
-            (500, "RNDS_DELETE_FAILED") => APIError::RDNSDeleteFailed {
-                message: err.message,
-            },
-            (500, "INTERNAL_ERROR") => APIError::InternalError {
-                message: err.message,
-            },
-            (500, "MAC_FAILED") => APIError::MACFailed {
-                message: err.message,
-            },
-            (500, "WOL_FAILED") => APIError::WOLFailed {
-                message: err.message,
-            },
-            (500, "RESET_FAILED") => APIError::ResetFailed {
-                message: err.message,
-            },
-            (500, "TRAFFIC_WARNING_UPDATE_FAILED") => APIError::TrafficWarningUpdateFailed {
-                message: err.message,
-            },
-            (500, "FAILOVER_FAILED") => APIError::FailoverFailed {
-                message: err.message,
-            },
-            (500, "FAILOVER_NOT_COMPLETE") => APIError::FailoverNotComplete {
-                message: err.message,
-            },
-            (409, "BOOT_ALREADY_ENABLED") => APIError::BootAlreadyEnabled {
-                message: err.message,
-            },
-            (409, "BOOT_BLOCKED") => APIError::BootBlocked {
-                message: err.message,
-            },
-            (500, "BOOT_ACTIVATION_FAILED") => APIError::BootActivationFailed {
-                message: err.message,
-            },
-            (500, "BOOT_DEACTIVATION_FAILED") => APIError::BootDeactivationFailed {
-                message: err.message,
-            },
-            (503, _) => APIError::Unavailable,
-            _ => APIError::Generic {
-                status: err.status,
-                code: err.code,
-                message: err.message,
-            },
+impl From<MaybeTyped> for APIError {
+    fn from(maybe: MaybeTyped) -> Self {
+        match maybe {
+            MaybeTyped::Typed(t) => t,
+            MaybeTyped::Untyped(t) => APIError::Generic(t),
         }
     }
 }
@@ -405,14 +243,14 @@ impl From<GenericAPIError> for APIError {
 #[serde(untagged)]
 enum APIResult<T> {
     Ok(T),
-    Error(GenericAPIError),
+    Error(MaybeTyped),
 }
 
 impl<T> From<APIResult<T>> for Result<T, Error> {
     fn from(result: APIResult<T>) -> Self {
         match result {
             APIResult::Ok(inner) => Ok(inner),
-            APIResult::Error(e) => Err(Error::API(APIError::from(e))),
+            APIResult::Error(e) => Err(Error::API(e.into())),
         }
     }
 }
@@ -432,5 +270,98 @@ impl From<reqwest::Error> for Error {
 impl From<APIError> for Error {
     fn from(e: APIError) -> Self {
         Error::API(e)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+
+    // Fetched using:
+    // curl -s https://robot.your-server.de/doc/webservice/en.html | rg -r '"$1",' '.*<td>([A-Z][A-Z_]*)</td>.*' | sort | uniq
+    const ERROR_CODES: &[&str] = &[
+        "BOOT_ACTIVATION_FAILED",
+        "BOOT_ALREADY_ENABLED",
+        "BOOT_BLOCKED",
+        "BOOT_DEACTIVATION_FAILED",
+        "BOOT_NOT_AVAILABLE",
+        "CONFLICT",
+        "CPANEL_MISSING_ADDON",
+        "FAILOVER_ALREADY_ROUTED",
+        "FAILOVER_FAILED",
+        "FAILOVER_LOCKED",
+        "FAILOVER_NEW_SERVER_NOT_FOUND",
+        "FAILOVER_NOT_COMPLETE",
+        "FIREWALL_IN_PROCESS",
+        "FIREWALL_NOT_AVAILABLE",
+        "FIREWALL_PORT_NOT_FOUND",
+        "FIREWALL_TEMPLATE_NOT_FOUND",
+        "INTERNAL_ERROR",
+        "INVALID_INPUT",
+        "IP_NOT_FOUND",
+        "KEY_ALREADY_EXISTS",
+        "KEY_CREATE_FAILED",
+        "KEY_DELETE_FAILED",
+        "KEY_UPDATE_FAILED",
+        "MAC_ALREADY_SET",
+        "MAC_FAILED",
+        "MAC_NOT_AVAILABLE",
+        "MAC_NOT_FOUND",
+        "NOT_FOUND",
+        "PLESK_MISSING_ADDON",
+        // This one requires additional fields,
+        // so we can't test conversion generically
+        //"RATE_LIMIT_EXCEEDED",
+        "RDNS_ALREADY_EXISTS",
+        "RDNS_CREATE_FAILED",
+        "RDNS_DELETE_FAILED",
+        "RDNS_NOT_FOUND",
+        "RDNS_UPDATE_FAILED",
+        "RESET_FAILED",
+        "RESET_MANUAL_ACTIVE",
+        "RESET_NOT_AVAILABLE",
+        "SERVER_CANCELLATION_RESERVE_LOCATION_FALSE_ONLY",
+        "SERVER_NOT_FOUND",
+        "SERVER_REVERSAL_NOT_POSSIBLE",
+        "SNAPSHOT_LIMIT_EXCEEDED",
+        "SNAPSHOT_NOT_FOUND",
+        "STORAGEBOX_NOT_FOUND",
+        "STORAGEBOX_SUBACCOUNT_LIMIT_EXCEEDED",
+        "STORAGEBOX_SUBACCOUNT_NOT_FOUND",
+        "SUBNET_NOT_FOUND",
+        "TRAFFIC_WARNING_UPDATE_FAILED",
+        "VSWITCH_IN_PROCESS",
+        "VSWITCH_LIMIT_REACHED",
+        "VSWITCH_NOT_AVAILABLE",
+        "VSWITCH_PER_SERVER_LIMIT_REACHED",
+        "VSWITCH_SERVER_LIMIT_REACHED",
+        "VSWITCH_VLAN_NOT_UNIQUE",
+        "WINDOWS_MISSING_ADDON",
+        "WINDOWS_OUTDATED_VERSION",
+        "WOL_FAILED",
+        "WOL_NOT_AVAILABLE",
+    ];
+
+    #[derive(Serialize)]
+    struct ErrorFormat<'a> {
+        status: u32,
+        code: &'a str,
+        message: &'a str,
+    }
+
+    #[test]
+    fn deserialize_error_code() {
+        for code in ERROR_CODES {
+            let format = ErrorFormat {
+                status: 200,
+                code: code,
+                message: "Irrelevant",
+            };
+
+            let error: MaybeTyped =
+                serde_json::from_str(&serde_json::to_string(&format).unwrap()).unwrap();
+            assert!(error.is_typed(), "{}: {:#?}", code, APIError::from(error));
+        }
     }
 }
