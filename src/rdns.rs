@@ -58,7 +58,7 @@ where
     }
 
     fn delete_rdns(&self, ip: Ipv4Addr) -> Result<ReverseDNS, Error> {
-        self.delete::<ReverseDNSResponse>(&format!("/rdns/{}", ip))
+        self.delete::<ReverseDNSResponse, ()>(&format!("/rdns/{}", ip), ())
             .map(ReverseDNS::from)
     }
 }

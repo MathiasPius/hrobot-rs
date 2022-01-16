@@ -76,6 +76,6 @@ where
     }
 
     fn delete_key(&self, fingerprint: &str) -> Result<(), Error> {
-        self.delete::<()>(&format!("/key/{}", fingerprint))
+        self.delete(&format!("/key/{}", fingerprint), ())
     }
 }

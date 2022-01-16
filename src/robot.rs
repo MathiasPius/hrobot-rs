@@ -12,7 +12,12 @@ pub trait SyncRobot {
     /// so we need this function for posting our manually serialized version
     fn post_raw<T: DeserializeOwned>(&self, path: &str, form: String) -> Result<T, Error>;
     fn put<T: DeserializeOwned, U: Serialize>(&self, path: &str, form: U) -> Result<T, Error>;
-    fn delete<T: DeserializeOwned>(&self, path: &str) -> Result<T, Error>;
+    fn delete<T: DeserializeOwned, U: Serialize>(
+        &self,
+        path: &str,
+        parameters: U,
+    ) -> Result<T, Error>;
+    fn delete_raw<T: DeserializeOwned>(&self, path: &str, form: String) -> Result<T, Error>;
 }
 
 pub struct Robot {
@@ -31,28 +36,33 @@ impl SyncRobot for Robot {
     }
 
     fn get<T: DeserializeOwned>(&self, path: &str) -> Result<T, Error> {
-        self.client
+        let result: String = self
+            .client
             .get(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .send()?
-            .json::<APIResult<T>>()?
-            .into()
+            .text()?;
+
+        serde_json::from_str::<APIResult<T>>(&result)?.into()
     }
 
     fn post<T: DeserializeOwned, U: Serialize>(&self, path: &str, form: U) -> Result<T, Error> {
-        self.client
+        let result: String = self
+            .client
             .post(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .form(&form)
             .send()?
-            .json::<APIResult<T>>()?
-            .into()
+            .text()?;
+
+        serde_json::from_str::<APIResult<T>>(&result)?.into()
     }
 
     /// URL-encoding the [Firewall](`crate::Firewall`) configuration specifically is not possible using serde_urlencoding
     /// so we need this function for posting our manually serialized version
     fn post_raw<T: DeserializeOwned>(&self, path: &str, form: String) -> Result<T, Error> {
-        self.client
+        let result: String = self
+            .client
             .post(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .header(
@@ -61,27 +71,53 @@ impl SyncRobot for Robot {
             )
             .body(form)
             .send()?
-            .json::<APIResult<T>>()?
-            .into()
+            .text()?;
+
+        serde_json::from_str::<APIResult<T>>(&result)?.into()
     }
 
     fn put<T: DeserializeOwned, U: Serialize>(&self, path: &str, form: U) -> Result<T, Error> {
-        self.client
+        let result: String = self
+            .client
             .put(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .form(&form)
             .send()?
-            .json::<APIResult<T>>()?
-            .into()
+            .text()?;
+
+        serde_json::from_str::<APIResult<T>>(&result)?.into()
     }
 
-    fn delete<T: DeserializeOwned>(&self, path: &str) -> Result<T, Error> {
-        self.client
+    fn delete<T: DeserializeOwned, U: Serialize>(
+        &self,
+        path: &str,
+        parameters: U,
+    ) -> Result<T, Error> {
+        let result: String = self
+            .client
             .delete(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
+            .form(&parameters)
             .send()?
-            .json::<APIResult<T>>()?
-            .into()
+            .text()?;
+
+        serde_json::from_str::<APIResult<T>>(&result)?.into()
+    }
+
+    fn delete_raw<T: DeserializeOwned>(&self, path: &str, form: String) -> Result<T, Error> {
+        let result: String = self
+            .client
+            .delete(format!("{}{}", self.base_url, path))
+            .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
+            .header(
+                reqwest::header::CONTENT_TYPE,
+                "application/x-www-form-urlencoded",
+            )
+            .body(form)
+            .send()?
+            .text()?;
+
+        serde_json::from_str::<APIResult<T>>(&result)?.into()
     }
 }
 

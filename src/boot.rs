@@ -342,7 +342,7 @@ where
         server_number: u32,
     ) -> Result<Option<RescueConfiguration>, Error> {
         Ok(self
-            .delete::<BootConfiguration>(&format!("/boot/{}/rescue", server_number))?
+            .delete::<BootConfiguration, ()>(&format!("/boot/{}/rescue", server_number), ())?
             .rescue)
     }
 
@@ -388,7 +388,7 @@ where
         server_number: u32,
     ) -> Result<Option<LinuxConfiguration>, Error> {
         Ok(self
-            .delete::<BootConfiguration>(&format!("/boot/{}/linux", server_number))?
+            .delete::<BootConfiguration, ()>(&format!("/boot/{}/linux", server_number), ())?
             .linux)
     }
 
@@ -437,7 +437,7 @@ where
         server_number: u32,
     ) -> Result<Option<VncConfiguration>, Error> {
         Ok(self
-            .delete::<BootConfiguration>(&format!("/boot/{}/vnc", server_number))?
+            .delete::<BootConfiguration, ()>(&format!("/boot/{}/vnc", server_number), ())?
             .vnc)
     }
 
@@ -478,7 +478,7 @@ where
         server_number: u32,
     ) -> Result<Option<WindowsConfiguration>, Error> {
         Ok(self
-            .delete::<BootConfiguration>(&format!("/boot/{}/windows", server_number))?
+            .delete::<BootConfiguration, ()>(&format!("/boot/{}/windows", server_number), ())?
             .windows)
     }
 
@@ -514,7 +514,7 @@ where
         server_number: u32,
     ) -> Result<Option<PleskConfiguration>, Error> {
         Ok(self
-            .delete::<BootConfiguration>(&format!("/boot/{}/plesk", server_number))?
+            .delete::<BootConfiguration, ()>(&format!("/boot/{}/plesk", server_number), ())?
             .plesk)
     }
 
@@ -562,7 +562,7 @@ where
         server_number: u32,
     ) -> Result<Option<CPanelConfiguration>, Error> {
         Ok(self
-            .delete::<BootConfiguration>(&format!("/boot/{}/cpanel", server_number))?
+            .delete::<BootConfiguration, ()>(&format!("/boot/{}/cpanel", server_number), ())?
             .cpanel)
     }
 

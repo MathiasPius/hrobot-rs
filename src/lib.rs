@@ -43,6 +43,7 @@ pub mod reset;
 pub mod robot;
 pub mod server;
 pub mod subnet;
+pub mod vswitch;
 pub mod wol;
 
 pub use boot::*;
@@ -55,6 +56,7 @@ pub use reset::*;
 pub use robot::*;
 pub use server::*;
 pub use subnet::*;
+pub use vswitch::*;
 pub use wol::*;
 
 /// Utility function for coercing a string or list of strings into a Vec<String> during deserialization

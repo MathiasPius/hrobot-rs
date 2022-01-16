@@ -32,7 +32,7 @@ Uses the blocking Reqwest client and rustls under the hood.
     * ❌ get subnet MAC.
     * ❌ update subnet MAC.
     * ❌ delete subnet MAC.
-* ❌ [vSwitch](https://robot.your-server.de/doc/webservice/en.html#vswitch): Not implemented.
+* ✅ [vSwitch](https://robot.your-server.de/doc/webservice/en.html#vswitch): All functionality implemented.
 * ✅ [Server](https://robot.your-server.de/doc/webservice/en.html#server): All functionality implemented.
 * ✅ [Reset](https://robot.your-server.de/doc/webservice/en.html#reset): All functionality implemented.
 * ✅ [Wake On Lan](https://robot.your-server.de/doc/webservice/en.html#wake-on-lan): All functionality implemented.
