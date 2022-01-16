@@ -36,7 +36,6 @@ impl SyncRobot for Robot {
             .get(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .send()?
-            .error_for_status()?
             .json()?)
     }
 
@@ -47,7 +46,6 @@ impl SyncRobot for Robot {
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .form(&form)
             .send()?
-            .error_for_status()?
             .json()?)
     }
 
@@ -64,7 +62,6 @@ impl SyncRobot for Robot {
             )
             .body(form)
             .send()?
-            .error_for_status()?
             .json()?)
     }
 
@@ -75,7 +72,6 @@ impl SyncRobot for Robot {
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .form(&form)
             .send()?
-            .error_for_status()?
             .json()?)
     }
 
@@ -85,7 +81,6 @@ impl SyncRobot for Robot {
             .delete(format!("{}{}", self.base_url, path))
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .send()?
-            .error_for_status()?
             .json()?)
     }
 }
