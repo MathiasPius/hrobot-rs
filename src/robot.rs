@@ -1,3 +1,4 @@
+use log::debug;
 use reqwest::{blocking::Client, Url};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -36,31 +37,42 @@ impl SyncRobot for Robot {
     }
 
     fn get<T: DeserializeOwned>(&self, path: &str) -> Result<T, Error> {
+        let full_path = format!("{}{}", self.base_url, path);
+        debug!("GET {}", full_path);
+
         let result: String = self
             .client
-            .get(format!("{}{}", self.base_url, path))
+            .get(full_path)
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .send()?
             .text()?;
 
+        debug!("API Response: {}", result);
         serde_json::from_str::<APIResult<T>>(&result)?.into()
     }
 
     fn post<T: DeserializeOwned, U: Serialize>(&self, path: &str, form: U) -> Result<T, Error> {
+        let full_path = format!("{}{}", self.base_url, path);
+        debug!("POST {}, {:#?}", full_path, serde_json::to_string(&form));
+
         let result: String = self
             .client
-            .post(format!("{}{}", self.base_url, path))
+            .post(full_path)
             .basic_auth(&self.basic_auth.0, Some(&self.basic_auth.1))
             .form(&form)
             .send()?
             .text()?;
 
+        debug!("API Response: {}", result);
         serde_json::from_str::<APIResult<T>>(&result)?.into()
     }
 
     /// URL-encoding the [Firewall](`crate::Firewall`) configuration specifically is not possible using serde_urlencoding
     /// so we need this function for posting our manually serialized version
     fn post_raw<T: DeserializeOwned>(&self, path: &str, form: String) -> Result<T, Error> {
+        let full_path = format!("{}{}", self.base_url, path);
+        debug!("POST {}, {}", full_path, form);
+
         let result: String = self
             .client
             .post(format!("{}{}", self.base_url, path))
@@ -73,10 +85,14 @@ impl SyncRobot for Robot {
             .send()?
             .text()?;
 
+        debug!("API Response: {}", result);
         serde_json::from_str::<APIResult<T>>(&result)?.into()
     }
 
     fn put<T: DeserializeOwned, U: Serialize>(&self, path: &str, form: U) -> Result<T, Error> {
+        let full_path = format!("{}{}", self.base_url, path);
+        debug!("PUT {}, {:#?}", full_path, serde_json::to_string(&form));
+
         let result: String = self
             .client
             .put(format!("{}{}", self.base_url, path))
@@ -85,6 +101,7 @@ impl SyncRobot for Robot {
             .send()?
             .text()?;
 
+        debug!("API Response: {}", result);
         serde_json::from_str::<APIResult<T>>(&result)?.into()
     }
 
@@ -93,6 +110,13 @@ impl SyncRobot for Robot {
         path: &str,
         parameters: U,
     ) -> Result<T, Error> {
+        let full_path = format!("{}{}", self.base_url, path);
+        debug!(
+            "DELETE {}, {:#?}",
+            full_path,
+            serde_json::to_string(&parameters)
+        );
+
         let result: String = self
             .client
             .delete(format!("{}{}", self.base_url, path))
@@ -104,7 +128,10 @@ impl SyncRobot for Robot {
         serde_json::from_str::<APIResult<T>>(&result)?.into()
     }
 
-    fn delete_raw<T: DeserializeOwned>(&self, path: &str, form: String) -> Result<T, Error> {
+    fn delete_raw<T: DeserializeOwned>(&self, path: &str, parameters: String) -> Result<T, Error> {
+        let full_path = format!("{}{}", self.base_url, path);
+        debug!("DELETE {}, {}", full_path, &parameters);
+
         let result: String = self
             .client
             .delete(format!("{}{}", self.base_url, path))
@@ -113,10 +140,11 @@ impl SyncRobot for Robot {
                 reqwest::header::CONTENT_TYPE,
                 "application/x-www-form-urlencoded",
             )
-            .body(form)
+            .body(parameters)
             .send()?
             .text()?;
 
+        debug!("API Response: {}", result);
         serde_json::from_str::<APIResult<T>>(&result)?.into()
     }
 }
@@ -125,6 +153,7 @@ impl SyncRobot for Robot {
 impl Default for Robot {
     fn default() -> Self {
         dotenv::dotenv().ok();
+        env_logger::init();
 
         let username = std::env::var("HROBOT_USERNAME")
             .expect("Robot WebService username must be provided via HROBOT_USERNAME");
