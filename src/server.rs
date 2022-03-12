@@ -15,7 +15,7 @@ pub enum Status {
 #[derive(Debug, Deserialize)]
 pub struct SubnetReference {
     #[serde(rename = "ip")]
-    pub ipv4: IpAddr,
+    pub ip: IpAddr,
     pub mask: String,
 }
 
