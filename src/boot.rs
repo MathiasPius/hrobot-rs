@@ -5,6 +5,40 @@ use serde::{Deserialize, Serialize};
 use crate::{Error, SyncRobot};
 
 #[derive(Debug, Deserialize)]
+#[serde(from = "AuthorizedKeyResponse")]
+pub struct AuthorizedKey {
+    pub name: String,
+    pub fingerprint: String,
+    pub key_type: String,
+    pub size: u32,
+        }
+
+#[derive(Debug, Deserialize)]
+struct AuthorizedKeyInner {
+    pub name: String,
+    pub fingerprint: String,
+    #[serde(rename = "type")]
+    pub key_type: String,
+    pub size: u32,
+}
+
+#[derive(Debug, Deserialize)]
+struct AuthorizedKeyResponse {
+    pub key: AuthorizedKeyInner,
+}
+
+impl From<AuthorizedKeyResponse> for AuthorizedKey {
+    fn from(key: AuthorizedKeyResponse) -> AuthorizedKey {
+        AuthorizedKey {
+            name: key.key.name,
+            fingerprint: key.key.fingerprint,
+            key_type: key.key.key_type,
+            size: key.key.size,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
 pub struct RescueConfiguration {
     #[serde(rename = "server_ip")]
     pub ipv4: Option<Ipv4Addr>,
@@ -18,7 +52,7 @@ pub struct RescueConfiguration {
     pub arch: Vec<u64>,
     pub active: bool,
     pub password: Option<String>,
-    pub authorized_key: Vec<String>,
+    pub authorized_key: Vec<AuthorizedKey>,
     pub host_key: Vec<String>,
 }
 
@@ -38,7 +72,7 @@ pub struct LinuxConfiguration {
     pub lang: Vec<String>,
     pub active: bool,
     pub password: Option<String>,
-    pub authorized_key: Vec<String>,
+    pub authorized_key: Vec<AuthorizedKey>,
     pub host_key: Vec<String>,
 }
 
