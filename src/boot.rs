@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use std::net::{Ipv4Addr, Ipv6Addr};
 
 use serde::{Deserialize, Serialize};
@@ -11,7 +12,7 @@ pub struct AuthorizedKey {
     pub fingerprint: String,
     pub key_type: String,
     pub size: u32,
-        }
+}
 
 #[derive(Debug, Deserialize)]
 struct AuthorizedKeyInner {
@@ -387,24 +388,17 @@ where
         arch: Option<u64>,
         authorized_keys: &[&str],
     ) -> Result<Option<RescueConfiguration>, Error> {
-        #[derive(Serialize)]
-        struct SetRescueConfigurationRequest<'a> {
-            pub os: &'a str,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            pub arch: Option<u64>,
-            #[serde(skip_serializing_if = "<[_]>::is_empty")]
-            pub authorized_key: &'a [&'a str],
+        let mut query = format!("os={}", os);
+        if let Some(arch) = arch {
+            write!(query, "&arch={}", arch).unwrap();
+        }
+
+        for key in authorized_keys {
+            write!(query, "&authorized_key[]={}", urlencoding::encode(key)).unwrap();
         }
 
         Ok(self
-            .post::<BootConfiguration, SetRescueConfigurationRequest>(
-                &format!("/boot/{}/rescue", server_number),
-                SetRescueConfigurationRequest {
-                    os,
-                    arch,
-                    authorized_key: authorized_keys,
-                },
-            )?
+            .post_raw::<BootConfiguration>(&format!("/boot/{}/rescue", server_number), query)?
             .rescue)
     }
 
@@ -434,26 +428,19 @@ where
         lang: &str,
         authorized_keys: &[&str],
     ) -> Result<Option<LinuxConfiguration>, Error> {
-        #[derive(Serialize)]
-        struct SetLinuxConfigurationRequest<'a> {
-            pub dist: &'a str,
-            pub lang: &'a str,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            pub arch: Option<u64>,
-            #[serde(skip_serializing_if = "<[_]>::is_empty")]
-            pub authorized_key: &'a [&'a str],
+        let mut query = format!("dist={}", dist);
+        if let Some(arch) = arch {
+            write!(query, "&arch={}", arch).unwrap();
+        }
+
+        write!(query, "&lang={}", lang).unwrap();
+
+        for key in authorized_keys {
+            write!(query, "&authorized_key[]={}", urlencoding::encode(key)).unwrap();
         }
 
         Ok(self
-            .post::<BootConfiguration, SetLinuxConfigurationRequest>(
-                &format!("/boot/{}/linux", server_number),
-                SetLinuxConfigurationRequest {
-                    dist,
-                    lang,
-                    arch,
-                    authorized_key: authorized_keys,
-                },
-            )?
+            .post_raw::<BootConfiguration>(&format!("/boot/{}/linux", server_number), query)?
             .linux)
     }
 
