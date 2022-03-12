@@ -2,6 +2,7 @@ use std::fmt::Write;
 use std::net::{Ipv4Addr, Ipv6Addr};
 
 use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, OneOrMany};
 
 use crate::{Error, SyncRobot};
 
@@ -39,6 +40,7 @@ impl From<AuthorizedKeyResponse> for AuthorizedKey {
     }
 }
 
+#[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct RescueConfiguration {
     #[serde(rename = "server_ip")]
@@ -47,9 +49,9 @@ pub struct RescueConfiguration {
     pub ipv6_net: Ipv6Addr,
     #[serde(rename = "server_number")]
     pub id: u32,
-    #[serde(deserialize_with = "crate::string_or_seq_string")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub os: Vec<String>,
-    #[serde(deserialize_with = "crate::num_or_seq_num")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub arch: Vec<u64>,
     pub active: bool,
     pub password: Option<String>,
@@ -57,6 +59,7 @@ pub struct RescueConfiguration {
     pub host_key: Vec<String>,
 }
 
+#[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct LinuxConfiguration {
     #[serde(rename = "server_ip")]
@@ -65,11 +68,11 @@ pub struct LinuxConfiguration {
     pub ipv6_net: Ipv6Addr,
     #[serde(rename = "server_number")]
     pub id: u32,
-    #[serde(deserialize_with = "crate::string_or_seq_string")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub dist: Vec<String>,
-    #[serde(deserialize_with = "crate::num_or_seq_num")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub arch: Vec<u64>,
-    #[serde(deserialize_with = "crate::string_or_seq_string")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub lang: Vec<String>,
     pub active: bool,
     pub password: Option<String>,
@@ -77,6 +80,7 @@ pub struct LinuxConfiguration {
     pub host_key: Vec<String>,
 }
 
+#[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct VncConfiguration {
     #[serde(rename = "server_ip")]
@@ -85,16 +89,17 @@ pub struct VncConfiguration {
     pub ipv6_net: Ipv6Addr,
     #[serde(rename = "server_number")]
     pub id: u32,
-    #[serde(deserialize_with = "crate::string_or_seq_string")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub dist: Vec<String>,
-    #[serde(deserialize_with = "crate::num_or_seq_num")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub arch: Vec<u64>,
-    #[serde(deserialize_with = "crate::string_or_seq_string")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub lang: Vec<String>,
     pub active: bool,
     pub password: Option<String>,
 }
 
+#[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct WindowsConfiguration {
     #[serde(rename = "server_ip")]
@@ -103,16 +108,17 @@ pub struct WindowsConfiguration {
     pub ipv6_net: Ipv6Addr,
     #[serde(rename = "server_number")]
     pub id: u32,
-    #[serde(deserialize_with = "crate::string_or_seq_string")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub dist: Vec<String>,
-    #[serde(deserialize_with = "crate::num_or_seq_num")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub arch: Vec<u64>,
-    #[serde(deserialize_with = "crate::string_or_seq_string")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub lang: Vec<String>,
     pub active: bool,
     pub password: Option<String>,
 }
 
+#[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct PleskConfiguration {
     #[serde(rename = "server_ip")]
@@ -121,17 +127,18 @@ pub struct PleskConfiguration {
     pub ipv6_net: Ipv6Addr,
     #[serde(rename = "server_number")]
     pub id: u32,
-    #[serde(deserialize_with = "crate::string_or_seq_string")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub dist: Vec<String>,
-    #[serde(deserialize_with = "crate::num_or_seq_num")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub arch: Vec<u64>,
-    #[serde(deserialize_with = "crate::string_or_seq_string")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub lang: Vec<String>,
     pub active: bool,
     pub password: Option<String>,
     pub hostname: Option<String>,
 }
 
+#[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct CPanelConfiguration {
     #[serde(rename = "server_ip")]
@@ -140,11 +147,11 @@ pub struct CPanelConfiguration {
     pub ipv6_net: Ipv6Addr,
     #[serde(rename = "server_number")]
     pub id: u32,
-    #[serde(deserialize_with = "crate::string_or_seq_string")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub dist: Vec<String>,
-    #[serde(deserialize_with = "crate::num_or_seq_num")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub arch: Vec<u64>,
-    #[serde(deserialize_with = "crate::string_or_seq_string")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub lang: Vec<String>,
     pub active: bool,
     pub password: Option<String>,

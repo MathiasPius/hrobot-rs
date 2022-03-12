@@ -3,7 +3,7 @@ name = "hrobot"
 description = "Unofficial Hetzner Robot API client"
 keywords = ["hetzner", "robot", "api", "client"]
 repository = "https://github.com/MathiasPius/hrobot-rs"
-version = "0.1.5"
+version = "0.1.6"
 license = "MIT"
 edition = "2021"
 
@@ -13,6 +13,7 @@ edition = "2021"
 log = "0.4.14"
 serde = { version = "^1.0", features = ["derive"] }
 serde_json = "1.0.74"
+serde_with = "1.12.0"
 urlencoding = "2.1.0"
 
 [dependencies.reqwest]

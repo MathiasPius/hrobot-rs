@@ -1,6 +1,7 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
 use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, OneOrMany};
 
 use crate::{Error, SyncRobot};
 
@@ -13,6 +14,7 @@ pub enum ResetOption {
     Man,
 }
 
+#[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct Reset {
     #[serde(rename = "server_ip")]
@@ -22,6 +24,7 @@ pub struct Reset {
     #[serde(rename = "server_number")]
     pub id: u32,
     #[serde(rename = "type")]
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     pub options: Vec<ResetOption>,
     pub operating_status: Option<String>,
 }
@@ -103,7 +106,7 @@ mod tests {
         let robot = Robot::default();
 
         let resets = robot.list_resets().unwrap();
-        robot.reset_server(resets[0].id, ResetOption::HW).unwrap();
+        robot.reset_server(resets[1].id, ResetOption::HW).unwrap();
     }
     */
 }
