@@ -1,137 +1,102 @@
-use serde::Deserialize;
+use std::fmt::Display;
 
-#[derive(Debug, Deserialize)]
+use serde::Deserialize;
+use thiserror::Error;
+
+#[derive(Debug, Deserialize, Error)]
 #[serde(tag = "code", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum APIError {
+    #[error("resource unavailable")]
     Unavailable,
-    NotFound {
-        message: String,
-    },
-    ServerNotFound {
-        message: String,
-    },
-    IpNotFound {
-        message: String,
-    },
-    SubnetNotFound {
-        message: String,
-    },
-    MacNotFound {
-        message: String,
-    },
-    MacNotAvailable {
-        message: String,
-    },
-    MacAlreadySet {
-        message: String,
-    },
-    MacFailed {
-        message: String,
-    },
-    WolNotAvailable {
-        message: String,
-    },
-    WolFailed {
-        message: String,
-    },
-    WindowsOutdatedVersion {
-        message: String,
-    },
-    WindowsMissingAddon {
-        message: String,
-    },
-    PleskMissingAddon {
-        message: String,
-    },
-    CpanelMissingAddon {
-        message: String,
-    },
+    #[error("not found: {message}")]
+    NotFound { message: String },
+    #[error("server not found: {message}")]
+    ServerNotFound { message: String },
+    #[error("ip address not found: {message}")]
+    IpNotFound { message: String },
+    #[error("subnet not found: {message}")]
+    SubnetNotFound { message: String },
+    #[error("mac address not found: {message}")]
+    MacNotFound { message: String },
+    #[error("mac address not available: {message}")]
+    MacNotAvailable { message: String },
+    #[error("mac address already set: {message}")]
+    MacAlreadySet { message: String },
+    #[error("mac address failure: {message}")]
+    MacFailed { message: String },
+    #[error("wak-on-lan not available: {message}")]
+    WolNotAvailable { message: String },
+    #[error("wake-on-lan failed: {message}")]
+    WolFailed { message: String },
+    #[error("outdated windows version: {message}")]
+    WindowsOutdatedVersion { message: String },
+    #[error("windows addon missing: {message}")]
+    WindowsMissingAddon { message: String },
+    #[error("plesk addon missing: {message}")]
+    PleskMissingAddon { message: String },
+    #[error("cpanel addon missing: {message}")]
+    CpanelMissingAddon { message: String },
+    #[error("rate limit exceeded: {message} (max req: {max_request}, interval: {interval}")]
     RateLimitExceeded {
         message: String,
         max_request: u32,
         interval: u32,
     },
-    ResetNotAvailable {
-        message: String,
-    },
-    StorageboxNotFound {
-        message: String,
-    },
-    StorageboxSubaccountNotFound {
-        message: String,
-    },
-    StorageboxSubaccountLimitExceeded {
-        message: String,
-    },
-    SnapshotNotFound {
-        message: String,
-    },
-    SnapshotLimitExceeded {
-        message: String,
-    },
-    FirewallPortNotFound {
-        message: String,
-    },
-    FirewallNotAvailable {
-        message: String,
-    },
-    FirewallTemplateNotFound {
-        message: String,
-    },
-    FirewallInProcess {
-        message: String,
-    },
-    VswitchLimitReached {
-        message: String,
-    },
-    VswitchNotAvailable {
-        message: String,
-    },
-    VswitchServerLimitReached {
-        message: String,
-    },
-    VswitchPerServerLimitReached {
-        message: String,
-    },
-    VswitchInProcess {
-        message: String,
-    },
-    VswitchVlanNotUnique {
-        message: String,
-    },
-    ResetManualActive {
-        message: String,
-    },
-    KeyUpdateFailed {
-        message: String,
-    },
-    KeyCreateFailed {
-        message: String,
-    },
-    KeyDeleteFailed {
-        message: String,
-    },
-    KeyAlreadyExists {
-        message: String,
-    },
-    RdnsNotFound {
-        message: String,
-    },
-    RdnsCreateFailed {
-        message: String,
-    },
-    RdnsUpdateFailed {
-        message: String,
-    },
-    RdnsDeleteFailed {
-        message: String,
-    },
-    RdnsAlreadyExists {
-        message: String,
-    },
-    ResetFailed {
-        message: String,
-    },
+    #[error("reset not available: {message}")]
+    ResetNotAvailable { message: String },
+    #[error("storage box not found: {message}")]
+    StorageboxNotFound { message: String },
+    #[error("storage box sub-account not found: {message}")]
+    StorageboxSubaccountNotFound { message: String },
+    #[error("stoage box sub-account limit exceeded: {message}")]
+    StorageboxSubaccountLimitExceeded { message: String },
+    #[error("snapshot not found: {message}")]
+    SnapshotNotFound { message: String },
+    #[error("snapshot limit exceeded: {message}")]
+    SnapshotLimitExceeded { message: String },
+    #[error("firewall port not found: {message}")]
+    FirewallPortNotFound { message: String },
+    #[error("firewall not available: {message}")]
+    FirewallNotAvailable { message: String },
+    #[error("firewall template not found: {message}")]
+    FirewallTemplateNotFound { message: String },
+    #[error("firewall is already processing a request: {message}")]
+    FirewallInProcess { message: String },
+    #[error("vSwitch limit reached: {message}")]
+    VswitchLimitReached { message: String },
+    #[error("vswitch not available: {message}")]
+    VswitchNotAvailable { message: String },
+    #[error("vSwitch server limit reached: {message}")]
+    VswitchServerLimitReached { message: String },
+    #[error("vSwitch-per-server limit reached: {message}")]
+    VswitchPerServerLimitReached { message: String },
+    #[error("vSwitch is already processing a request: {message}")]
+    VswitchInProcess { message: String },
+    #[error("vSwitch VLAN-ID must be unique: {message}")]
+    VswitchVlanNotUnique { message: String },
+    #[error("manual reset is active: {message}")]
+    ResetManualActive { message: String },
+    #[error("key update failed: {message}")]
+    KeyUpdateFailed { message: String },
+    #[error("key creation failed: {message}")]
+    KeyCreateFailed { message: String },
+    #[error("key deletion failed: {message}")]
+    KeyDeleteFailed { message: String },
+    #[error("key already exists: {message}")]
+    KeyAlreadyExists { message: String },
+    #[error("rnds entry not found: {message}")]
+    RdnsNotFound { message: String },
+    #[error("rdns creation failed: {message}")]
+    RdnsCreateFailed { message: String },
+    #[error("rdns update failed: {message}")]
+    RdnsUpdateFailed { message: String },
+    #[error("rnds deletion failed: {message}")]
+    RdnsDeleteFailed { message: String },
+    #[error("rnds entry already exists: {message}")]
+    RdnsAlreadyExists { message: String },
+    #[error("reset failed: {message}")]
+    ResetFailed { message: String },
+    #[error("invalid input: {message}")]
     InvalidInput {
         message: String,
         #[serde(default)]
@@ -139,52 +104,38 @@ pub enum APIError {
         #[serde(default)]
         invalid: Vec<String>,
     },
-    Conflict {
-        message: String,
-    },
-    ServerCancellationReserveLocationFalseOnly {
-        message: String,
-    },
-    TrafficWarningUpdateFailed {
-        message: String,
-    },
-    BootNotAvailable {
-        message: String,
-    },
-    InternalError {
-        message: String,
-    },
-    FailoverAlreadyRouted {
-        message: String,
-    },
-    FailoverFailed {
-        message: String,
-    },
-    FailoverLocked {
-        message: String,
-    },
-    FailoverNotComplete {
-        message: String,
-    },
-    FailoverNewServerNotFound {
-        message: String,
-    },
-    ServerReversalNotPossible {
-        message: String,
-    },
-    BootActivationFailed {
-        message: String,
-    },
-    BootDeactivationFailed {
-        message: String,
-    },
-    BootAlreadyEnabled {
-        message: String,
-    },
-    BootBlocked {
-        message: String,
-    },
+    #[error("conflict: {message}")]
+    Conflict { message: String },
+    #[error("server cancellation reserve location must be false: {message}")]
+    ServerCancellationReserveLocationFalseOnly { message: String },
+    #[error("traffic warning update failed: {message}")]
+    TrafficWarningUpdateFailed { message: String },
+    #[error("boot not available: {message}")]
+    BootNotAvailable { message: String },
+    #[error("internal error: {message}")]
+    InternalError { message: String },
+    #[error("failover already routed: {message}")]
+    FailoverAlreadyRouted { message: String },
+    #[error("failover failed: {message}")]
+    FailoverFailed { message: String },
+    #[error("failover locked: {message}")]
+    FailoverLocked { message: String },
+    #[error("failover not complete: {message}")]
+    FailoverNotComplete { message: String },
+    #[error("new failover server not found: {message}")]
+    FailoverNewServerNotFound { message: String },
+    #[error("server reversal not possible: {message}")]
+    ServerReversalNotPossible { message: String },
+    #[error("boot activation failed: {message}")]
+    BootActivationFailed { message: String },
+    #[error("boot deactivation failed: {message}")]
+    BootDeactivationFailed { message: String },
+    #[error("boot already enabled: {message}")]
+    BootAlreadyEnabled { message: String },
+    #[error("boot locked: {message}")]
+    BootBlocked { message: String },
     #[serde(skip_deserializing)]
+    #[error("unknown error {0}")]
     Generic(GenericError),
 }
 
@@ -211,6 +162,18 @@ pub struct GenericError {
     pub invalid_input: Option<InvalidInputError>,
     #[serde(flatten)]
     pub rate_limit: Option<RateLimitError>,
+}
+
+impl Display for GenericError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "unclassified error: {status} {code}: {message}",
+            status = self.status,
+            code = self.code,
+            message = self.message
+        )
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -266,28 +229,19 @@ impl<T> From<APIResult<T>> for Result<T, Error> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
-    Transport(Box<dyn std::error::Error>),
-    Decode(serde_json::Error),
-    API(APIError),
-}
-
-impl From<serde_json::Error> for Error {
-    fn from(e: serde_json::Error) -> Self {
-        Error::Decode(e)
-    }
+    #[error("transport error: {0}")]
+    Transport(#[from] Box<dyn std::error::Error>),
+    #[error("json decode error: {0}")]
+    Decode(#[from] serde_json::Error),
+    #[error("api error: {0}")]
+    API(#[from] APIError),
 }
 
 impl From<reqwest::Error> for Error {
     fn from(e: reqwest::Error) -> Self {
         Error::Transport(Box::new(e))
-    }
-}
-
-impl From<APIError> for Error {
-    fn from(e: APIError) -> Self {
-        Error::API(e)
     }
 }
 
