@@ -3,7 +3,7 @@ name = "hrobot"
 description = "Unofficial Hetzner Robot API client"
 keywords = ["hetzner", "robot", "api", "client"]
 repository = "https://github.com/MathiasPius/hrobot-rs"
-version = "0.1.8"
+version = "0.1.9"
 license = "MIT"
 edition = "2021"
 
