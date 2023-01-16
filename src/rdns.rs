@@ -43,22 +43,22 @@ where
     }
 
     fn get_rdns(&self, ip: Ipv4Addr) -> Result<ReverseDNS, Error> {
-        self.get::<ReverseDNSResponse>(&format!("/rdns/{}", ip))
+        self.get::<ReverseDNSResponse>(&format!("/rdns/{ip}"))
             .map(ReverseDNS::from)
     }
 
     fn create_rdns(&self, ip: Ipv4Addr, ptr: &str) -> Result<ReverseDNS, Error> {
-        self.put::<ReverseDNSResponse, PtrRecord>(&format!("/rdns/{}", ip), PtrRecord { ptr })
+        self.put::<ReverseDNSResponse, PtrRecord>(&format!("/rdns/{ip}"), PtrRecord { ptr })
             .map(ReverseDNS::from)
     }
 
     fn update_rdns(&self, ip: Ipv4Addr, ptr: &str) -> Result<ReverseDNS, Error> {
-        self.post::<ReverseDNSResponse, PtrRecord>(&format!("/rdns/{}", ip), PtrRecord { ptr })
+        self.post::<ReverseDNSResponse, PtrRecord>(&format!("/rdns/{ip}"), PtrRecord { ptr })
             .map(ReverseDNS::from)
     }
 
     fn delete_rdns(&self, ip: Ipv4Addr) -> Result<ReverseDNS, Error> {
-        self.delete::<ReverseDNSResponse, ()>(&format!("/rdns/{}", ip), ())
+        self.delete::<ReverseDNSResponse, ()>(&format!("/rdns/{ip}"), ())
             .map(ReverseDNS::from)
     }
 }

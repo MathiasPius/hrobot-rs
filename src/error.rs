@@ -327,7 +327,7 @@ mod tests {
         for code in ERROR_CODES {
             let format = ErrorFormat {
                 status: 200,
-                code: code,
+                code,
                 message: "Irrelevant",
             };
 

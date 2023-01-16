@@ -86,7 +86,7 @@ where
     }
 
     fn get_vswitch(&self, id: u32) -> Result<VswitchExtended, Error> {
-        self.get(&format!("/vswitch/{}", id))
+        self.get(&format!("/vswitch/{id}"))
     }
 
     fn delete_vswitch(&self, id: u32, cancellation_date: &str) -> Result<(), Error> {
@@ -95,7 +95,7 @@ where
             pub cancellation_date: &'a str,
         }
         self.delete(
-            &format!("/vswitch/{}", id),
+            &format!("/vswitch/{id}"),
             VswitchDeleteRequest { cancellation_date },
         )
         .or_else(|e| {
@@ -120,7 +120,7 @@ where
 
     fn rename_vswitch(&self, id: u32, name: &str) -> Result<(), Error> {
         self.post(
-            &format!("/vswitch/{}", id),
+            &format!("/vswitch/{id}"),
             VSwitchUpdateRequest {
                 name: Some(name),
                 vlan: None,
@@ -130,7 +130,7 @@ where
 
     fn change_vswitch_vlan(&self, id: u32, vlan: u32) -> Result<(), Error> {
         self.post(
-            &format!("/vswitch/{}", id),
+            &format!("/vswitch/{id}"),
             VSwitchUpdateRequest {
                 name: None,
                 vlan: Some(vlan),
@@ -140,10 +140,10 @@ where
 
     fn add_server_to_vswitch(&self, vswitch_id: u32, server_ids: &[u32]) -> Result<(), Error> {
         self.post_raw(
-            &format!("/vswitch/{}/server", vswitch_id),
+            &format!("/vswitch/{vswitch_id}/server"),
             server_ids
                 .iter()
-                .map(|id| format!("server[]={}", id))
+                .map(|id| format!("server[]={id}"))
                 .collect::<Vec<_>>()
                 .join("&"),
         )
@@ -161,10 +161,10 @@ where
 
     fn remove_server_from_vswitch(&self, vswitch_id: u32, server_ids: &[u32]) -> Result<(), Error> {
         self.delete_raw(
-            &format!("/vswitch/{}/server", vswitch_id),
+            &format!("/vswitch/{vswitch_id}/server"),
             server_ids
                 .iter()
-                .map(|id| format!("server[]={}", id))
+                .map(|id| format!("server[]={id}"))
                 .collect::<Vec<_>>()
                 .join("&"),
         )
@@ -192,7 +192,7 @@ mod tests {
         let robot = Robot::default();
 
         let vswitches = robot.list_vswitches().unwrap();
-        assert!(vswitches.len() > 0);
+        assert!(!vswitches.is_empty());
     }
 
     #[test]
@@ -201,10 +201,10 @@ mod tests {
         let robot = Robot::default();
 
         let vswitches = robot.list_vswitches().unwrap();
-        assert!(vswitches.len() > 0);
+        assert!(!vswitches.is_empty());
 
         let vswitch = robot.get_vswitch(vswitches[0].id).unwrap();
-        println!("{:#?}", vswitch);
+        println!("{vswitch:#?}");
     }
 
     /*

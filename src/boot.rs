@@ -359,7 +359,7 @@ where
         &self,
         server_number: u32,
     ) -> Result<BootConfiguration, Error> {
-        self.get::<BootConfigurationResponse>(&format!("/boot/{}", server_number))
+        self.get::<BootConfigurationResponse>(&format!("/boot/{server_number}"))
             .map(BootConfiguration::from)
     }
 
@@ -375,7 +375,7 @@ where
         server_number: u32,
     ) -> Result<Option<RescueConfiguration>, Error> {
         Ok(self
-            .get::<BootConfiguration>(&format!("/boot/{}/rescue", server_number))?
+            .get::<BootConfiguration>(&format!("/boot/{server_number}/rescue"))?
             .rescue)
     }
 
@@ -384,7 +384,7 @@ where
         server_number: u32,
     ) -> Result<Option<RescueConfiguration>, Error> {
         Ok(self
-            .delete::<BootConfiguration, ()>(&format!("/boot/{}/rescue", server_number), ())?
+            .delete::<BootConfiguration, ()>(&format!("/boot/{server_number}/rescue"), ())?
             .rescue)
     }
 
@@ -395,9 +395,9 @@ where
         arch: Option<u64>,
         authorized_keys: &[&str],
     ) -> Result<Option<RescueConfiguration>, Error> {
-        let mut query = format!("os={}", os);
+        let mut query = format!("os={os}");
         if let Some(arch) = arch {
-            write!(query, "&arch={}", arch).unwrap();
+            write!(query, "&arch={arch}").unwrap();
         }
 
         for key in authorized_keys {
@@ -405,7 +405,7 @@ where
         }
 
         Ok(self
-            .post_raw::<BootConfiguration>(&format!("/boot/{}/rescue", server_number), query)?
+            .post_raw::<BootConfiguration>(&format!("/boot/{server_number}/rescue"), query)?
             .rescue)
     }
 
@@ -414,7 +414,7 @@ where
         server_number: u32,
     ) -> Result<Option<LinuxConfiguration>, Error> {
         Ok(self
-            .get::<BootConfiguration>(&format!("/boot/{}/linux", server_number))?
+            .get::<BootConfiguration>(&format!("/boot/{server_number}/linux"))?
             .linux)
     }
 
@@ -423,7 +423,7 @@ where
         server_number: u32,
     ) -> Result<Option<LinuxConfiguration>, Error> {
         Ok(self
-            .delete::<BootConfiguration, ()>(&format!("/boot/{}/linux", server_number), ())?
+            .delete::<BootConfiguration, ()>(&format!("/boot/{server_number}/linux"), ())?
             .linux)
     }
 
@@ -435,19 +435,19 @@ where
         lang: &str,
         authorized_keys: &[&str],
     ) -> Result<Option<LinuxConfiguration>, Error> {
-        let mut query = format!("dist={}", dist);
+        let mut query = format!("dist={dist}");
         if let Some(arch) = arch {
-            write!(query, "&arch={}", arch).unwrap();
+            write!(query, "&arch={arch}").unwrap();
         }
 
-        write!(query, "&lang={}", lang).unwrap();
+        write!(query, "&lang={lang}").unwrap();
 
         for key in authorized_keys {
             write!(query, "&authorized_key[]={}", urlencoding::encode(key)).unwrap();
         }
 
         Ok(self
-            .post_raw::<BootConfiguration>(&format!("/boot/{}/linux", server_number), query)?
+            .post_raw::<BootConfiguration>(&format!("/boot/{server_number}/linux"), query)?
             .linux)
     }
 
@@ -456,7 +456,7 @@ where
         server_number: u32,
     ) -> Result<Option<VncConfiguration>, Error> {
         Ok(self
-            .get::<BootConfiguration>(&format!("/boot/{}/vnc", server_number))?
+            .get::<BootConfiguration>(&format!("/boot/{server_number}/vnc"))?
             .vnc)
     }
 
@@ -465,7 +465,7 @@ where
         server_number: u32,
     ) -> Result<Option<VncConfiguration>, Error> {
         Ok(self
-            .delete::<BootConfiguration, ()>(&format!("/boot/{}/vnc", server_number), ())?
+            .delete::<BootConfiguration, ()>(&format!("/boot/{server_number}/vnc"), ())?
             .vnc)
     }
 
@@ -486,7 +486,7 @@ where
 
         Ok(self
             .post::<BootConfiguration, SetVncConfigurationRequest>(
-                &format!("/boot/{}/vnc", server_number),
+                &format!("/boot/{server_number}/vnc"),
                 SetVncConfigurationRequest { dist, lang, arch },
             )?
             .vnc)
@@ -497,7 +497,7 @@ where
         server_number: u32,
     ) -> Result<Option<WindowsConfiguration>, Error> {
         Ok(self
-            .get::<BootConfiguration>(&format!("/boot/{}/windows", server_number))?
+            .get::<BootConfiguration>(&format!("/boot/{server_number}/windows"))?
             .windows)
     }
 
@@ -506,7 +506,7 @@ where
         server_number: u32,
     ) -> Result<Option<WindowsConfiguration>, Error> {
         Ok(self
-            .delete::<BootConfiguration, ()>(&format!("/boot/{}/windows", server_number), ())?
+            .delete::<BootConfiguration, ()>(&format!("/boot/{server_number}/windows"), ())?
             .windows)
     }
 
@@ -522,7 +522,7 @@ where
 
         Ok(self
             .post::<BootConfiguration, SetWindowsConfigurationRequest>(
-                &format!("/boot/{}/windows", server_number),
+                &format!("/boot/{server_number}/windows"),
                 SetWindowsConfigurationRequest { lang },
             )?
             .windows)
@@ -533,7 +533,7 @@ where
         server_number: u32,
     ) -> Result<Option<PleskConfiguration>, Error> {
         Ok(self
-            .get::<BootConfiguration>(&format!("/boot/{}/plesk", server_number))?
+            .get::<BootConfiguration>(&format!("/boot/{server_number}/plesk"))?
             .plesk)
     }
 
@@ -542,7 +542,7 @@ where
         server_number: u32,
     ) -> Result<Option<PleskConfiguration>, Error> {
         Ok(self
-            .delete::<BootConfiguration, ()>(&format!("/boot/{}/plesk", server_number), ())?
+            .delete::<BootConfiguration, ()>(&format!("/boot/{server_number}/plesk"), ())?
             .plesk)
     }
 
@@ -565,7 +565,7 @@ where
 
         Ok(self
             .post::<BootConfiguration, SetPleskConfigurationRequest>(
-                &format!("/boot/{}/plesk", server_number),
+                &format!("/boot/{server_number}/plesk"),
                 SetPleskConfigurationRequest {
                     dist,
                     lang,
@@ -581,7 +581,7 @@ where
         server_number: u32,
     ) -> Result<Option<CPanelConfiguration>, Error> {
         Ok(self
-            .get::<BootConfiguration>(&format!("/boot/{}/cpanel", server_number))?
+            .get::<BootConfiguration>(&format!("/boot/{server_number}/cpanel"))?
             .cpanel)
     }
 
@@ -590,7 +590,7 @@ where
         server_number: u32,
     ) -> Result<Option<CPanelConfiguration>, Error> {
         Ok(self
-            .delete::<BootConfiguration, ()>(&format!("/boot/{}/cpanel", server_number), ())?
+            .delete::<BootConfiguration, ()>(&format!("/boot/{server_number}/cpanel"), ())?
             .cpanel)
     }
 
@@ -613,7 +613,7 @@ where
 
         Ok(self
             .post::<BootConfiguration, SetCpanelConfigurationRequest>(
-                &format!("/boot/{}/cpanel", server_number),
+                &format!("/boot/{server_number}/cpanel"),
                 SetCpanelConfigurationRequest {
                     dist,
                     lang,
@@ -637,7 +637,7 @@ mod tests {
         let robot = Robot::default();
 
         let servers = robot.list_servers().unwrap();
-        assert!(servers.len() > 0);
+        assert!(!servers.is_empty());
 
         let configs = robot.list_server_boot_configurations(servers[0].id);
 
@@ -651,13 +651,13 @@ mod tests {
         let robot = Robot::default();
 
         let servers = robot.list_servers().unwrap();
-        assert!(servers.len() > 0);
+        assert!(!servers.is_empty());
 
         let config = robot
             .get_server_rescue_boot_configuration(servers[0].id)
             .unwrap();
 
-        println!("{:#?}", config);
+        println!("{config:#?}");
         assert!(config.is_some());
     }
 
@@ -668,7 +668,7 @@ mod tests {
         let robot = Robot::default();
 
         let servers = robot.list_servers().unwrap();
-        assert!(servers.len() > 0);
+        assert!(!servers.is_empty());
 
         let config = robot
             .get_server_rescue_boot_configuration(servers[0].id)
@@ -705,7 +705,7 @@ mod tests {
         let robot = Robot::default();
 
         let servers = robot.list_servers().unwrap();
-        assert!(servers.len() > 0);
+        assert!(!servers.is_empty());
 
         let config = robot
             .get_server_linux_boot_configuration(servers[0].id)
@@ -744,7 +744,7 @@ mod tests {
         let robot = Robot::default();
 
         let servers = robot.list_servers().unwrap();
-        assert!(servers.len() > 0);
+        assert!(!servers.is_empty());
 
         let config = robot
             .get_server_vnc_boot_configuration(servers[0].id)

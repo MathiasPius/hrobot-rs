@@ -56,7 +56,7 @@ where
     }
 
     fn get_reset(&self, server_number: u32) -> Result<Reset, Error> {
-        self.get::<ResetResponse>(&format!("/reset/{}", server_number))
+        self.get::<ResetResponse>(&format!("/reset/{server_number}"))
             .map(Reset::from)
     }
 
@@ -68,7 +68,7 @@ where
         }
 
         self.post::<ResetResponse, ResetServerRequest>(
-            &format!("/reset/{}", server_number),
+            &format!("/reset/{server_number}"),
             ResetServerRequest { method },
         )
         .map(Reset::from)
@@ -85,7 +85,7 @@ mod tests {
     pub fn list_resets() {
         let robot = Robot::default();
 
-        assert!(robot.list_resets().unwrap().len() > 0);
+        assert!(!robot.list_resets().unwrap().is_empty());
     }
 
     #[test]
@@ -94,7 +94,7 @@ mod tests {
         let robot = Robot::default();
 
         let resets = robot.list_resets().unwrap();
-        assert!(resets.len() > 0);
+        assert!(!resets.is_empty());
         assert_eq!(robot.get_reset(resets[0].id).unwrap().ipv4, resets[0].ipv4);
     }
 

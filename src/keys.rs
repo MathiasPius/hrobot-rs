@@ -58,7 +58,7 @@ where
     }
 
     fn get_key(&self, fingerprint: &str) -> Result<Key, Error> {
-        self.get::<KeyResponse>(&format!("/key/{}", fingerprint))
+        self.get::<KeyResponse>(&format!("/key/{fingerprint}"))
             .map(Key::from)
     }
 
@@ -69,13 +69,13 @@ where
         }
 
         self.post::<KeyResponse, RenameKeyRequest>(
-            &format!("/key/{}", fingerprint),
+            &format!("/key/{fingerprint}"),
             RenameKeyRequest { name },
         )
         .map(Key::from)
     }
 
     fn delete_key(&self, fingerprint: &str) -> Result<(), Error> {
-        self.delete(&format!("/key/{}", fingerprint), ())
+        self.delete(&format!("/key/{fingerprint}"), ())
     }
 }

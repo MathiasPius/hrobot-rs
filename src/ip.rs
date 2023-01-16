@@ -72,11 +72,11 @@ where
     }
 
     fn get_ip(&self, ip: Ipv4Addr) -> Result<Ip, Error> {
-        self.get::<IpResponse>(&format!("/ip/{}", ip)).map(Ip::from)
+        self.get::<IpResponse>(&format!("/ip/{ip}")).map(Ip::from)
     }
 
     fn get_mac(&self, ip: Ipv4Addr) -> Result<Mac, Error> {
-        self.get::<MacResponse>(&format!("/ip/{}/mac", ip))
+        self.get::<MacResponse>(&format!("/ip/{ip}/mac"))
             .map(Mac::from)
     }
 }
@@ -91,7 +91,7 @@ mod tests {
     pub fn list_ips() {
         let robot = Robot::default();
 
-        assert!(robot.list_ips().unwrap().len() > 0);
+        assert!(!robot.list_ips().unwrap().is_empty());
     }
 
     #[test]
@@ -100,7 +100,7 @@ mod tests {
         let robot = Robot::default();
 
         let ips = robot.list_ips().unwrap();
-        assert!(ips.len() > 0);
+        assert!(!ips.is_empty());
         assert_eq!(robot.get_ip(ips[0].ips).unwrap().ips, ips[0].ips);
     }
 }

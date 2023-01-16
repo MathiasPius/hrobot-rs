@@ -44,7 +44,7 @@ where
     }
 
     fn get_subnet(&self, subnet: IpAddr) -> Result<Subnet, Error> {
-        self.get::<SubnetResponse>(&format!("/subnet/{}", subnet))
+        self.get::<SubnetResponse>(&format!("/subnet/{subnet}"))
             .map(Subnet::from)
     }
 }
@@ -60,7 +60,7 @@ mod tests {
         let robot = Robot::default();
 
         let subnets = robot.list_subnets().unwrap();
-        assert!(subnets.len() > 0);
+        assert!(!subnets.is_empty());
     }
 
     #[test]
@@ -69,7 +69,7 @@ mod tests {
         let robot = Robot::default();
 
         let subnets = robot.list_subnets().unwrap();
-        assert!(subnets.len() > 0);
+        assert!(!subnets.is_empty());
         assert_eq!(robot.get_subnet(subnets[0].ip).unwrap().ip, subnets[0].ip);
     }
 }

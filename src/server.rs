@@ -117,7 +117,7 @@ where
     }
 
     fn get_server(&self, server_number: u32) -> Result<Server, Error> {
-        self.get::<ServerResponse>(&format!("/server/{}", server_number))
+        self.get::<ServerResponse>(&format!("/server/{server_number}"))
             .map(Server::from)
     }
 
@@ -128,14 +128,14 @@ where
         }
 
         self.post::<ServerResponse, RenameServerRequest>(
-            &format!("/server/{}", server_number),
+            &format!("/server/{server_number}"),
             RenameServerRequest { server_name: name },
         )
         .map(Server::from)
     }
 
     fn get_server_cancellation(&self, server_number: u32) -> Result<Cancellation, Error> {
-        self.get::<CancellationResponse>(&format!("/server/{}/cancellation", server_number))
+        self.get::<CancellationResponse>(&format!("/server/{server_number}/cancellation"))
             .map(Cancellation::from)
     }
 
@@ -147,7 +147,7 @@ where
         }
 
         self.post::<CancellationResponse, WithdrawalRequest>(
-            &format!("/server/{}/reversal", id),
+            &format!("/server/{id}/reversal"),
             WithdrawalRequest {
                 reversal_reason: reason,
             },
@@ -167,7 +167,7 @@ mod tests {
     pub fn list_servers() {
         let robot = Robot::default();
         println!("{:#?}", robot.list_servers().unwrap());
-        assert!(robot.list_servers().unwrap().len() > 0);
+        assert!(!robot.list_servers().unwrap().is_empty());
     }
 
     #[test]
@@ -177,7 +177,7 @@ mod tests {
         let robot = Robot::default();
 
         let servers = robot.list_servers().unwrap();
-        assert!(servers.len() > 0);
+        assert!(!servers.is_empty());
         assert_eq!(
             robot.get_server(servers[0].id).unwrap().name,
             servers[0].name
@@ -202,7 +202,7 @@ mod tests {
         let robot = Robot::default();
 
         let servers = robot.list_servers().unwrap();
-        assert!(servers.len() > 0);
+        assert!(!servers.is_empty());
 
         let old_name = &servers[0].name;
         robot.rename_server(servers[0].id, "test_name").unwrap();
@@ -218,7 +218,7 @@ mod tests {
         let robot = Robot::default();
 
         let servers = robot.list_servers().unwrap();
-        assert!(servers.len() > 0);
+        assert!(!servers.is_empty());
         let cancellation = robot.get_server_cancellation(servers[0].id).unwrap();
 
         assert_eq!(cancellation.id, servers[0].id);

@@ -7,17 +7,12 @@ use std::{
 
 use crate::{Error, SyncRobot};
 
-#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+#[derive(Default, Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum IPVersion {
+    #[default]
     IPv4,
     IPv6,
-}
-
-impl Default for IPVersion {
-    fn default() -> Self {
-        IPVersion::IPv4
-    }
 }
 
 impl Display for IPVersion {
@@ -233,7 +228,7 @@ impl SetFirewallRequest {
 
         write!(query, "status={}", self.status)?;
         if let Some(whitelist) = self.whitelist_hos {
-            write!(query, "&whitelist_hos={}", whitelist)?;
+            write!(query, "&whitelist_hos={whitelist}")?;
         }
 
         for (k, v) in segments.into_iter() {
@@ -265,7 +260,7 @@ where
     T: SyncRobot,
 {
     fn get_firewall(&self, server_number: u32) -> Result<Firewall, Error> {
-        self.get::<FirewallResponse>(&format!("/firewall/{}", server_number))
+        self.get::<FirewallResponse>(&format!("/firewall/{server_number}"))
             .map(Firewall::from)
     }
 
@@ -283,7 +278,7 @@ where
         };
 
         self.post_raw::<FirewallResponse>(
-            &format!("/firewall/{}", server_number),
+            &format!("/firewall/{server_number}"),
             request.into_urlencoded().unwrap(),
         )
         .map(Firewall::from)
@@ -301,10 +296,10 @@ mod tests {
         let robot = Robot::default();
 
         let servers = robot.list_servers().unwrap();
-        assert!(servers.len() > 0);
+        assert!(!servers.is_empty());
 
         let firewall = robot.get_firewall(servers[0].id).unwrap();
-        println!("{:#?}", firewall);
+        println!("{firewall:#?}");
     }
 
     #[test]
@@ -313,12 +308,12 @@ mod tests {
         let robot = Robot::default();
 
         let servers = robot.list_servers().unwrap();
-        assert!(servers.len() > 0);
+        assert!(!servers.is_empty());
 
         println!("{:#?}", servers[0]);
 
         let firewall = robot.get_firewall(servers[0].id).unwrap();
-        println!("{:#?}", firewall);
+        println!("{firewall:#?}");
 
         let new_firewall = robot
             .set_firewall_rules(
@@ -329,6 +324,6 @@ mod tests {
             )
             .unwrap();
 
-        println!("{:#?}", new_firewall);
+        println!("{new_firewall:#?}");
     }
 }

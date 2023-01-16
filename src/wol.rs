@@ -35,12 +35,12 @@ where
     T: SyncRobot,
 {
     fn get_wol(&self, server_number: u32) -> Result<WakeOnLan, Error> {
-        self.get::<WakeOnLanResponse>(&format!("/wol/{}", server_number))
+        self.get::<WakeOnLanResponse>(&format!("/wol/{server_number}"))
             .map(WakeOnLan::from)
     }
 
     fn trigger_wol(&self, server_number: u32) -> Result<WakeOnLan, Error> {
-        self.post::<WakeOnLanResponse, ()>(&format!("/wol/{}", server_number), ())
+        self.post::<WakeOnLanResponse, ()>(&format!("/wol/{server_number}"), ())
             .map(WakeOnLan::from)
     }
 }
