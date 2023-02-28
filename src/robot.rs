@@ -152,7 +152,7 @@ impl SyncRobot for Robot {
 #[cfg(test)]
 impl Default for Robot {
     fn default() -> Self {
-        dotenv::dotenv().ok();
+        dotenvy::dotenv().ok();
         env_logger::init();
 
         let username = std::env::var("HROBOT_USERNAME")
