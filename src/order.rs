@@ -33,6 +33,7 @@ pub struct MarketProduct {
     pub network_speed: String,
     pub price: String,
     pub price_vat: String,
+    pub price_setup: String,
     pub price_setup_vat: String,
     pub fixed_price: bool,
     pub next_reduce: i32,
