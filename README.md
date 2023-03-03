@@ -49,8 +49,13 @@ foobar: AX51-NVMe in FSN1-DC18
 
 * ❌ [Failover](https://robot.your-server.de/doc/webservice/en.html#failover): Not implemented.
 * ❌ [Traffic](https://robot.your-server.de/doc/webservice/en.html#traffic): Not implemented.
-* ❌ [Server Ordering](https://robot.your-server.de/doc/webservice/en.html#server-ordering): Not implemented. I'm not made of money!
 * ❌ [Storage Box](https://robot.your-server.de/doc/webservice/en.html#storage-box): Not implemented.
+* ⚠️ [Server Ordering](https://robot.your-server.de/doc/webservice/en.html#server-ordering)
+    * ✅ list standard products.
+    * ✅ list server market (auction) products.
+    * ❌ placing orders. I'm not made of money!
+    * ❌ get, list or place transactions.
+    * ❌ get, list or purchase addons.
 * ⚠️ [Firewall](https://robot.your-server.de/doc/webservice/en.html#firewall)
     * ✅ get & update firewall rules & configuration directly.
     * ❌ create, modify or delete firewall templates.

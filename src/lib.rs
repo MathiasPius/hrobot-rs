@@ -33,24 +33,26 @@
 //! ```text
 //! foobar: AX51-NVMe in FSN1-DC18
 //! ```
-pub mod boot;
-pub mod error;
-pub mod firewall;
-pub mod ip;
-pub mod keys;
-pub mod rdns;
-pub mod reset;
-pub mod robot;
-pub mod server;
-pub mod subnet;
-pub mod vswitch;
-pub mod wol;
+mod boot;
+mod error;
+mod firewall;
+mod ip;
+mod keys;
+mod order;
+mod rdns;
+mod reset;
+mod robot;
+mod server;
+mod subnet;
+mod vswitch;
+mod wol;
 
 pub use boot::*;
 pub use error::*;
 pub use firewall::*;
 pub use ip::*;
 pub use keys::*;
+pub use order::*;
 pub use rdns::*;
 pub use reset::*;
 pub use robot::*;
