@@ -3,7 +3,7 @@ name = "hrobot"
 description = "Unofficial Hetzner Robot API client"
 keywords = ["hetzner", "robot", "api", "client"]
 repository = "https://github.com/MathiasPius/hrobot-rs"
-version = "0.1.13"
+version = "0.1.14"
 license = "MIT"
 edition = "2021"
 
@@ -25,4 +25,4 @@ features = ["json", "multipart", "rustls-tls", "blocking"]
 [dev-dependencies]
 env_logger = "0.10"
 dotenvy = "0.15"
-serial_test = "1"
+serial_test = "2"
