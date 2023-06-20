@@ -128,6 +128,7 @@ mod tests {
     pub fn list_market_products() {
         let robot = Robot::default();
         let products = robot.list_market_products().unwrap();
+        println!("{products:#?}");
         assert!(products.len() > 0);
     }
 }
