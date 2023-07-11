@@ -18,7 +18,7 @@ pub fn get_server(server_number: u32) -> UnauthenticatedRequest<GetServerRespons
 pub fn rename_server(
     server_number: u32,
     name: &str,
-) -> Result<UnauthenticatedRequest<RenameServerResponse>, serde_json::Error> {
+) -> Result<UnauthenticatedRequest<RenameServerResponse>, serde_html_form::ser::Error> {
     #[derive(Serialize)]
     struct RenameServerRequest<'a> {
         pub server_name: &'a str,
@@ -42,24 +42,34 @@ pub struct RenameServerResponse(#[serde(deserialize_with = "deserialize_inner")]
 
 #[cfg(all(test, feature = "hyper-client"))]
 mod tests {
+    use tracing::{info, Level};
+
     #[tokio::test]
     async fn test_list_servers() {
         dotenvy::dotenv().ok();
+        tracing_subscriber::fmt::fmt()
+            .with_max_level(Level::TRACE)
+            .pretty()
+            .init();
 
         let robot = crate::AsyncRobot::default();
 
         let servers = robot.list_servers().await.unwrap();
-        println!("{servers:#?}");
+        info!("{servers:#?}");
     }
 
     #[tokio::test]
     async fn test_get_server() {
         dotenvy::dotenv().ok();
+        tracing_subscriber::fmt::fmt()
+            .with_max_level(Level::TRACE)
+            .pretty()
+            .init();
 
         let robot = crate::AsyncRobot::default();
 
         let servers = robot.list_servers().await.unwrap();
-        println!("{servers:#?}");
+        info!("{servers:#?}");
 
         if let Some(server) = servers.iter().next() {
             let retrieved_server = robot.get_server(server.id).await.unwrap();
@@ -69,13 +79,18 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "unexpected failure might leave server in renamed state."]
     async fn test_rename_server() {
         dotenvy::dotenv().ok();
+        tracing_subscriber::fmt::fmt()
+            .with_max_level(Level::TRACE)
+            .pretty()
+            .init();
 
         let robot = crate::AsyncRobot::default();
 
         let servers = robot.list_servers().await.unwrap();
-        println!("{servers:#?}");
+        info!("{servers:#?}");
 
         if let Some(server) = servers.iter().next() {
             let old_name = &server.name;

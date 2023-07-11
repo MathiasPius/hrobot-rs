@@ -15,9 +15,23 @@ pub use server::*;
 /// Used when [authenticating](UnauthenticatedRequest::authenticate)
 /// a request, before it is transformed into a client-dependent request
 /// type and sent.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Credentials {
     pub header_value: String,
+}
+
+impl std::fmt::Debug for Credentials {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let encoded = &self.header_value.strip_prefix("Basic ").unwrap();
+        let decoded = BASE64.decode(encoded).unwrap();
+        let stringified = String::from_utf8_lossy(&decoded);
+
+        let username = stringified.split_once(':').unwrap().0;
+
+        f.debug_struct("Credentials")
+            .field("username", &username)
+            .finish()
+    }
 }
 
 impl Credentials {
@@ -35,13 +49,27 @@ impl Credentials {
 /// Must be [`authenticated`](UnauthenticatedRequest::authenticate)
 /// using Hetzner Robot [`Credentials`](Credentials) before it can be
 /// transformed into a client-dependent request and then sent.
-#[derive(Debug)]
 pub struct UnauthenticatedRequest<Response> {
     pub uri: Uri,
     pub method: &'static str,
-    pub body: Option<Vec<u8>>,
+    pub body: Option<String>,
     pub headers: Vec<(&'static str, String)>,
     _response: PhantomData<Response>,
+}
+
+impl<Response> std::fmt::Debug for UnauthenticatedRequest<Response> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("UnauthenticatedRequest")
+            .field("uri", &self.uri)
+            .field("method", &self.method)
+            .field("body", &self.body)
+            .field("headers", &self.headers)
+            .field(
+                "response type",
+                &std::any::type_name::<Response>().to_string(),
+            )
+            .finish()
+    }
 }
 
 impl<Response> UnauthenticatedRequest<Response> {
@@ -64,8 +92,8 @@ impl<Response> UnauthenticatedRequest<Response> {
         self
     }
 
-    pub fn with_body<T: Serialize>(mut self, body: T) -> Result<Self, serde_json::Error> {
-        self.body = Some(serde_json::to_vec(&body)?);
+    pub fn with_body<T: Serialize>(mut self, body: T) -> Result<Self, serde_html_form::ser::Error> {
+        self.body = Some(serde_html_form::to_string(&body)?);
         Ok(self)
     }
 

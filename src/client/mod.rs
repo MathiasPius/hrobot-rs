@@ -5,6 +5,7 @@ mod hyper;
 mod r#async {
     use async_trait::async_trait;
     use serde::de::DeserializeOwned;
+    use tracing::trace;
 
     use crate::{
         api::{self, AuthenticatedRequest, Credentials, UnauthenticatedRequest},
@@ -35,6 +36,15 @@ mod r#async {
         client: Client,
     }
 
+    impl<Client> std::fmt::Debug for AsyncRobot<Client> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.debug_struct("AsyncRobot")
+                .field("credentials", &self.credentials)
+                .field("client type", &std::any::type_name::<Client>())
+                .finish()
+        }
+    }
+
     impl<Client: AsyncClient> AsyncRobot<Client> {
         pub fn from_env(client: Client) -> Result<Self, std::env::VarError> {
             Ok(Self::new(
@@ -52,11 +62,15 @@ mod r#async {
         }
 
         /// Shorthand for authenticating and sending the request.
+        #[tracing::instrument]
         async fn go<Response: DeserializeOwned + Send + 'static>(
             &self,
             request: UnauthenticatedRequest<Response>,
         ) -> Result<Response, Error> {
+            trace!("{request:?}");
+
             let authenticated_request = request.authenticate(&self.credentials);
+
             self.client.send_request(authenticated_request).await
         }
 

@@ -34,6 +34,7 @@ impl<Response> TryInto<hyper::Request<Body>> for AuthenticatedRequest<Response> 
 
         let mut request = hyper::Request::builder()
             .uri(self.request.uri)
+            .method(self.request.method)
             .header("Authorization", &self.credentials.header_value)
             .header("Content-Type", "application/x-www-form-urlencoded ")
             .header("Accept", "application/json");

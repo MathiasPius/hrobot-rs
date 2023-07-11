@@ -234,7 +234,9 @@ pub enum Error {
     #[error("transport error: {0}")]
     Transport(#[from] Box<dyn std::error::Error>),
     #[error("json decode error: {0}")]
-    Json(#[from] serde_json::Error),
+    Deserialization(#[from] serde_json::Error),
+    #[error("html form encoding error: {0}")]
+    Serialization(#[from] serde_html_form::ser::Error),
     #[error("api error: {0}")]
     Api(#[from] ApiError),
 }
