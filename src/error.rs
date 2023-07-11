@@ -5,7 +5,7 @@ use thiserror::Error;
 
 #[derive(Debug, Deserialize, Error)]
 #[serde(tag = "code", rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum APIError {
+pub enum ApiError {
     #[error("resource unavailable")]
     Unavailable,
     #[error("not found: {message}")]
@@ -179,7 +179,7 @@ impl Display for GenericError {
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub(crate) enum MaybeTyped {
-    Typed(APIError),
+    Typed(ApiError),
     Untyped(GenericError),
 }
 
@@ -204,11 +204,11 @@ impl MaybeTyped {
     }
 }
 
-impl From<MaybeTyped> for APIError {
+impl From<MaybeTyped> for ApiError {
     fn from(maybe: MaybeTyped) -> Self {
         match maybe {
             MaybeTyped::Typed(t) => t,
-            MaybeTyped::Untyped(t) => APIError::Generic(t),
+            MaybeTyped::Untyped(t) => ApiError::Generic(t),
         }
     }
 }
@@ -224,7 +224,7 @@ impl<T> From<APIResult<T>> for Result<T, Error> {
     fn from(result: APIResult<T>) -> Self {
         match result {
             APIResult::Ok(inner) => Ok(inner),
-            APIResult::Error(e) => Err(Error::API(e.error.into())),
+            APIResult::Error(e) => Err(Error::Api(e.error.into())),
         }
     }
 }
@@ -234,14 +234,14 @@ pub enum Error {
     #[error("transport error: {0}")]
     Transport(#[from] Box<dyn std::error::Error>),
     #[error("json decode error: {0}")]
-    Decode(#[from] serde_json::Error),
+    Json(#[from] serde_json::Error),
     #[error("api error: {0}")]
-    API(#[from] APIError),
+    Api(#[from] ApiError),
 }
 
-impl From<reqwest::Error> for Error {
-    fn from(e: reqwest::Error) -> Self {
-        Error::Transport(Box::new(e))
+impl Error {
+    pub fn transport(error: impl std::error::Error + 'static) -> Error {
+        Error::Transport(Box::new(error))
     }
 }
 
@@ -333,7 +333,7 @@ mod tests {
 
             let error: MaybeTyped =
                 serde_json::from_str(&serde_json::to_string(&format).unwrap()).unwrap();
-            assert!(error.is_typed(), "{}: {:#?}", code, APIError::from(error));
+            assert!(error.is_typed(), "{}: {:#?}", code, ApiError::from(error));
         }
     }
 }

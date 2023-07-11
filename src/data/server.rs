@@ -1,5 +1,4 @@
-use crate::{error::Error, SyncRobot};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 #[derive(Debug, Deserialize)]
@@ -11,7 +10,7 @@ pub enum Status {
     InProgress,
 }
 
-/// Reference to a Subnet. More information about the subnet can be retrieved using the [SubnetRobot](crate::subnet::SubnetRobot) interface.
+/// Reference to a Subnet.
 #[derive(Debug, Deserialize)]
 pub struct SubnetReference {
     #[serde(rename = "ip")]
@@ -57,17 +56,6 @@ pub struct Server {
     pub extended: Option<ServerFlags>,
 }
 
-#[derive(Debug, Deserialize)]
-struct ServerResponse {
-    pub server: Server,
-}
-
-impl From<ServerResponse> for Server {
-    fn from(s: ServerResponse) -> Self {
-        s.server
-    }
-}
-
 /// If the server has been cancelled the struct will reflect this status, otherwise it will
 /// contain information about when the earliest possible cancellation is, and whether reserving
 /// the server upon cancellation is possible
@@ -98,70 +86,9 @@ impl From<CancellationResponse> for Cancellation {
     }
 }
 
-/// Trait defining the server-related API endpoints of the Hetzner API. Implemented by [`Robot`]
-pub trait ServerRobot {
-    fn list_servers(&self) -> Result<Vec<Server>, Error>;
-    fn get_server(&self, id: u32) -> Result<Server, Error>;
-    fn rename_server(&self, id: u32, name: &str) -> Result<Server, Error>;
-    fn get_server_cancellation(&self, id: u32) -> Result<Cancellation, Error>;
-    fn withdraw_server_order(&self, id: u32, reason: Option<&str>) -> Result<Cancellation, Error>;
-}
-
-impl<T> ServerRobot for T
-where
-    T: SyncRobot,
-{
-    fn list_servers(&self) -> Result<Vec<Server>, Error> {
-        self.get::<Vec<ServerResponse>>("/server")
-            .map(|s| s.into_iter().map(Server::from).collect())
-    }
-
-    fn get_server(&self, server_number: u32) -> Result<Server, Error> {
-        self.get::<ServerResponse>(&format!("/server/{server_number}"))
-            .map(Server::from)
-    }
-
-    fn rename_server(&self, server_number: u32, name: &str) -> Result<Server, Error> {
-        #[derive(Serialize)]
-        struct RenameServerRequest<'a> {
-            pub server_name: &'a str,
-        }
-
-        self.post::<ServerResponse, RenameServerRequest>(
-            &format!("/server/{server_number}"),
-            RenameServerRequest { server_name: name },
-        )
-        .map(Server::from)
-    }
-
-    fn get_server_cancellation(&self, server_number: u32) -> Result<Cancellation, Error> {
-        self.get::<CancellationResponse>(&format!("/server/{server_number}/cancellation"))
-            .map(Cancellation::from)
-    }
-
-    fn withdraw_server_order(&self, id: u32, reason: Option<&str>) -> Result<Cancellation, Error> {
-        #[derive(Serialize)]
-        struct WithdrawalRequest<'a> {
-            #[serde(skip_serializing_if = "Option::is_none")]
-            reversal_reason: Option<&'a str>,
-        }
-
-        self.post::<CancellationResponse, WithdrawalRequest>(
-            &format!("/server/{id}/reversal"),
-            WithdrawalRequest {
-                reversal_reason: reason,
-            },
-        )
-        .map(Cancellation::from)
-    }
-}
-
+/*
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::{APIError, Robot};
-    use serial_test::serial;
-
     #[test]
     #[ignore]
     pub fn list_servers() {
@@ -169,6 +96,7 @@ mod tests {
         println!("{:#?}", robot.list_servers().unwrap());
         assert!(!robot.list_servers().unwrap().is_empty());
     }
+
 
     #[test]
     #[ignore]
@@ -228,4 +156,6 @@ mod tests {
             assert!(cancellation.cancellation_date.is_none());
         }
     }
+
 }
+*/
