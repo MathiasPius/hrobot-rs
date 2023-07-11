@@ -69,8 +69,8 @@ impl<Response> UnauthenticatedRequest<Response> {
         Ok(self)
     }
 
-    pub fn with_header(mut self, key: &'static str, value: String) -> Self {
-        self.headers.push((key, value));
+    pub fn with_header(mut self, key: &'static str, value: &str) -> Self {
+        self.headers.push((key, value.to_owned()));
         self
     }
 }
