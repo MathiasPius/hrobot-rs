@@ -42,15 +42,13 @@ pub struct RenameServerResponse(#[serde(deserialize_with = "deserialize_inner")]
 
 #[cfg(all(test, feature = "hyper-client"))]
 mod tests {
-    use tracing::{info, Level};
+    use tracing::info;
+    use tracing_test::traced_test;
 
     #[tokio::test]
+    #[traced_test]
     async fn test_list_servers() {
         dotenvy::dotenv().ok();
-        tracing_subscriber::fmt::fmt()
-            .with_max_level(Level::TRACE)
-            .pretty()
-            .init();
 
         let robot = crate::AsyncRobot::default();
 
@@ -59,12 +57,9 @@ mod tests {
     }
 
     #[tokio::test]
+    #[traced_test]
     async fn test_get_server() {
         dotenvy::dotenv().ok();
-        tracing_subscriber::fmt::fmt()
-            .with_max_level(Level::TRACE)
-            .pretty()
-            .init();
 
         let robot = crate::AsyncRobot::default();
 
@@ -79,13 +74,10 @@ mod tests {
     }
 
     #[tokio::test]
+    #[traced_test]
     #[ignore = "unexpected failure might leave server in renamed state."]
     async fn test_rename_server() {
         dotenvy::dotenv().ok();
-        tracing_subscriber::fmt::fmt()
-            .with_max_level(Level::TRACE)
-            .pretty()
-            .init();
 
         let robot = crate::AsyncRobot::default();
 

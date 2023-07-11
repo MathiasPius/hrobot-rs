@@ -62,6 +62,7 @@ mod r#async {
         }
 
         /// Shorthand for authenticating and sending the request.
+
         #[tracing::instrument]
         async fn go<Response: DeserializeOwned + Send + 'static>(
             &self,
@@ -74,14 +75,45 @@ mod r#async {
             self.client.send_request(authenticated_request).await
         }
 
+        /// List all owned servers.
+        /// ```rust,no_run
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// # let robot = hrobot::AsyncRobot::default();
+        /// for server in robot.list_servers().await.unwrap() {
+        ///     println!("Name: {}", server.name);
+        ///     // Name: gibson
+        /// }
+        /// # }
+        /// ```
         pub async fn list_servers(&self) -> Result<Vec<Server>, Error> {
             Ok(self.go(api::list_servers()).await?.0)
         }
 
+        /// Retrieve complete information about a specific [`Server`].
+        /// ```rust,no_run
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// # let robot = hrobot::AsyncRobot::default();
+        /// let server = robot.get_server(1234567).await.unwrap();
+        /// assert_eq!(server.id, 1234567);
+        ///
+        /// println!("Name: {}", server.name);
+        /// // Name: gibson
+        /// # }
+        /// ```
         pub async fn get_server(&self, server_number: u32) -> Result<Server, Error> {
             Ok(self.go(api::get_server(server_number)).await?.0)
         }
 
+        /// Rename a server.
+        /// ```rust,no_run
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// # let robot = hrobot::AsyncRobot::default();
+        /// robot.rename_server(1234567, "gibson").await.unwrap();
+        /// # }
+        /// ```
         pub async fn rename_server(&self, server_number: u32, name: &str) -> Result<Server, Error> {
             Ok(self.go(api::rename_server(server_number, name)?).await?.0)
         }

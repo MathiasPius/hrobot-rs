@@ -1,3 +1,5 @@
+//! Request Builders and Response Models.
+
 use std::{marker::PhantomData, str::FromStr};
 
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
