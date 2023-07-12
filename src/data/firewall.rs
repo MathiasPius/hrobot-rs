@@ -3,19 +3,14 @@ use std::{collections::HashMap, fmt::Display, net::Ipv4Addr};
 use tracing::trace;
 
 /// Version of the Internet Protocol supported by the firewall.
-#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+#[derive(Default, Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum IPVersion {
     /// IPv4
+    #[default]
     IPv4,
     /// IPv6
     IPv6,
-}
-
-impl Default for IPVersion {
-    fn default() -> Self {
-        IPVersion::IPv4
-    }
 }
 
 impl Display for IPVersion {
