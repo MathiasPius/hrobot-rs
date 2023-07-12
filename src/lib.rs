@@ -1,7 +1,6 @@
 pub mod api;
 mod client;
 pub mod data;
-mod error;
+pub mod error;
 
 pub use client::*;
-pub use error::{ApiError, Error};

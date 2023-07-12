@@ -70,7 +70,7 @@ mod tests {
     use tracing::info;
     use tracing_test::traced_test;
 
-    use crate::{ApiError, Error};
+    use crate::error::{ApiError, Error};
 
     #[tokio::test]
     #[traced_test]
