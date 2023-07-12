@@ -229,20 +229,29 @@ impl<T> From<ApiResult<T>> for Result<T, Error> {
     }
 }
 
+/// Error which can originate at any stage of the API request.
 #[derive(Debug, Error)]
 pub enum Error {
+    /// Covers any errors produced by the Client implementations.
     #[error("transport error: {0}")]
     Transport(#[from] Box<dyn std::error::Error>),
+    /// Failure when deserializing json body response from the API.
     #[error("json decode error: {0}")]
     Deserialization(#[from] serde_json::Error),
+    /// Failure while attempting to encode the specified input
+    /// parameters as `application/x-www-form-urlencoded`
     #[error("html form encoding error: {0}")]
     Serialization(#[from] serde_html_form::ser::Error),
+    /// Error returned by the Hetzner Robot API.
     #[error("api error: {0}")]
     Api(#[from] ApiError),
 }
 
 impl Error {
-    pub fn transport(error: impl std::error::Error + 'static) -> Error {
+    /// Construct an [`Error::Transport`] from the given error.
+    ///
+    /// Utility function for use with [`Result::map_err()`] specifically.
+    pub(crate) fn transport(error: impl std::error::Error + 'static) -> Error {
         Error::Transport(Box::new(error))
     }
 }

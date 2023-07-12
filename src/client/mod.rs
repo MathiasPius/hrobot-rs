@@ -13,9 +13,73 @@ mod r#async {
         error::Error,
     };
 
-    /// Implemented by asynchronous http clients, so they can be used with [`AsyncRobot`](AsyncRobot)
+    /// Implemented by asynchronous http clients, so they can be
+    /// used with [`AsyncRobot`](AsyncRobot)
+    ///
+    /// The signature looks crazier than it is, because of the need
+    /// for [`async_trait`](mod@async_trait),
+    /// which will also be necessary when implementing it.
+    ///
+    /// The actual signature when using `async_trait` is:
+    ///
+    /// ```rust
+    /// pub trait AsyncClient {
+    ///     async fn send_request<Response>(
+    ///         &self,
+    ///         request: AuthenticatedRequest<Response>,
+    ///     ) -> Result<Response, Error>
+    ///     where
+    ///         Response: DeserializeOwned + Send + 'static;
+    /// }
+    /// ```
+    /// See the example below for an example implementation.
+    /// # Example
+    /// Implementation for [`hyper::Client`].
+    ///
+    /// Note: this implementation is included by when the
+    /// `hyper-client` feature is enabled, which it is by default.
+    /// ```rust
+    /// # use async_trait::async_trait;
+    /// #[async_trait]
+    /// impl<C> AsyncClient for hyper::Client<C, Body>
+    /// where
+    ///     C: Connect + Clone + Send + Sync + 'static,
+    /// {
+    ///     async fn send_request<Response>(
+    ///         &self,
+    ///         request: AuthenticatedRequest<Response>,
+    ///     ) -> Result<Response, Error>
+    ///     where
+    ///         Response: DeserializeOwned + Send + 'static,
+    ///     {
+    ///         // convert the request from an AuthenticatedRequest<Response>
+    ///         // into a `hyper::Request`.
+    ///         let request = request.try_into()
+    ///             .map_err(Error::transport)?;
+    ///
+    ///         // send request and attempt wait for the response
+    ///         let response = self.request(request).await
+    ///             .map_err(Error::transport)?;
+    ///
+    ///         // get the response body
+    ///         let body = hyper::body::to_bytes(response.into_body())
+    ///             .await
+    ///             .map_err(Error::transport)?;
+    ///
+    ///         // deserialize the response body into an `ApiResult<T>` containing
+    ///         // either the expected `Response` type, or an `ApiError`.
+    ///         serde_json::from_slice::<ApiResult<Response>>(&body)?.into()
+    ///    }
+    /// }
+    /// ```
     #[async_trait]
     pub trait AsyncClient {
+        /// Send an [`AuthenticatedRequest`] and return the deserialized
+        /// `Response` or an [`Error`].
+        ///
+        /// Translating the [`AuthenticatedRequest`] and transmitting it
+        /// through the underlying client is the responsibility of the
+        /// implementor of this method.
         async fn send_request<Response>(
             &self,
             request: AuthenticatedRequest<Response>,
@@ -31,6 +95,29 @@ mod r#async {
     ///
     /// In most cases, this is the struct you want to construct once
     /// and then use everywhere you want to interact with the API.
+    ///
+    /// # Client Requirements
+    /// `Client` type is required to implement the [`AsyncClient`].
+    ///
+    /// If the default feature `hyper-client` is enabled, then this
+    /// crate implements it for [`hyper::Client`], and defines a default
+    /// constructor for [`AsyncRobot<hyper::Client>`]
+    ///
+    /// See example below.
+    ///
+    /// # Example
+    /// With the default `hyper-client` feature, you can construct
+    /// an [`AsyncRobot`] using the `HROBOT_USERNAME` and `HROBOT_PASSWORD`
+    /// environment variables with the [`AsyncRobot::default()`] function:
+    /// ```rust
+    /// # #[cfg(feature = "hyper-client")]
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// # }
+    /// ```
+    /// This uses [`hyper::Client`] and [`hyper_rustls`] to construct
+    /// an HTTPS-enabled client, using credentials from the environment.
     pub struct AsyncRobot<Client> {
         credentials: Credentials,
         client: Client,
@@ -47,10 +134,11 @@ mod r#async {
 
     impl<Client: AsyncClient> AsyncRobot<Client> {
         /// Construct a new [`AsyncRobot`] using the environment variables
-        /// `HROBOT_USERNAME` and `HROBOT_PASSWORD` for credentials.
+        /// `HROBOT_USERNAME` and `HROBOT_PASSWORD` for credentials,
+        /// and the given client.
         ///
         /// # Example
-        /// Construct an [`AsyncRobot`] using a [`hyper::Client`].
+        /// Construct an [`AsyncRobot`] using a [`hyper::Client`] and [`hyper_rustls`].
         /// ```rust
         /// # #[cfg(feature = "hyper-client")]
         /// # #[tokio::main]
@@ -74,7 +162,7 @@ mod r#async {
             ))
         }
 
-        /// Construct a new [`AsyncRobot`].
+        /// Construct a new [`AsyncRobot`], using the given client, username and password.
         ///
         /// # Example
         /// Construct an [`AsyncRobot`] using a [`hyper::Client`].
@@ -117,7 +205,7 @@ mod r#async {
         /// List all owned servers.
         ///
         /// # Example
-        /// Print the IDs and Names of all our servers.
+        /// Print the ids and names of all servers accessible by our credentials.
         /// ```rust,no_run
         /// # #[tokio::main]
         /// # async fn main() {

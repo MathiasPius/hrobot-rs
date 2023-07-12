@@ -167,6 +167,7 @@ mod tests {
 
         if let Some(server) = servers.iter().next() {
             let status = robot.get_server_cancellation(server.id).await.unwrap();
+            info!("{status:#?}");
             assert!(!status.cancelled);
         }
     }
