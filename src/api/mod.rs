@@ -5,9 +5,12 @@ use std::{marker::PhantomData, str::FromStr};
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use hyper::Uri;
 
-mod server;
 mod wrapper;
 
+mod firewall;
+mod server;
+
+pub(crate) use firewall::*;
 use serde::Serialize;
 pub(crate) use server::*;
 

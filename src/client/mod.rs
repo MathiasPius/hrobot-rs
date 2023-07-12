@@ -9,7 +9,7 @@ mod r#async {
 
     use crate::{
         api::{self, AuthenticatedRequest, Credentials, UnauthenticatedRequest},
-        data::{Cancellation, Server},
+        data::{Cancellation, Firewall, Server},
         error::Error,
     };
 
@@ -313,6 +313,10 @@ mod r#async {
                 .go(api::withdraw_server_order(server_number, reason)?)
                 .await?
                 .0)
+        }
+
+        pub async fn get_firewall(&self, server_number: u32) -> Result<Firewall, Error> {
+            Ok(self.go(api::get_firewall(server_number)).await?.0)
         }
     }
 }
