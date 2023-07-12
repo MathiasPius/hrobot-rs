@@ -31,8 +31,8 @@ impl Default for AsyncRobot<hyper::Client<HttpsConnector<HttpConnector>, Body>> 
 impl<Response: 'static> TryInto<hyper::Request<Body>> for AuthenticatedRequest<Response> {
     type Error = hyper::http::Error;
 
-    fn try_into(self) -> Result<hyper::Request<Body>, Self::Error> {
-        let body = match self.body() {
+    fn try_into(mut self) -> Result<hyper::Request<Body>, Self::Error> {
+        let body = match self.take_body() {
             None => Body::empty(),
             Some(value) => Body::from(value),
         };

@@ -145,7 +145,7 @@ impl<Response> AuthenticatedRequest<Response> {
         &self.credentials.header_value
     }
 
-    pub fn body(&self) -> Option<&str> {
-        self.request.body.as_deref()
+    pub fn take_body(&mut self) -> Option<String> {
+        self.request.body.take()
     }
 }
