@@ -123,6 +123,9 @@ mod r#async {
         client: Client,
     }
 
+    // Instead of requiring [`Debug`](std::fmt::Debug) be implemented
+    // for all possible future clients, we just use whatever typename
+    // for the client instead.
     impl<Client> std::fmt::Debug for AsyncRobot<Client> {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             f.debug_struct("AsyncRobot")
@@ -189,7 +192,6 @@ mod r#async {
         }
 
         /// Shorthand for authenticating and sending the request.
-
         #[tracing::instrument]
         async fn go<Response: DeserializeOwned + Send + 'static>(
             &self,
@@ -270,7 +272,7 @@ mod r#async {
                 .0)
         }
 
-        /// Withdraw a server cancellation
+        /// Withdraw a server cancellation.
         ///
         /// # Example
         /// ```rust,no_run
@@ -287,6 +289,28 @@ mod r#async {
         ) -> Result<Cancellation, Error> {
             Ok(self
                 .go(api::withdraw_server_cancellation(server_number))
+                .await?
+                .0)
+        }
+
+        /// Withdraw a server order.
+        ///
+        /// # Example
+        /// ```rust,no_run
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// let robot = hrobot::AsyncRobot::default();
+        /// let status = robot.withdraw_server_order(1234567, Some("Accidental purchase.")).await.unwrap();
+        /// assert!(status.cancelled);
+        /// # }
+        /// ```
+        pub async fn withdraw_server_order(
+            &self,
+            server_number: u32,
+            reason: Option<&str>,
+        ) -> Result<Cancellation, Error> {
+            Ok(self
+                .go(api::withdraw_server_order(server_number, reason)?)
                 .await?
                 .0)
         }
