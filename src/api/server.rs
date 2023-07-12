@@ -1,15 +1,15 @@
-use crate::api::wrapper::{deserialize_inner, deserialize_inner_vec};
+use crate::api::wrapper::{List, Single};
 use crate::data::{Cancellation, Server};
 use hyper::Uri;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use super::UnauthenticatedRequest;
 
-pub fn list_servers() -> UnauthenticatedRequest<ListServerResponse> {
+pub fn list_servers() -> UnauthenticatedRequest<List<Server>> {
     UnauthenticatedRequest::new(Uri::from_static("https://robot-ws.your-server.de/server"))
 }
 
-pub fn get_server(server_number: u32) -> UnauthenticatedRequest<GetServerResponse> {
+pub fn get_server(server_number: u32) -> UnauthenticatedRequest<Single<Server>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/server/{server_number}"
     ))
@@ -18,7 +18,7 @@ pub fn get_server(server_number: u32) -> UnauthenticatedRequest<GetServerRespons
 pub fn rename_server(
     server_number: u32,
     name: &str,
-) -> Result<UnauthenticatedRequest<RenameServerResponse>, serde_html_form::ser::Error> {
+) -> Result<UnauthenticatedRequest<Single<Server>>, serde_html_form::ser::Error> {
     #[derive(Serialize)]
     struct RenameServerRequest<'a> {
         pub server_name: &'a str,
@@ -31,9 +31,7 @@ pub fn rename_server(
     .with_body(RenameServerRequest { server_name: name })
 }
 
-pub fn get_server_cancellation(
-    server_number: u32,
-) -> UnauthenticatedRequest<ServerCancellationRespone> {
+pub fn get_server_cancellation(server_number: u32) -> UnauthenticatedRequest<Single<Cancellation>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/server/{server_number}/cancellation"
     ))
@@ -41,7 +39,7 @@ pub fn get_server_cancellation(
 
 pub fn withdraw_server_cancellation(
     server_number: u32,
-) -> UnauthenticatedRequest<ServerCancellationRespone> {
+) -> UnauthenticatedRequest<Single<Cancellation>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/server/{server_number}/cancellation"
     ))
@@ -51,7 +49,7 @@ pub fn withdraw_server_cancellation(
 pub fn withdraw_server_order(
     server_number: u32,
     reason: Option<&str>,
-) -> Result<UnauthenticatedRequest<ServerCancellationRespone>, serde_html_form::ser::Error> {
+) -> Result<UnauthenticatedRequest<Single<Cancellation>>, serde_html_form::ser::Error> {
     #[derive(Serialize)]
     struct WithdrawalRequest<'a> {
         #[serde(skip_serializing_if = "Option::is_none")]
@@ -66,20 +64,6 @@ pub fn withdraw_server_order(
         reversal_reason: reason,
     })
 }
-
-#[derive(Debug, Deserialize)]
-pub struct ListServerResponse(#[serde(deserialize_with = "deserialize_inner_vec")] pub Vec<Server>);
-
-#[derive(Debug, Deserialize)]
-pub struct GetServerResponse(#[serde(deserialize_with = "deserialize_inner")] pub Server);
-
-#[derive(Debug, Deserialize)]
-pub struct RenameServerResponse(#[serde(deserialize_with = "deserialize_inner")] pub Server);
-
-#[derive(Debug, Deserialize)]
-pub struct ServerCancellationRespone(
-    #[serde(deserialize_with = "deserialize_inner")] pub Cancellation,
-);
 
 #[cfg(all(test, feature = "hyper-client"))]
 mod tests {

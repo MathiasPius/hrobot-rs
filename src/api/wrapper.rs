@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::{Deserialize, Deserializer};
+use serde::{de::DeserializeOwned, Deserialize, Deserializer};
 
 /// Deserialize an array of objects where each object is nested
 /// under a key indicating its type.
@@ -18,7 +18,7 @@ use serde::{Deserialize, Deserializer};
 /// In order to transform this result, it is necessary to first
 /// deserialize the outer map, and then extract the contained
 /// server objects.
-pub(crate) fn deserialize_inner_vec<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
+fn deserialize_inner_vec<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
     deserializer: D,
 ) -> Result<Vec<T>, D::Error> {
     let tmp = Vec::<HashMap<&str, T>>::deserialize(deserializer)?;
@@ -50,7 +50,7 @@ pub(crate) fn deserialize_inner_vec<'de, T: Deserialize<'de>, D: Deserializer<'d
 /// In order to transform this result, it is necessary to first
 /// deserialize the outer map, and then extract the contained
 /// server objects.
-pub(crate) fn deserialize_inner<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
+fn deserialize_inner<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
     deserializer: D,
 ) -> Result<T, D::Error> {
     HashMap::<&str, T>::deserialize(deserializer)?
@@ -58,6 +58,16 @@ pub(crate) fn deserialize_inner<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
         .next()
         .ok_or(serde::de::Error::custom("empty map"))
 }
+
+/// Deserialize a list of [`T`], where each T is wrapped.
+#[derive(Debug, Deserialize)]
+pub struct List<T: DeserializeOwned>(
+    #[serde(deserialize_with = "deserialize_inner_vec")] pub Vec<T>,
+);
+
+/// Deserialize a single wrapped [`T`].
+#[derive(Debug, Deserialize)]
+pub struct Single<T: DeserializeOwned>(#[serde(deserialize_with = "deserialize_inner")] pub T);
 
 #[cfg(test)]
 mod tests {

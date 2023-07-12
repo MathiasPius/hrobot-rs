@@ -251,7 +251,7 @@ impl Error {
     /// Construct an [`Error::Transport`] from the given error.
     ///
     /// Utility function for use with [`Result::map_err()`] specifically.
-    pub(crate) fn transport(error: impl std::error::Error + 'static) -> Error {
+    pub fn transport(error: impl std::error::Error + 'static) -> Error {
         Error::Transport(Box::new(error))
     }
 }
