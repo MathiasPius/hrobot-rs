@@ -46,6 +46,26 @@ mod r#async {
     }
 
     impl<Client: AsyncClient> AsyncRobot<Client> {
+        /// Construct a new [`AsyncRobot`] using the environment variables
+        /// `HROBOT_USERNAME` and `HROBOT_PASSWORD` for credentials.
+        ///
+        /// # Example
+        /// Construct an [`AsyncRobot`] using a [`hyper::Client`].
+        /// ```rust
+        /// # #[cfg(feature = "hyper-client")]
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// let https = hyper_rustls::HttpsConnectorBuilder::new()
+        ///     .with_native_roots()
+        ///     .https_only()
+        ///     .enable_http1()
+        ///     .build();
+        ///
+        /// let client = hyper::Client::builder().build(https);
+        ///
+        /// let robot = hrobot::AsyncRobot::from_env(client);
+        /// # }
+        /// ```
         pub fn from_env(client: Client) -> Result<Self, std::env::VarError> {
             Ok(Self::new(
                 client,
@@ -54,6 +74,25 @@ mod r#async {
             ))
         }
 
+        /// Construct a new [`AsyncRobot`].
+        ///
+        /// # Example
+        /// Construct an [`AsyncRobot`] using a [`hyper::Client`].
+        /// ```rust
+        /// # #[cfg(feature = "hyper-client")]
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// let https = hyper_rustls::HttpsConnectorBuilder::new()
+        ///     .with_native_roots()
+        ///     .https_only()
+        ///     .enable_http1()
+        ///     .build();
+        ///
+        /// let client = hyper::Client::builder().build(https);
+        ///
+        /// let robot = hrobot::AsyncRobot::new(client, "#ws+username", "p@ssw0rd");
+        /// # }
+        /// ```
         pub fn new(client: Client, username: &str, password: &str) -> Self {
             AsyncRobot {
                 credentials: Credentials::new(username, password),

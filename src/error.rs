@@ -215,16 +215,16 @@ impl From<MaybeTyped> for ApiError {
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
-pub(crate) enum APIResult<T> {
+pub(crate) enum ApiResult<T> {
     Ok(T),
     Error(MaybeTypedResponse),
 }
 
-impl<T> From<APIResult<T>> for Result<T, Error> {
-    fn from(result: APIResult<T>) -> Self {
+impl<T> From<ApiResult<T>> for Result<T, Error> {
+    fn from(result: ApiResult<T>) -> Self {
         match result {
-            APIResult::Ok(inner) => Ok(inner),
-            APIResult::Error(e) => Err(Error::Api(e.error.into())),
+            ApiResult::Ok(inner) => Ok(inner),
+            ApiResult::Error(e) => Err(Error::Api(e.error.into())),
         }
     }
 }

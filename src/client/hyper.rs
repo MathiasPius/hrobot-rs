@@ -5,8 +5,13 @@ use hyper::{
 };
 use hyper_rustls::HttpsConnector;
 use serde::de::DeserializeOwned;
+use tracing::trace;
 
-use crate::{api::AuthenticatedRequest, error::Error, AsyncRobot};
+use crate::{
+    api::AuthenticatedRequest,
+    error::{ApiResult, Error},
+    AsyncRobot,
+};
 
 use super::r#async::AsyncClient;
 
@@ -68,8 +73,8 @@ where
             .map_err(Error::transport)?;
 
         let stringified = String::from_utf8_lossy(&body);
-        println!("{stringified}");
+        trace!("response body: {stringified}");
 
-        Ok(serde_json::from_slice(&body)?)
+        serde_json::from_str::<ApiResult<Response>>(&stringified)?.into()
     }
 }

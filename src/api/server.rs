@@ -86,6 +86,8 @@ mod tests {
     use tracing::info;
     use tracing_test::traced_test;
 
+    use crate::{ApiError, Error};
+
     #[tokio::test]
     #[traced_test]
     async fn test_list_servers() {
@@ -112,6 +114,22 @@ mod tests {
 
             assert_eq!(retrieved_server.name, server.name);
         }
+    }
+
+    #[tokio::test]
+    #[traced_test]
+    async fn test_get_nonexistent_server() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let result = robot.get_server(1).await;
+        info!("{result:#?}");
+
+        assert!(matches!(
+            result,
+            Err(Error::Api(ApiError::ServerNotFound { .. }))
+        ));
     }
 
     #[tokio::test]
