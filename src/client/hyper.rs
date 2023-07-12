@@ -28,27 +28,22 @@ impl Default for AsyncRobot<hyper::Client<HttpsConnector<HttpConnector>, Body>> 
     }
 }
 
-impl<Response> TryInto<hyper::Request<Body>> for AuthenticatedRequest<Response> {
+impl<Response: 'static> TryInto<hyper::Request<Body>> for AuthenticatedRequest<Response> {
     type Error = hyper::http::Error;
 
     fn try_into(self) -> Result<hyper::Request<Body>, Self::Error> {
-        let body = match self.request.body {
+        let body = match self.body() {
             None => Body::empty(),
             Some(value) => Body::from(value),
         };
 
-        let mut request = hyper::Request::builder()
-            .uri(self.request.uri)
-            .method(self.request.method)
-            .header("Authorization", &self.credentials.header_value)
+        hyper::Request::builder()
+            .uri(self.uri())
+            .method(self.method())
+            .header("Authorization", self.authorization_header())
             .header("Content-Type", "application/x-www-form-urlencoded ")
-            .header("Accept", "application/json");
-
-        for (key, value) in self.request.headers {
-            request = request.header(key, value)
-        }
-
-        request.body(body)
+            .header("Accept", "application/json")
+            .body(body)
     }
 }
 

@@ -9,7 +9,7 @@ mod server;
 mod wrapper;
 
 use serde::Serialize;
-pub use server::*;
+pub(crate) use server::*;
 
 /// Base64-encoded credentials used to authenticate against
 /// the Hetzner Robot API.
@@ -53,10 +53,12 @@ impl Credentials {
 /// using Hetzner Robot [`Credentials`](Credentials) before it can be
 /// transformed into a client-dependent request and then sent.
 pub struct UnauthenticatedRequest<Response> {
-    pub uri: Uri,
-    pub method: &'static str,
-    pub body: Option<String>,
-    pub headers: Vec<(&'static str, String)>,
+    /// URI for the resource.
+    uri: Uri,
+    /// HTTP Request Method. Should be one of GET, POST, PUT, or DELETE.
+    method: &'static str,
+    /// application/x-www-form-urlencoded body of the request.
+    body: Option<String>,
     _response: PhantomData<Response>,
 }
 
@@ -66,7 +68,6 @@ impl<Response> std::fmt::Debug for UnauthenticatedRequest<Response> {
             .field("uri", &self.uri)
             .field("method", &self.method)
             .field("body", &self.body)
-            .field("headers", &self.headers)
             .field(
                 "response type",
                 &std::any::type_name::<Response>().to_string(),
@@ -76,33 +77,38 @@ impl<Response> std::fmt::Debug for UnauthenticatedRequest<Response> {
 }
 
 impl<Response> UnauthenticatedRequest<Response> {
-    pub fn new(uri: Uri) -> Self {
+    /// Construct a new [`UnauthenticatedRequest`] GET from a Uri.
+    pub(crate) fn new(uri: Uri) -> Self {
         UnauthenticatedRequest {
             uri,
             method: "GET",
             body: None,
-            headers: vec![],
             _response: PhantomData,
         }
     }
 
-    pub fn from(uri: &str) -> Self {
+    /// Construct an [`UnauthenticatedRequest`] from a plain-text URI.
+    ///
+    /// Panics if given an invalid URI string.
+    pub(crate) fn from(uri: &str) -> Self {
         Self::new(Uri::from_str(uri).expect("constructing the uri should never fail."))
     }
 
-    pub fn with_method(mut self, method: &'static str) -> Self {
+    /// Set the HTTP Request Method of the request.
+    pub(crate) fn with_method(mut self, method: &'static str) -> Self {
         self.method = method;
         self
     }
 
-    pub fn with_body<T: Serialize>(mut self, body: T) -> Result<Self, serde_html_form::ser::Error> {
+    /// Set the body of the request.
+    ///
+    /// Is automatically encoded as application/x-www-form-urlencoded.
+    pub(crate) fn with_body<T: Serialize>(
+        mut self,
+        body: T,
+    ) -> Result<Self, serde_html_form::ser::Error> {
         self.body = Some(serde_html_form::to_string(&body)?);
         Ok(self)
-    }
-
-    pub fn with_header(mut self, key: &'static str, value: &str) -> Self {
-        self.headers.push((key, value.to_owned()));
-        self
     }
 }
 
@@ -122,6 +128,24 @@ impl<Response> UnauthenticatedRequest<Response> {
 /// by your client library.
 #[derive(Debug)]
 pub struct AuthenticatedRequest<Response> {
-    pub request: UnauthenticatedRequest<Response>,
-    pub credentials: Credentials,
+    request: UnauthenticatedRequest<Response>,
+    credentials: Credentials,
+}
+
+impl<Response> AuthenticatedRequest<Response> {
+    pub fn method(&self) -> &'static str {
+        self.request.method
+    }
+
+    pub fn uri(&self) -> &Uri {
+        &self.request.uri
+    }
+
+    pub fn authorization_header(&self) -> &str {
+        &self.credentials.header_value
+    }
+
+    pub fn body(&self) -> Option<&str> {
+        self.request.body.as_deref()
+    }
 }

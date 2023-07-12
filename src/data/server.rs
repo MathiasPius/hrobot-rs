@@ -1,12 +1,13 @@
 use serde::Deserialize;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
+/// Indicates the status of a server.
 #[derive(Debug, Deserialize)]
 pub enum Status {
     /// Server is ready for use.
     #[serde(rename = "ready")]
     Ready,
-    /// Server is being provisioned or otherwise unavailable
+    /// Server is being provisioned or otherwise unavailable.
     #[serde(rename = "in progress")]
     InProgress,
 }
