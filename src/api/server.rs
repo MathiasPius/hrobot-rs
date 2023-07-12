@@ -1,5 +1,5 @@
 use crate::api::wrapper::{deserialize_inner, deserialize_inner_vec};
-use crate::data::Server;
+use crate::data::{Cancellation, Server};
 use hyper::Uri;
 use serde::{Deserialize, Serialize};
 
@@ -31,6 +31,42 @@ pub fn rename_server(
     .with_body(RenameServerRequest { server_name: name })
 }
 
+pub fn get_server_cancellation(
+    server_number: u32,
+) -> UnauthenticatedRequest<ServerCancellationRespone> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/server/{server_number}/cancellation"
+    ))
+}
+
+pub fn withdraw_server_cancellation(
+    server_number: u32,
+) -> UnauthenticatedRequest<ServerCancellationRespone> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/server/{server_number}/cancellation"
+    ))
+    .with_method("DELETE")
+}
+
+pub fn withdraw_server_order(
+    server_number: u32,
+    reason: Option<&str>,
+) -> Result<UnauthenticatedRequest<ServerCancellationRespone>, serde_html_form::ser::Error> {
+    #[derive(Serialize)]
+    struct WithdrawalRequest<'a> {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        reversal_reason: Option<&'a str>,
+    }
+
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/server/{server_number}/reversal"
+    ))
+    .with_method("POST")
+    .with_body(WithdrawalRequest {
+        reversal_reason: reason,
+    })
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ListServerResponse(#[serde(deserialize_with = "deserialize_inner_vec")] pub Vec<Server>);
 
@@ -39,6 +75,11 @@ pub struct GetServerResponse(#[serde(deserialize_with = "deserialize_inner")] pu
 
 #[derive(Debug, Deserialize)]
 pub struct RenameServerResponse(#[serde(deserialize_with = "deserialize_inner")] pub Server);
+
+#[derive(Debug, Deserialize)]
+pub struct ServerCancellationRespone(
+    #[serde(deserialize_with = "deserialize_inner")] pub Cancellation,
+);
 
 #[cfg(all(test, feature = "hyper-client"))]
 mod tests {
@@ -93,6 +134,22 @@ mod tests {
 
             let rolled_back_server = robot.rename_server(server.id, &old_name).await.unwrap();
             assert_eq!(&rolled_back_server.name, old_name);
+        }
+    }
+
+    #[tokio::test]
+    #[traced_test]
+    async fn test_get_server_cancellation() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let servers = robot.list_servers().await.unwrap();
+        info!("{servers:#?}");
+
+        if let Some(server) = servers.iter().next() {
+            let status = robot.get_server_cancellation(server.id).await.unwrap();
+            assert!(!status.cancelled);
         }
     }
 }

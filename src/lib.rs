@@ -4,3 +4,4 @@ pub mod data;
 mod error;
 
 pub use client::*;
+pub use error::{ApiError, Error};

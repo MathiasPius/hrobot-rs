@@ -32,6 +32,7 @@ impl std::fmt::Debug for Credentials {
 
         f.debug_struct("Credentials")
             .field("username", &username)
+            .field("password", &"<hidden>")
             .finish()
     }
 }

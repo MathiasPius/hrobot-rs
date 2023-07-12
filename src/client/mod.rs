@@ -9,7 +9,7 @@ mod r#async {
 
     use crate::{
         api::{self, AuthenticatedRequest, Credentials, UnauthenticatedRequest},
-        data::Server,
+        data::{Cancellation, Server},
         error::Error,
     };
 
@@ -76,13 +76,15 @@ mod r#async {
         }
 
         /// List all owned servers.
+        ///
+        /// # Example
+        /// Print the IDs and Names of all our servers.
         /// ```rust,no_run
         /// # #[tokio::main]
         /// # async fn main() {
         /// # let robot = hrobot::AsyncRobot::default();
         /// for server in robot.list_servers().await.unwrap() {
-        ///     println!("Name: {}", server.name);
-        ///     // Name: gibson
+        ///     println!("{}: {}", server.id, server.name);
         /// }
         /// # }
         /// ```
@@ -91,15 +93,15 @@ mod r#async {
         }
 
         /// Retrieve complete information about a specific [`Server`].
+        ///
+        /// # Example
         /// ```rust,no_run
         /// # #[tokio::main]
         /// # async fn main() {
-        /// # let robot = hrobot::AsyncRobot::default();
+        /// let robot = hrobot::AsyncRobot::default();
         /// let server = robot.get_server(1234567).await.unwrap();
         /// assert_eq!(server.id, 1234567);
-        ///
         /// println!("Name: {}", server.name);
-        /// // Name: gibson
         /// # }
         /// ```
         pub async fn get_server(&self, server_number: u32) -> Result<Server, Error> {
@@ -107,15 +109,59 @@ mod r#async {
         }
 
         /// Rename a server.
+        ///
+        /// # Example
         /// ```rust,no_run
         /// # #[tokio::main]
         /// # async fn main() {
-        /// # let robot = hrobot::AsyncRobot::default();
+        /// let robot = hrobot::AsyncRobot::default();
         /// robot.rename_server(1234567, "gibson").await.unwrap();
         /// # }
         /// ```
         pub async fn rename_server(&self, server_number: u32, name: &str) -> Result<Server, Error> {
             Ok(self.go(api::rename_server(server_number, name)?).await?.0)
+        }
+
+        /// Get the current cancellation status of a server.
+        ///
+        /// # Example
+        /// ```rust,no_run
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// let robot = hrobot::AsyncRobot::default();
+        /// let status = robot.get_server_cancellation(1234567).await.unwrap();
+        /// assert!(!status.cancelled);
+        /// # }
+        /// ```
+        pub async fn get_server_cancellation(
+            &self,
+            server_number: u32,
+        ) -> Result<Cancellation, Error> {
+            Ok(self
+                .go(api::get_server_cancellation(server_number))
+                .await?
+                .0)
+        }
+
+        /// Withdraw a server cancellation
+        ///
+        /// # Example
+        /// ```rust,no_run
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// let robot = hrobot::AsyncRobot::default();
+        /// let status = robot.withdraw_server_cancellation(1234567).await.unwrap();
+        /// assert!(!status.cancelled);
+        /// # }
+        /// ```
+        pub async fn withdraw_server_cancellation(
+            &self,
+            server_number: u32,
+        ) -> Result<Cancellation, Error> {
+            Ok(self
+                .go(api::withdraw_server_cancellation(server_number))
+                .await?
+                .0)
         }
     }
 }
