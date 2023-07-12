@@ -315,6 +315,17 @@ mod r#async {
                 .0)
         }
 
+        /// Retrieve a [`Server`]'s [`Firewall`].
+        ///
+        /// # Example
+        /// ```rust,no_run
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// let robot = hrobot::AsyncRobot::default();
+        /// let firewall = robot.get_firewall(1234567).await.unwrap();
+        /// println!("Ingress rule count: {}", firewall.rules.ingress.len());
+        /// # }
+        /// ```
         pub async fn get_firewall(&self, server_number: u32) -> Result<Firewall, Error> {
             Ok(self.go(api::get_firewall(server_number)).await?.0)
         }
