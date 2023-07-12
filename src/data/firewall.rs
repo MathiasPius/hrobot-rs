@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::{fmt::Display, net::Ipv4Addr};
+use std::{collections::HashMap, fmt::Display, net::Ipv4Addr};
+use tracing::trace;
 
 /// Version of the Internet Protocol supported by the firewall.
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
@@ -163,6 +164,111 @@ pub struct Firewall {
     pub rules: Rules,
 }
 
+impl Firewall {
+    pub(crate) fn to_urlencoded(&self) -> Result<String, std::fmt::Error> {
+        use std::fmt::Write;
+
+        let mut segments = HashMap::new();
+
+        fn serialize_rule(
+            direction: &str,
+            segments: &mut HashMap<String, String>,
+            i: usize,
+            rule: &Rule,
+        ) {
+            if let Some(ip_version) = rule.ip_version.as_ref() {
+                segments.insert(
+                    format!(
+                        "rules[{direction}][{id}][{key}]",
+                        id = i,
+                        key = "ip_version"
+                    ),
+                    ip_version.to_string(),
+                );
+            }
+            segments.insert(
+                format!("rules[{direction}][{id}][{key}]", id = i, key = "name"),
+                rule.name.to_owned(),
+            );
+
+            if let Some(dst_ip) = rule.dst_ip.as_ref() {
+                segments.insert(
+                    format!("rules[{direction}][{id}][{key}]", id = i, key = "dst_ip"),
+                    dst_ip.to_owned(),
+                );
+            }
+
+            if let Some(src_ip) = rule.src_ip.as_ref() {
+                segments.insert(
+                    format!("rules[{direction}][{id}][{key}]", id = i, key = "src_ip"),
+                    src_ip.to_owned(),
+                );
+            }
+
+            if let Some(dst_port) = rule.dst_port.as_ref() {
+                segments.insert(
+                    format!("rules[{direction}][{id}][{key}]", id = i, key = "dst_port"),
+                    dst_port.to_owned(),
+                );
+            }
+
+            if let Some(src_port) = rule.src_port.as_ref() {
+                segments.insert(
+                    format!("rules[{direction}][{id}][{key}]", id = i, key = "src_port"),
+                    src_port.to_owned(),
+                );
+            }
+
+            if let Some(protocol) = rule.protocol.as_ref() {
+                segments.insert(
+                    format!("rules[{direction}][{id}][{key}]", id = i, key = "protocol"),
+                    protocol.to_string(),
+                );
+            }
+
+            if let Some(tcp_flags) = rule.tcp_flags.as_ref() {
+                segments.insert(
+                    format!("rules[{direction}][{id}][{key}]", id = i, key = "tcp_flags"),
+                    tcp_flags.to_owned(),
+                );
+            }
+
+            segments.insert(
+                format!("rules[{direction}][{id}][{key}]", id = i, key = "action"),
+                rule.action.to_string(),
+            );
+        }
+
+        for (index, rule) in self.rules.ingress.iter().enumerate() {
+            serialize_rule("input", &mut segments, index, rule)
+        }
+
+        for (index, rule) in self.rules.egress.iter().enumerate() {
+            serialize_rule("output", &mut segments, index, rule)
+        }
+
+        let mut segments: Vec<(_, _)> = segments.into_iter().collect();
+        segments.sort_by(|(k1, _), (k2, _)| k1.cmp(k2));
+
+        let mut query = String::new();
+
+        write!(query, "status={}", self.status)?;
+        write!(query, "&whitelist_hos={}", self.whitelist_hetzner_services)?;
+
+        for (k, v) in segments.into_iter() {
+            trace!("{k}={v}");
+            write!(
+                query,
+                "&{}={}",
+                urlencoding::encode(&k),
+                urlencoding::encode(&v)
+            )?;
+        }
+
+        Ok(query)
+    }
+}
+
 /// Encapsulates all ingoing and outgoing rules for a Firewall.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Rules {
@@ -203,4 +309,53 @@ pub struct Rule {
 
     /// Action to take if rule matches.
     pub action: Action,
+}
+
+#[cfg(test)]
+mod tests {
+    use std::net::Ipv4Addr;
+
+    use tracing_test::traced_test;
+
+    use crate::data::{IPVersion, Protocol};
+
+    use super::{Firewall, Rule, Rules};
+
+    #[test]
+    #[traced_test]
+    fn serializing_firewall_rules() {
+        let firewall = Firewall {
+            ipv4: Ipv4Addr::LOCALHOST,
+            id: 123123123,
+            status: super::State::Active,
+            whitelist_hetzner_services: true,
+            port: super::Port::Main,
+            rules: Rules {
+                ingress: vec![Rule {
+                    ip_version: Some(IPVersion::IPv4),
+                    name: "Allow all".to_owned(),
+                    dst_ip: Some("127.0.0.0/8".to_string()),
+                    src_ip: Some("0.0.0.0/0".to_string()),
+                    dst_port: Some("27015-27016".to_string()),
+                    src_port: None,
+                    protocol: Some(Protocol::TCP),
+                    tcp_flags: None,
+                    action: super::Action::Accept,
+                }],
+                egress: vec![Rule {
+                    ip_version: None,
+                    name: "Allow all".to_owned(),
+                    dst_ip: None,
+                    src_ip: None,
+                    dst_port: None,
+                    src_port: None,
+                    protocol: None,
+                    tcp_flags: None,
+                    action: super::Action::Accept,
+                }],
+            },
+        };
+
+        println!("{}", firewall.to_urlencoded().unwrap());
+    }
 }
