@@ -1,5 +1,5 @@
 use crate::api::wrapper::{List, Single};
-use crate::data::{Cancellation, Server};
+use crate::models::{Cancellation, Server};
 use hyper::Uri;
 use serde::Serialize;
 

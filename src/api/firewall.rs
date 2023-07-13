@@ -1,4 +1,4 @@
-use crate::data::Firewall;
+use crate::models::Firewall;
 
 use super::{wrapper::Single, UnauthenticatedRequest};
 

@@ -9,8 +9,8 @@ mod r#async {
 
     use crate::{
         api::{self, AuthenticatedRequest, Credentials, UnauthenticatedRequest},
-        data::{Cancellation, Firewall, Server},
         error::Error,
+        models::{Cancellation, Firewall, Server},
     };
 
     /// Implemented by asynchronous http clients, so they can be

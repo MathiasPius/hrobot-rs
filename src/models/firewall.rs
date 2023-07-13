@@ -312,7 +312,7 @@ mod tests {
 
     use tracing_test::traced_test;
 
-    use crate::data::{IPVersion, Protocol};
+    use crate::models::{IPVersion, Protocol};
 
     use super::{Firewall, Rule, Rules};
 
