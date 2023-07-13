@@ -13,7 +13,7 @@ use crate::{
     AsyncRobot,
 };
 
-use super::r#async::AsyncClient;
+use super::r#async::AsyncHttpClient;
 
 impl Default for AsyncRobot<hyper::Client<HttpsConnector<HttpConnector>, Body>> {
     fn default() -> Self {
@@ -31,10 +31,10 @@ impl Default for AsyncRobot<hyper::Client<HttpsConnector<HttpConnector>, Body>> 
 impl<Response: 'static> TryInto<hyper::Request<Body>> for AuthenticatedRequest<Response> {
     type Error = hyper::http::Error;
 
-    fn try_into(mut self) -> Result<hyper::Request<Body>, Self::Error> {
-        let body = match self.take_body() {
+    fn try_into(self) -> Result<hyper::Request<Body>, Self::Error> {
+        let body = match self.body() {
             None => Body::empty(),
-            Some(value) => Body::from(value),
+            Some(value) => Body::from(value.to_owned()),
         };
 
         hyper::Request::builder()
@@ -48,7 +48,7 @@ impl<Response: 'static> TryInto<hyper::Request<Body>> for AuthenticatedRequest<R
 }
 
 #[async_trait]
-impl<C> AsyncClient for hyper::Client<C, Body>
+impl<C> AsyncHttpClient for hyper::Client<C, Body>
 where
     C: Connect + Clone + Send + Sync + 'static,
 {

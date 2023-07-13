@@ -2,7 +2,7 @@ use crate::data::Firewall;
 
 use super::{wrapper::Single, UnauthenticatedRequest};
 
-pub fn get_firewall(server_number: u32) -> UnauthenticatedRequest<Single<Firewall>> {
+pub(crate) fn get_firewall(server_number: u32) -> UnauthenticatedRequest<Single<Firewall>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/{server_number}"
     ))

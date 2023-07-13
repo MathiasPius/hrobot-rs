@@ -5,17 +5,17 @@ use serde::Serialize;
 
 use super::UnauthenticatedRequest;
 
-pub fn list_servers() -> UnauthenticatedRequest<List<Server>> {
+pub(crate) fn list_servers() -> UnauthenticatedRequest<List<Server>> {
     UnauthenticatedRequest::new(Uri::from_static("https://robot-ws.your-server.de/server"))
 }
 
-pub fn get_server(server_number: u32) -> UnauthenticatedRequest<Single<Server>> {
+pub(crate) fn get_server(server_number: u32) -> UnauthenticatedRequest<Single<Server>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/server/{server_number}"
     ))
 }
 
-pub fn rename_server(
+pub(crate) fn rename_server(
     server_number: u32,
     name: &str,
 ) -> Result<UnauthenticatedRequest<Single<Server>>, serde_html_form::ser::Error> {
@@ -31,13 +31,15 @@ pub fn rename_server(
     .with_body(RenameServerRequest { server_name: name })
 }
 
-pub fn get_server_cancellation(server_number: u32) -> UnauthenticatedRequest<Single<Cancellation>> {
+pub(crate) fn get_server_cancellation(
+    server_number: u32,
+) -> UnauthenticatedRequest<Single<Cancellation>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/server/{server_number}/cancellation"
     ))
 }
 
-pub fn withdraw_server_cancellation(
+pub(crate) fn withdraw_server_cancellation(
     server_number: u32,
 ) -> UnauthenticatedRequest<Single<Cancellation>> {
     UnauthenticatedRequest::from(&format!(
@@ -46,7 +48,7 @@ pub fn withdraw_server_cancellation(
     .with_method("DELETE")
 }
 
-pub fn withdraw_server_order(
+pub(crate) fn withdraw_server_order(
     server_number: u32,
     reason: Option<&str>,
 ) -> Result<UnauthenticatedRequest<Single<Cancellation>>, serde_html_form::ser::Error> {

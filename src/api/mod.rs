@@ -17,9 +17,8 @@ pub(crate) use server::*;
 /// Base64-encoded credentials used to authenticate against
 /// the Hetzner Robot API.
 ///
-/// Used when [authenticating](UnauthenticatedRequest::authenticate)
-/// a request, before it is transformed into a client-dependent request
-/// type and sent.
+/// Used by [`AsyncRobot`](crate::AsyncRobot) to authenticate requests, before it
+/// is transformed into a client-dependent request type and sent.
 #[derive(Clone)]
 pub struct Credentials {
     pub header_value: String,
@@ -55,7 +54,7 @@ impl Credentials {
 /// Must be [`authenticated`](UnauthenticatedRequest::authenticate)
 /// using Hetzner Robot [`Credentials`](Credentials) before it can be
 /// transformed into a client-dependent request and then sent.
-pub struct UnauthenticatedRequest<Response> {
+pub(crate) struct UnauthenticatedRequest<Response> {
     /// URI for the resource.
     uri: Uri,
     /// HTTP Request Method. Should be one of GET, POST, PUT, or DELETE.
@@ -136,19 +135,28 @@ pub struct AuthenticatedRequest<Response> {
 }
 
 impl<Response> AuthenticatedRequest<Response> {
+    /// Returns the method of the request.
+    ///
+    /// One of `GET`, `POST`, `PUT` or `DELETE`.
     pub fn method(&self) -> &'static str {
         self.request.method
     }
 
+    /// Returns the complete URI for the request.
     pub fn uri(&self) -> &Uri {
         &self.request.uri
     }
 
+    /// Returns the already encoded header value to be used as
+    /// the Authorization header of the request.
+    ///
+    /// Example: `"Basic aGVsbG86d29ybGQK"`
     pub fn authorization_header(&self) -> &str {
         &self.credentials.header_value
     }
 
-    pub fn take_body(&mut self) -> Option<String> {
-        self.request.body.take()
+    /// Returns the encoded body of the request.
+    pub fn body(&self) -> Option<&str> {
+        self.request.body.as_deref()
     }
 }

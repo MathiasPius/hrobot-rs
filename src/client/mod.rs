@@ -23,7 +23,7 @@ mod r#async {
     /// The actual signature when using `async_trait` is:
     ///
     /// ```rust
-    /// pub trait AsyncClient {
+    /// pub trait AsyncHttpClient {
     ///     async fn send_request<Response>(
     ///         &self,
     ///         request: AuthenticatedRequest<Response>,
@@ -41,7 +41,7 @@ mod r#async {
     /// ```rust
     /// # use async_trait::async_trait;
     /// #[async_trait]
-    /// impl<C> AsyncClient for hyper::Client<C, Body>
+    /// impl<C> AsyncHttpClient for hyper::Client<C, Body>
     /// where
     ///     C: Connect + Clone + Send + Sync + 'static,
     /// {
@@ -73,7 +73,7 @@ mod r#async {
     /// }
     /// ```
     #[async_trait]
-    pub trait AsyncClient {
+    pub trait AsyncHttpClient {
         /// Send an [`AuthenticatedRequest`] and return the deserialized
         /// `Response` or an [`Error`].
         ///
@@ -88,7 +88,7 @@ mod r#async {
             Response: DeserializeOwned + Send + 'static;
     }
 
-    /// Easy to use wrapper around an [`AsyncClient`] implementation.
+    /// Easy to use wrapper around an [`AsyncHttpClient`] implementation.
     ///
     /// Handles authentication and exposes the Hetzner Robot API functionality
     /// with a simple interface.
@@ -97,7 +97,7 @@ mod r#async {
     /// and then use everywhere you want to interact with the API.
     ///
     /// # Client Requirements
-    /// `Client` type is required to implement the [`AsyncClient`].
+    /// `Client` type is required to implement the [`AsyncHttpClient`].
     ///
     /// If the default feature `hyper-client` is enabled, then this
     /// crate implements it for [`hyper::Client`], and defines a default
@@ -135,7 +135,7 @@ mod r#async {
         }
     }
 
-    impl<Client: AsyncClient> AsyncRobot<Client> {
+    impl<Client: AsyncHttpClient> AsyncRobot<Client> {
         /// Construct a new [`AsyncRobot`] using the environment variables
         /// `HROBOT_USERNAME` and `HROBOT_PASSWORD` for credentials,
         /// and the given client.
