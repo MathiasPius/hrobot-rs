@@ -4,14 +4,8 @@ use hyper::{
     Body,
 };
 use hyper_rustls::HttpsConnector;
-use serde::de::DeserializeOwned;
-use tracing::trace;
 
-use crate::{
-    api::AuthenticatedRequest,
-    error::{ApiResult, Error},
-    AsyncRobot,
-};
+use crate::{api::AuthenticatedRequest, error::Error, AsyncRobot};
 
 use super::r#async::AsyncHttpClient;
 
@@ -55,9 +49,9 @@ where
     async fn send_request<Response>(
         &self,
         request: AuthenticatedRequest<Response>,
-    ) -> Result<Response, Error>
+    ) -> Result<Vec<u8>, Error>
     where
-        Response: DeserializeOwned + Send + 'static,
+        Response: Send + 'static,
     {
         let request = request.try_into().map_err(Error::transport)?;
 
@@ -67,9 +61,6 @@ where
             .await
             .map_err(Error::transport)?;
 
-        let stringified = String::from_utf8_lossy(&body);
-        trace!("response body: {stringified}");
-
-        serde_json::from_str::<ApiResult<Response>>(&stringified)?.into()
+        Ok(body.to_vec())
     }
 }

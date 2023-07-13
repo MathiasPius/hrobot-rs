@@ -9,8 +9,8 @@ mod r#async {
 
     use crate::{
         api::{self, AuthenticatedRequest, Credentials, UnauthenticatedRequest},
-        error::Error,
-        models::{Cancellation, Firewall, Server},
+        error::{ApiResult, Error},
+        models::{Cancellation, Firewall, FirewallConfiguration, Server},
     };
 
     /// Implemented by asynchronous http clients, so they can be
@@ -23,53 +23,16 @@ mod r#async {
     /// The actual signature when using `async_trait` is:
     ///
     /// ```rust
+    /// # use hrobot::error::Error;
+    /// # use hrobot::api::AuthenticatedRequest;
+    /// # #[async_trait::async_trait]
     /// pub trait AsyncHttpClient {
     ///     async fn send_request<Response>(
     ///         &self,
     ///         request: AuthenticatedRequest<Response>,
     ///     ) -> Result<Response, Error>
     ///     where
-    ///         Response: DeserializeOwned + Send + 'static;
-    /// }
-    /// ```
-    /// See the example below for an example implementation.
-    /// # Example
-    /// Implementation for [`hyper::Client`].
-    ///
-    /// Note: this implementation is included by when the
-    /// `hyper-client` feature is enabled, which it is by default.
-    /// ```rust
-    /// # use async_trait::async_trait;
-    /// #[async_trait]
-    /// impl<C> AsyncHttpClient for hyper::Client<C, Body>
-    /// where
-    ///     C: Connect + Clone + Send + Sync + 'static,
-    /// {
-    ///     async fn send_request<Response>(
-    ///         &self,
-    ///         request: AuthenticatedRequest<Response>,
-    ///     ) -> Result<Response, Error>
-    ///     where
-    ///         Response: DeserializeOwned + Send + 'static,
-    ///     {
-    ///         // convert the request from an AuthenticatedRequest<Response>
-    ///         // into a `hyper::Request`.
-    ///         let request = request.try_into()
-    ///             .map_err(Error::transport)?;
-    ///
-    ///         // send request and attempt wait for the response
-    ///         let response = self.request(request).await
-    ///             .map_err(Error::transport)?;
-    ///
-    ///         // get the response body
-    ///         let body = hyper::body::to_bytes(response.into_body())
-    ///             .await
-    ///             .map_err(Error::transport)?;
-    ///
-    ///         // deserialize the response body into an `ApiResult<T>` containing
-    ///         // either the expected `Response` type, or an `ApiError`.
-    ///         serde_json::from_slice::<ApiResult<Response>>(&body)?.into()
-    ///    }
+    ///         Response: Send + 'static;
     /// }
     /// ```
     #[async_trait]
@@ -83,9 +46,9 @@ mod r#async {
         async fn send_request<Response>(
             &self,
             request: AuthenticatedRequest<Response>,
-        ) -> Result<Response, Error>
+        ) -> Result<Vec<u8>, Error>
         where
-            Response: DeserializeOwned + Send + 'static;
+            Response: Send + 'static;
     }
 
     /// Easy to use wrapper around an [`AsyncHttpClient`] implementation.
@@ -113,6 +76,8 @@ mod r#async {
     /// # #[cfg(feature = "hyper-client")]
     /// # #[tokio::main]
     /// # async fn main() {
+    /// # std::env::set_var("HROBOT_USERNAME", "username");
+    /// # std::env::set_var("HROBOT_PASSWORD", "password");
     /// let robot = hrobot::AsyncRobot::default();
     /// # }
     /// ```
@@ -201,7 +166,12 @@ mod r#async {
 
             let authenticated_request = request.authenticate(&self.credentials);
 
-            self.client.send_request(authenticated_request).await
+            let body = self.client.send_request(authenticated_request).await?;
+
+            let stringified = String::from_utf8_lossy(&body);
+            trace!("response body: {stringified}");
+
+            serde_json::from_str::<ApiResult<Response>>(&stringified)?.into()
         }
 
         /// List all owned servers.
@@ -328,6 +298,51 @@ mod r#async {
         /// ```
         pub async fn get_firewall(&self, server_number: u32) -> Result<Firewall, Error> {
             Ok(self.go(api::get_firewall(server_number)).await?.0)
+        }
+
+        /// Replace a [`Server`]'s [`Firewall`].
+        ///
+        /// # Example
+        /// ```rust,no_run
+        /// # use hrobot::models::{
+        /// #     FirewallConfiguration, Protocol, Action,
+        /// #     IPVersion, Rule, Rules, State
+        /// # };
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// let robot = hrobot::AsyncRobot::default();
+        ///
+        /// let firewall = FirewallConfiguration {
+        ///    status: State::Active,
+        ///    filter_ipv6: false,
+        ///    whitelist_hetzner_services: true,
+        ///    rules: Rules {
+        ///        ingress: vec![
+        ///            Rule {
+        ///                name: "Allow from home".to_owned(),
+        ///                ip_version: Some(IPVersion::IPv4),
+        ///                src_ip: Some("123.123.123.123/32".to_string()),
+        ///                dst_port: Some("27015-27016".to_string()),
+        ///                protocol: Some(Protocol::TCP),
+        ///                action: Action::Accept,
+        ///                ..Default::default()
+        ///        }],
+        ///        egress: vec![]
+        ///    },
+        /// };
+        ///
+        /// robot.set_firewall_configuration(1234567, &firewall).await.unwrap();
+        /// # }
+        /// ```
+        pub async fn set_firewall_configuration(
+            &self,
+            server_number: u32,
+            firewall: &FirewallConfiguration,
+        ) -> Result<Firewall, Error> {
+            Ok(self
+                .go(api::set_firewall(server_number, firewall)?)
+                .await?
+                .0)
         }
     }
 }
