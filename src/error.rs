@@ -1,7 +1,16 @@
 use std::fmt::Display;
 
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use thiserror::Error;
+
+fn deserialize_null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    T: Default + Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_default())
+}
 
 /// Error returned by the Hetzner Robot API.
 #[derive(Debug, Deserialize, Error)]
@@ -187,9 +196,9 @@ pub enum ApiError {
     #[error("invalid input: {message}")]
     InvalidInput {
         message: String,
-        #[serde(default)]
+        #[serde(default, deserialize_with = "deserialize_null_default")]
         missing: Vec<String>,
-        #[serde(default)]
+        #[serde(default, deserialize_with = "deserialize_null_default")]
         invalid: Vec<String>,
     },
     /// Conflict.
@@ -478,7 +487,7 @@ mod tests {
     }
 
     #[test]
-    fn deserialize_error_code() {
+    fn test_deserialize_error_code() {
         for code in ERROR_CODES {
             let format = ErrorFormat {
                 status: 200,
@@ -490,5 +499,28 @@ mod tests {
                 serde_json::from_str(&serde_json::to_string(&format).unwrap()).unwrap();
             assert!(error.is_typed(), "{}: {:#?}", code, ApiError::from(error));
         }
+    }
+
+    #[test]
+    fn test_deserialize_invalid_input() {
+        let error = r#"
+            {
+                "error": {
+                    "status":400,
+                    "code":"INVALID_INPUT",
+                    "message":"invalid input",
+                    "missing":null,
+                    "invalid":[
+                        "rules"
+                    ]
+                }
+            }
+        "#;
+
+        let err: MaybeTypedResponse = serde_json::from_str(error).unwrap();
+
+        assert!(matches!(err, MaybeTypedResponse {
+            error: MaybeTyped::Typed(ApiError::InvalidInput { .. })
+        }));
     }
 }
