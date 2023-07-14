@@ -133,6 +133,7 @@ fn urlencode_firewall(firewall: &FirewallConfiguration) -> Result<String, std::f
 
 #[cfg(all(test, feature = "hyper-client"))]
 mod tests {
+    use serial_test::serial;
     use tracing::info;
     use tracing_test::traced_test;
 
@@ -143,6 +144,7 @@ mod tests {
 
     #[tokio::test]
     #[traced_test]
+    #[serial("firewall")]
     async fn test_get_firewall() {
         dotenvy::dotenv().ok();
 
@@ -161,6 +163,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "unexpected failure might leave firewall in modified state."]
     #[traced_test]
+    #[serial("firewall")]
     async fn test_set_firewall_configuration() {
         dotenvy::dotenv().ok();
 
