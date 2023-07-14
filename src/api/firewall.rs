@@ -1,9 +1,4 @@
-use serde::ser::Error;
-use tracing::trace;
-
-use crate::models::{
-    Firewall, FirewallConfiguration, FirewallTemplate, FirewallTemplateReference, Rule,
-};
+use crate::models::{Firewall, FirewallConfiguration, FirewallTemplate, FirewallTemplateReference};
 
 use super::{
     wrapper::{List, Single},
@@ -20,15 +15,13 @@ pub(crate) fn set_firewall_configuration(
     server_number: u32,
     firewall: &FirewallConfiguration,
 ) -> Result<UnauthenticatedRequest<Single<Firewall>>, serde_html_form::ser::Error> {
+    use crate::models::firewall::urlencode::UrlEncode;
+
     Ok(UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/{server_number}"
     ))
     .with_method("POST")
-    .with_serialized_body(urlencode_firewall(firewall).map_err(|_| {
-        serde_html_form::ser::Error::custom(
-            "formatting error while serializing firewall configuration",
-        )
-    })?))
+    .with_serialized_body(firewall.encode()))
 }
 
 pub(crate) fn delete_firewall(server_number: u32) -> UnauthenticatedRequest<Single<Firewall>> {
@@ -52,79 +45,13 @@ pub(crate) fn get_firewall_template(
     ))
 }
 
-fn urlencode_firewall(firewall: &FirewallConfiguration) -> Result<String, std::fmt::Error> {
-    use std::fmt::Write;
-
-    let mut segments = Vec::new();
-
-    fn serialize_rule(
-        direction: &str,
-        segments: &mut Vec<(String, String)>,
-        id: usize,
-        rule: &Rule,
-    ) {
-        let mut serialize_field = |name, value| {
-            if let Some(value) = value {
-                segments.push((format!("rules[{direction}][{id}][{name}]"), value))
-            }
-        };
-
-        serialize_field("name", Some(rule.name.to_owned()));
-        serialize_field(
-            "ip_version",
-            rule.ip_version.as_ref().map(ToString::to_string),
-        );
-        serialize_field("dst_ip", rule.dst_ip.clone());
-        serialize_field("src_ip", rule.src_ip.clone());
-        serialize_field("dst_port", rule.dst_port.clone());
-        serialize_field("src_port", rule.src_port.clone());
-        serialize_field("protocol", rule.protocol.as_ref().map(ToString::to_string));
-        serialize_field(
-            "tcp_flags",
-            rule.tcp_flags.as_ref().map(ToString::to_string),
-        );
-        serialize_field("action", Some(rule.action.to_string()));
-    }
-
-    for (index, rule) in firewall.rules.ingress.iter().enumerate() {
-        serialize_rule("input", &mut segments, index, rule)
-    }
-
-    for (index, rule) in firewall.rules.egress.iter().enumerate() {
-        serialize_rule("output", &mut segments, index, rule)
-    }
-
-    let mut query = format!("status={}", firewall.status);
-
-    write!(
-        query,
-        "&whitelist_hos={}",
-        firewall.whitelist_hetzner_services
-    )?;
-
-    for (k, v) in segments.into_iter() {
-        trace!("{k}={v}");
-        write!(
-            query,
-            "&{}={}",
-            urlencoding::encode(&k),
-            urlencoding::encode(&v).replace("%20", "+")
-        )?;
-    }
-
-    Ok(query)
-}
-
 #[cfg(all(test, feature = "hyper-client"))]
 mod tests {
     use serial_test::serial;
     use tracing::info;
     use tracing_test::traced_test;
 
-    use crate::{
-        api::firewall::urlencode_firewall,
-        models::{Action, FirewallConfiguration, IPVersion, Protocol, Rule, Rules, State},
-    };
+    use crate::models::{Action, Rule, State};
 
     #[tokio::test]
     #[traced_test]
@@ -259,42 +186,6 @@ mod tests {
                 .await
                 .unwrap();
         }
-    }
-
-    #[test]
-    #[traced_test]
-    fn serializing_firewall_rules() {
-        let firewall = FirewallConfiguration {
-            status: State::Active,
-            filter_ipv6: false,
-            whitelist_hetzner_services: true,
-            rules: Rules {
-                ingress: vec![Rule {
-                    ip_version: Some(IPVersion::IPv4),
-                    name: "Some rule".to_owned(),
-                    dst_ip: Some("127.0.0.0/8".to_string()),
-                    src_ip: Some("0.0.0.0/0".to_string()),
-                    dst_port: Some("27015-27016".to_string()),
-                    src_port: None,
-                    protocol: Some(Protocol::TCP),
-                    tcp_flags: None,
-                    action: Action::Accept,
-                }],
-                egress: vec![Rule {
-                    ip_version: None,
-                    name: "Allow all".to_owned(),
-                    dst_ip: None,
-                    src_ip: None,
-                    dst_port: None,
-                    src_port: None,
-                    protocol: None,
-                    tcp_flags: None,
-                    action: Action::Accept,
-                }],
-            },
-        };
-
-        println!("{}", urlencode_firewall(&firewall).unwrap());
     }
 
     #[tokio::test]

@@ -12,16 +12,18 @@ pub enum IPVersion {
     IPv6,
 }
 
+impl AsRef<str> for IPVersion {
+    fn as_ref(&self) -> &str {
+        match self {
+            IPVersion::IPv4 => "ipv4",
+            IPVersion::IPv6 => "ipv6",
+        }
+    }
+}
+
 impl Display for IPVersion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                IPVersion::IPv4 => "ipv4",
-                IPVersion::IPv6 => "ipv6",
-            }
-        )
+        f.write_str(self.as_ref())
     }
 }
 
@@ -91,21 +93,23 @@ pub enum Protocol {
     ESP,
 }
 
+impl AsRef<str> for Protocol {
+    fn as_ref(&self) -> &str {
+        match self {
+            Protocol::TCP => "tcp",
+            Protocol::UDP => "udp",
+            Protocol::GRE => "gre",
+            Protocol::ICMP => "icmp",
+            Protocol::IPIP => "ipip",
+            Protocol::AH => "ah",
+            Protocol::ESP => "esp",
+        }
+    }
+}
+
 impl Display for Protocol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Protocol::TCP => "tcp",
-                Protocol::UDP => "udp",
-                Protocol::GRE => "gre",
-                Protocol::ICMP => "icmp",
-                Protocol::IPIP => "ipip",
-                Protocol::AH => "ah",
-                Protocol::ESP => "esp",
-            }
-        )
+        f.write_str(self.as_ref())
     }
 }
 
@@ -121,16 +125,18 @@ pub enum Action {
     Discard,
 }
 
+impl AsRef<str> for Action {
+    fn as_ref(&self) -> &str {
+        match self {
+            Action::Accept => "accept",
+            Action::Discard => "discard",
+        }
+    }
+}
+
 impl Display for Action {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Action::Accept => "accept",
-                Action::Discard => "discard",
-            }
-        )
+        f.write_str(self.as_ref())
     }
 }
 
@@ -288,4 +294,163 @@ pub struct Rule {
 
     /// Action to take if rule matches.
     pub action: Action,
+}
+
+pub(crate) mod urlencode {
+    use super::{FirewallConfiguration, Rule, Rules};
+
+    pub(crate) struct UrlEncodingBuffer<'a> {
+        buffer: &'a mut Vec<String>,
+        prefix: String,
+    }
+
+    impl<'a> UrlEncodingBuffer<'a> {
+        pub fn from(buffer: &'a mut Vec<String>) -> Self {
+            UrlEncodingBuffer {
+                buffer,
+                prefix: String::new(),
+            }
+        }
+
+        pub fn append(&mut self, prefix: &str) -> UrlEncodingBuffer<'_> {
+            UrlEncodingBuffer {
+                buffer: self.buffer,
+                prefix: format!("{}{}", self.prefix, prefix),
+            }
+        }
+
+        pub fn set(&mut self, key: &str, value: &str) {
+            self.buffer.push(format!(
+                "{}{}={}",
+                urlencoding::encode(&self.prefix),
+                urlencoding::encode(key),
+                urlencoding::encode(value).replace("%20", "+")
+            ));
+        }
+    }
+    /// Used to serialize firewalls and their configurations
+    pub(crate) trait UrlEncode {
+        fn encode_into(&self, f: UrlEncodingBuffer<'_>);
+        fn encode(&self) -> String {
+            let mut buffer = Vec::new();
+            let encoder = UrlEncodingBuffer::from(&mut buffer);
+
+            self.encode_into(encoder);
+            buffer.join("&")
+        }
+    }
+
+    impl UrlEncode for Rule {
+        fn encode_into(&self, mut f: UrlEncodingBuffer<'_>) {
+            f.set("[name]", &self.name);
+
+            if let Some(ip_version) = self.ip_version.as_ref() {
+                f.set("[ip_version]", ip_version.as_ref())
+            }
+
+            if let Some(dst_ip) = self.dst_ip.as_ref() {
+                f.set("[dst_ip]", dst_ip.as_ref())
+            }
+
+            if let Some(src_ip) = self.src_ip.as_ref() {
+                f.set("[src_ip]", src_ip.as_ref())
+            }
+
+            if let Some(dst_port) = self.dst_port.as_ref() {
+                f.set("[dst_port]", dst_port.as_ref())
+            }
+
+            if let Some(src_port) = self.src_port.as_ref() {
+                f.set("[src_port]", src_port.as_ref())
+            }
+
+            if let Some(protocol) = self.protocol.as_ref() {
+                f.set("[protocol]", protocol.as_ref())
+            }
+
+            if let Some(tcp_flags) = self.tcp_flags.as_ref() {
+                f.set("[tcp_flags]", tcp_flags.as_ref())
+            }
+
+            f.set("[action]", self.action.as_ref());
+        }
+    }
+
+    impl UrlEncode for Rules {
+        fn encode_into(&self, mut f: UrlEncodingBuffer<'_>) {
+            {
+                let mut ingress = f.append("[input]");
+                for (index, rule) in self.ingress.iter().enumerate() {
+                    rule.encode_into(ingress.append(&format!("[{index}]")));
+                }
+
+                let mut egress = f.append("[output]");
+                for (index, rule) in self.ingress.iter().enumerate() {
+                    rule.encode_into(egress.append(&format!("[{index}]")));
+                }
+            }
+        }
+    }
+
+    impl UrlEncode for FirewallConfiguration {
+        fn encode_into(&self, mut f: UrlEncodingBuffer<'_>) {
+            f.set("status", &self.status.to_string());
+            f.set("filter_ipv6", &self.filter_ipv6.to_string());
+            f.set(
+                "whitelist_hos",
+                &self.whitelist_hetzner_services.to_string(),
+            );
+            self.rules.encode_into(f.append("rules"));
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use tracing::info;
+        use tracing_test::traced_test;
+
+        use crate::models::{
+            Action, FirewallConfiguration, IPVersion, Protocol, Rule, Rules, State,
+        };
+
+        use super::UrlEncode;
+
+        #[test]
+        #[traced_test]
+        fn serialize_firewall_config() {
+            info!(
+                "{}",
+                &FirewallConfiguration {
+                    status: State::Active,
+                    filter_ipv6: false,
+                    whitelist_hetzner_services: true,
+                    rules: Rules {
+                        ingress: vec![Rule {
+                            ip_version: Some(IPVersion::IPv4),
+                            name: "Some rule".to_owned(),
+                            dst_ip: Some("127.0.0.0/8".to_string()),
+                            src_ip: Some("0.0.0.0/0".to_string()),
+                            dst_port: Some("27015-27016".to_string()),
+                            src_port: None,
+                            protocol: Some(Protocol::TCP),
+                            tcp_flags: None,
+                            action: Action::Accept,
+                        }],
+                        egress: vec![Rule {
+                            ip_version: None,
+                            name: "Allow all".to_owned(),
+                            dst_ip: None,
+                            src_ip: None,
+                            dst_port: None,
+                            src_port: None,
+                            protocol: None,
+                            tcp_flags: None,
+                            action: Action::Accept,
+                        }],
+                    },
+                }
+                .encode()
+            );
+        }
+    }
 }
