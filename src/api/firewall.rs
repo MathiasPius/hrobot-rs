@@ -59,6 +59,17 @@ pub(crate) fn delete_firewall_template(template_number: u32) -> UnauthenticatedR
     .with_method("DELETE")
 }
 
+pub(crate) fn update_firewall_template(
+    template_number: u32,
+    template: FirewallTemplateConfiguration,
+) -> UnauthenticatedRequest<Single<FirewallTemplate>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/firewall/template/{template_number}"
+    ))
+    .with_method("POST")
+    .with_serialized_body(template.encode())
+}
+
 #[cfg(all(test, feature = "hyper-client"))]
 mod tests {
     use serial_test::serial;
@@ -235,7 +246,7 @@ mod tests {
     #[ignore = "unexpected failure could leave template behind."]
     #[traced_test]
     #[serial("firewall-templates")]
-    async fn test_create_delete_firewall_template() {
+    async fn test_create_update_delete_firewall_template() {
         dotenvy::dotenv().ok();
 
         let robot = crate::AsyncRobot::default();
@@ -259,6 +270,31 @@ mod tests {
                     }],
                 },
             })
+            .await
+            .unwrap();
+
+        robot
+            .update_firewall_template(
+                template.id,
+                FirewallTemplateConfiguration {
+                    name: "Come on in".to_string(),
+                    filter_ipv6: false,
+                    whitelist_hetzner_services: true,
+                    is_default: false,
+                    rules: Rules {
+                        ingress: vec![Rule {
+                            name: "Allow in".to_string(),
+                            action: Action::Accept,
+                            ..Default::default()
+                        }],
+                        egress: vec![Rule {
+                            name: "Allow out".to_string(),
+                            action: Action::Accept,
+                            ..Default::default()
+                        }],
+                    },
+                },
+            )
             .await
             .unwrap();
 

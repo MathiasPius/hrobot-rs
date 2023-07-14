@@ -473,6 +473,37 @@ mod r#async {
                     }
                 })
         }
+
+        /// Modify a [`FirewallTemplate`].
+        ///
+        /// # Example
+        /// ```rust,no_run
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// let robot = hrobot::AsyncRobot::default();
+        /// // Remove all firewall rules
+        /// robot.update_firewall_template(1234, FirewallTemplateConfiguration {
+        ///     name: "More like water-wall".to_string(),
+        ///     filter_ipv6: false,
+        ///     whitelist_hetzner_services: true,
+        ///     is_default: false,
+        ///     rules: Rules {
+        ///        ingress: vec![],
+        ///        egress: vec![]
+        ///    },
+        /// }).await.unwrap();
+        /// # }
+        /// ```
+        pub async fn update_firewall_template(
+            &self,
+            template_number: u32,
+            template: FirewallTemplateConfiguration,
+        ) -> Result<FirewallTemplate, Error> {
+            Ok(self
+                .go(api::update_firewall_template(template_number, template))
+                .await?
+                .0)
+        }
     }
 }
 
