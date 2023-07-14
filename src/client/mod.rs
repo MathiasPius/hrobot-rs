@@ -351,7 +351,10 @@ mod r#async {
 
         /// Clear a [`Server`]s [`Firewall`] configuration.
         ///
-        ///
+        /// This reverts the server's firewall configuration to
+        /// default Hetzner firewall, which has "Allow all" rules
+        /// in both directions.
+        ///  
         /// # Example
         /// ```rust,no_run
         /// # #[tokio::main]
