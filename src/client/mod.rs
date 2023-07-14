@@ -12,7 +12,7 @@ mod r#async {
         error::{ApiResult, Error},
         models::{
             Cancellation, Firewall, FirewallConfiguration, FirewallTemplate,
-            FirewallTemplateReference, Server,
+            FirewallTemplateConfiguration, FirewallTemplateReference, Server,
         },
     };
 
@@ -414,6 +414,64 @@ mod r#async {
                 .go(api::get_firewall_template(template_number))
                 .await?
                 .0)
+        }
+
+        /// Create a new [`FirewallTemplate`].
+        ///
+        /// # Example
+        /// ```rust,no_run
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// let robot = hrobot::AsyncRobot::default();
+        /// robot.create_firewall_template(FirewallTemplateConfiguration {
+        ///     name: "My First Template".to_string(),
+        ///     filter_ipv6: false,
+        ///     whitelist_hetzner_services: true,
+        ///     is_default: false,
+        ///     rules: Rules {
+        ///        ingress: vec![
+        ///            Rule {
+        ///                name: "Allow from home".to_owned(),
+        ///                ip_version: Some(IPVersion::IPv4),
+        ///                src_ip: Some("123.123.123.123/32".to_string()),
+        ///                dst_port: Some("27015-27016".to_string()),
+        ///                protocol: Some(Protocol::TCP),
+        ///                action: Action::Accept,
+        ///                ..Default::default()
+        ///        }],
+        ///        egress: vec![]
+        ///    },
+        /// }).await.unwrap();
+        /// # }
+        /// ```
+        pub async fn create_firewall_template(
+            &self,
+            template: FirewallTemplateConfiguration,
+        ) -> Result<FirewallTemplate, Error> {
+            Ok(self.go(api::create_firewall_template(template)).await?.0)
+        }
+
+        /// Delete a [`FirewallTemplate`].
+        ///
+        /// # Example
+        /// ```rust,no_run
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// let robot = hrobot::AsyncRobot::default();
+        /// robot.delete_firewall_template(1234).await.unwrap();
+        /// # }
+        /// ```
+        pub async fn delete_firewall_template(&self, template_number: u32) -> Result<(), Error> {
+            self.go(api::delete_firewall_template(template_number))
+                .await
+                .or_else(|err| {
+                    // Recover from error caused by attempting to deserialize ().
+                    if matches!(err, Error::Deserialization(_)) {
+                        Ok(())
+                    } else {
+                        Err(err)
+                    }
+                })
         }
     }
 }

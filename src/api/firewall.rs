@@ -1,4 +1,7 @@
-use crate::models::{Firewall, FirewallConfiguration, FirewallTemplate, FirewallTemplateReference};
+use crate::models::{
+    urlencode::UrlEncode, Firewall, FirewallConfiguration, FirewallTemplate,
+    FirewallTemplateConfiguration, FirewallTemplateReference,
+};
 
 use super::{
     wrapper::{List, Single},
@@ -15,8 +18,6 @@ pub(crate) fn set_firewall_configuration(
     server_number: u32,
     firewall: &FirewallConfiguration,
 ) -> Result<UnauthenticatedRequest<Single<Firewall>>, serde_html_form::ser::Error> {
-    use crate::models::urlencode::UrlEncode;
-
     Ok(UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/{server_number}"
     ))
@@ -32,9 +33,7 @@ pub(crate) fn delete_firewall(server_number: u32) -> UnauthenticatedRequest<Sing
 }
 
 pub(crate) fn list_firewall_templates() -> UnauthenticatedRequest<List<FirewallTemplateReference>> {
-    UnauthenticatedRequest::from(&format!(
-        "https://robot-ws.your-server.de/firewall/template"
-    ))
+    UnauthenticatedRequest::from("https://robot-ws.your-server.de/firewall/template")
 }
 
 pub(crate) fn get_firewall_template(
@@ -45,13 +44,28 @@ pub(crate) fn get_firewall_template(
     ))
 }
 
+pub(crate) fn create_firewall_template(
+    template: FirewallTemplateConfiguration,
+) -> UnauthenticatedRequest<Single<FirewallTemplate>> {
+    UnauthenticatedRequest::from("https://robot-ws.your-server.de/firewall/template")
+        .with_method("POST")
+        .with_serialized_body(template.encode())
+}
+
+pub(crate) fn delete_firewall_template(template_number: u32) -> UnauthenticatedRequest<()> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/firewall/template/{template_number}"
+    ))
+    .with_method("DELETE")
+}
+
 #[cfg(all(test, feature = "hyper-client"))]
 mod tests {
     use serial_test::serial;
     use tracing::info;
     use tracing_test::traced_test;
 
-    use crate::models::{Action, Rule, State};
+    use crate::models::{Action, FirewallTemplateConfiguration, Rule, Rules, State};
 
     #[tokio::test]
     #[traced_test]
@@ -215,5 +229,39 @@ mod tests {
             let template = robot.get_firewall_template(template_ref.id).await.unwrap();
             info!("{template:#?}");
         }
+    }
+
+    #[tokio::test]
+    #[ignore = "unexpected failure could leave template behind."]
+    #[traced_test]
+    #[serial("firewall-templates")]
+    async fn test_create_delete_firewall_template() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let template = robot
+            .create_firewall_template(FirewallTemplateConfiguration {
+                name: "Lockdown".to_string(),
+                filter_ipv6: false,
+                whitelist_hetzner_services: false,
+                is_default: false,
+                rules: Rules {
+                    ingress: vec![Rule {
+                        name: "Deny in".to_string(),
+                        action: Action::Discard,
+                        ..Default::default()
+                    }],
+                    egress: vec![Rule {
+                        name: "Deny out".to_string(),
+                        action: Action::Discard,
+                        ..Default::default()
+                    }],
+                },
+            })
+            .await
+            .unwrap();
+
+        robot.delete_firewall_template(template.id).await.unwrap();
     }
 }

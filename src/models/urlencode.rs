@@ -27,6 +27,7 @@ impl<'a> UrlEncodingBuffer<'a> {
         ));
     }
 }
+
 /// Used to serialize firewalls and their configurations
 pub(crate) trait UrlEncode {
     fn encode_into(&self, f: UrlEncodingBuffer<'_>);

@@ -169,6 +169,9 @@ pub struct FirewallTemplateReference {
 /// Describes an entire firewall template.
 #[derive(Debug, Clone, Deserialize)]
 pub struct FirewallTemplate {
+    /// Unique firewall template id
+    pub id: u32,
+
     /// Human-readable name for the template.
     pub name: String,
 
@@ -178,6 +181,26 @@ pub struct FirewallTemplate {
     /// Whether to whitelist Hetzner's services,
     /// granting them access through the firewall.
     #[serde(rename = "whitelist_hos")]
+    pub whitelist_hetzner_services: bool,
+
+    /// Indicates whether this template shows up as the
+    /// default in the Robot webpanel.
+    pub is_default: bool,
+
+    /// Firewall rules defined for this Firewall.
+    pub rules: Rules,
+}
+
+#[derive(Debug, Clone)]
+pub struct FirewallTemplateConfiguration {
+    /// Human-readable name for the template.
+    pub name: String,
+
+    /// Whether to filter IPv6 traffic.
+    pub filter_ipv6: bool,
+
+    /// Whether to whitelist Hetzner's services,
+    /// granting them access through the firewall.
     pub whitelist_hetzner_services: bool,
 
     /// Indicates whether this template shows up as the
@@ -357,6 +380,19 @@ impl UrlEncode for FirewallConfiguration {
             "whitelist_hos",
             &self.whitelist_hetzner_services.to_string(),
         );
+        self.rules.encode_into(f.append("rules"));
+    }
+}
+
+impl UrlEncode for FirewallTemplateConfiguration {
+    fn encode_into(&self, mut f: UrlEncodingBuffer<'_>) {
+        f.set("name", self.name.as_ref());
+        f.set("filter_ipv6", &self.filter_ipv6.to_string());
+        f.set(
+            "whitelist_hos",
+            &self.whitelist_hetzner_services.to_string(),
+        );
+        f.set("is_default", &self.is_default.to_string());
         self.rules.encode_into(f.append("rules"));
     }
 }
