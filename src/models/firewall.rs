@@ -134,6 +134,31 @@ impl Display for Action {
     }
 }
 
+/// Describes a Firewall template.
+///
+/// This is only a descriptor for a template, it does not contain
+/// any firewall rules.
+#[derive(Debug, Clone, Deserialize)]
+pub struct FirewallTemplateReference {
+    /// Unique template ID. Can be used to fetch the entire rule
+    /// list using [`AsyncRobot::get_firewall_template()`]
+    pub id: u32,
+
+    /// Human-readable name for the template.
+    pub name: String,
+
+    /// Whether to filter IPv6 traffic.
+    pub filter_ipv6: bool,
+
+    /// Whether to whitelist Hetzner's services,
+    /// granting them access through the firewall.
+    #[serde(rename = "whitelist_hos")]
+    pub whitelist_hetzner_services: bool,
+
+    /// Indicates if this template is set as default.
+    pub is_default: bool,
+}
+
 /// Describes an entire Firewall for a server.
 ///
 /// This is returned by Hetzner when getting or updating the firewall of a server.

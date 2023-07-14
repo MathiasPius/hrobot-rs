@@ -1,9 +1,12 @@
 use serde::ser::Error;
 use tracing::trace;
 
-use crate::models::{Firewall, FirewallConfiguration, Rule};
+use crate::models::{Firewall, FirewallConfiguration, FirewallTemplateReference, Rule};
 
-use super::{wrapper::Single, UnauthenticatedRequest};
+use super::{
+    wrapper::{List, Single},
+    UnauthenticatedRequest,
+};
 
 pub(crate) fn get_firewall(server_number: u32) -> UnauthenticatedRequest<Single<Firewall>> {
     UnauthenticatedRequest::from(&format!(
@@ -31,6 +34,12 @@ pub(crate) fn delete_firewall(server_number: u32) -> UnauthenticatedRequest<Sing
         "https://robot-ws.your-server.de/firewall/{server_number}"
     ))
     .with_method("DELETE")
+}
+
+pub(crate) fn list_firewall_templates() -> UnauthenticatedRequest<List<FirewallTemplateReference>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/firewall/template"
+    ))
 }
 
 fn urlencode_firewall(firewall: &FirewallConfiguration) -> Result<String, std::fmt::Error> {
@@ -192,7 +201,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "removing a production server's firewall, even temporarily, is obviously always *very* dangerus."]
+    #[ignore = "removing a production server's firewall, even temporarily, is obviously always *very* dangerous."]
     #[traced_test]
     #[serial("firewall")]
     async fn test_delete_firewall() {
@@ -276,5 +285,17 @@ mod tests {
         };
 
         println!("{}", urlencode_firewall(&firewall).unwrap());
+    }
+
+    #[tokio::test]
+    #[traced_test]
+    #[serial("firewall-templates")]
+    async fn test_list_firewall_templates() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let templates = robot.list_firewall_templates().await.unwrap();
+        info!("{templates:#?}");
     }
 }

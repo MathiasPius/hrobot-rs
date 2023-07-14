@@ -10,7 +10,9 @@ mod r#async {
     use crate::{
         api::{self, AuthenticatedRequest, Credentials, UnauthenticatedRequest},
         error::{ApiResult, Error},
-        models::{Cancellation, Firewall, FirewallConfiguration, Server},
+        models::{
+            Cancellation, Firewall, FirewallConfiguration, FirewallTemplateReference, Server,
+        },
     };
 
     /// Implemented by asynchronous http clients, so they can be
@@ -178,10 +180,11 @@ mod r#async {
         ///
         /// # Example
         /// Print the ids and names of all servers accessible by our credentials.
-        /// ```rust,no_run
+        /// ```rust
         /// # #[tokio::main]
         /// # async fn main() {
-        /// # let robot = hrobot::AsyncRobot::default();
+        /// # dotenvy::dotenv().ok();
+        /// let robot = hrobot::AsyncRobot::default();
         /// for server in robot.list_servers().await.unwrap() {
         ///     println!("{}: {}", server.id, server.name);
         /// }
@@ -365,6 +368,29 @@ mod r#async {
         /// ```
         pub async fn delete_firewall(&self, server_number: u32) -> Result<Firewall, Error> {
             Ok(self.go(api::delete_firewall(server_number)).await?.0)
+        }
+
+        /// List all firewall templates.
+        ///
+        /// This only returns a list of [`FirewallTemplateReference`],
+        /// which do not include the complete firewall configuration.
+        ///
+        /// use [`AsyncRobot::get_firewall_template()`] with the returned
+        /// template ID, if you want to get the configuration.
+        ///
+        /// # Example
+        /// ```rust
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// # dotenvy::dotenv().ok();
+        /// let robot = hrobot::AsyncRobot::default();
+        /// let templates = robot.list_firewall_templates().await.unwrap();
+        /// # }
+        /// ```
+        pub async fn list_firewall_templates(
+            &self,
+        ) -> Result<Vec<FirewallTemplateReference>, Error> {
+            Ok(self.go(api::list_firewall_templates()).await?.0)
         }
     }
 }
