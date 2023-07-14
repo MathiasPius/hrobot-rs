@@ -420,6 +420,7 @@ mod r#async {
         ///
         /// # Example
         /// ```rust,no_run
+        /// # use hrobot::models::{FirewallTemplateConfiguration, Rules, Rule, Protocol, IPVersion, Action};
         /// # #[tokio::main]
         /// # async fn main() {
         /// let robot = hrobot::AsyncRobot::default();
@@ -478,6 +479,7 @@ mod r#async {
         ///
         /// # Example
         /// ```rust,no_run
+        /// # use hrobot::models::{FirewallTemplateConfiguration, Rules, Rule};
         /// # #[tokio::main]
         /// # async fn main() {
         /// let robot = hrobot::AsyncRobot::default();
