@@ -519,8 +519,11 @@ mod tests {
 
         let err: MaybeTypedResponse = serde_json::from_str(error).unwrap();
 
-        assert!(matches!(err, MaybeTypedResponse {
-            error: MaybeTyped::Typed(ApiError::InvalidInput { .. })
-        }));
+        assert!(matches!(
+            err,
+            MaybeTypedResponse {
+                error: MaybeTyped::Typed(ApiError::InvalidInput { .. })
+            }
+        ));
     }
 }

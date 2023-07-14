@@ -25,7 +25,7 @@ impl Display for IPVersion {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub enum State {
     /// Firewall is active.
     #[serde(rename = "active")]
@@ -203,7 +203,7 @@ impl From<&Firewall> for FirewallConfiguration {
 }
 
 /// Encapsulates all ingoing and outgoing rules for a Firewall.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Rules {
     #[serde(rename = "input", default, skip_serializing_if = "Vec::is_empty")]
     pub ingress: Vec<Rule>,
@@ -213,7 +213,7 @@ pub struct Rules {
 }
 
 /// Describes a single Firewall rule.
-#[derive(Default, Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+#[derive(Default, Clone, PartialEq, Eq, Debug, Deserialize)]
 pub struct Rule {
     /// IP version which this rule applies to. None implies both.
     pub ip_version: Option<IPVersion>,
@@ -237,7 +237,6 @@ pub struct Rule {
     pub protocol: Option<Protocol>,
 
     /// TCP Flags.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub tcp_flags: Option<String>,
 
     /// Action to take if rule matches.

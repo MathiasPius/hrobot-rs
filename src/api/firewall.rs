@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use serde::ser::Error;
 use tracing::trace;
 
@@ -31,75 +29,76 @@ pub(crate) fn set_firewall_configuration(
 fn urlencode_firewall(firewall: &FirewallConfiguration) -> Result<String, std::fmt::Error> {
     use std::fmt::Write;
 
-    let mut segments = HashMap::new();
+    let mut segments = Vec::new();
 
     fn serialize_rule(
         direction: &str,
-        segments: &mut HashMap<String, String>,
+        segments: &mut Vec<(String, String)>,
         i: usize,
         rule: &Rule,
     ) {
+        segments.push((
+            format!("rules[{direction}][{id}][{key}]", id = i, key = "name"),
+            rule.name.to_owned(),
+        ));
+
         if let Some(ip_version) = rule.ip_version.as_ref() {
-            segments.insert(
+            segments.push((
                 format!(
                     "rules[{direction}][{id}][{key}]",
                     id = i,
                     key = "ip_version"
                 ),
                 ip_version.to_string(),
-            );
+            ));
         }
-        segments.insert(
-            format!("rules[{direction}][{id}][{key}]", id = i, key = "name"),
-            rule.name.to_owned(),
-        );
 
         if let Some(dst_ip) = rule.dst_ip.as_ref() {
-            segments.insert(
+            segments.push((
                 format!("rules[{direction}][{id}][{key}]", id = i, key = "dst_ip"),
                 dst_ip.to_owned(),
-            );
+            ));
         }
 
         if let Some(src_ip) = rule.src_ip.as_ref() {
-            segments.insert(
+            segments.push((
                 format!("rules[{direction}][{id}][{key}]", id = i, key = "src_ip"),
                 src_ip.to_owned(),
-            );
+            ));
         }
 
         if let Some(dst_port) = rule.dst_port.as_ref() {
-            segments.insert(
+            segments.push((
                 format!("rules[{direction}][{id}][{key}]", id = i, key = "dst_port"),
                 dst_port.to_owned(),
-            );
+            ));
         }
 
         if let Some(src_port) = rule.src_port.as_ref() {
-            segments.insert(
+            segments.push((
                 format!("rules[{direction}][{id}][{key}]", id = i, key = "src_port"),
                 src_port.to_owned(),
-            );
+            ));
         }
 
         if let Some(protocol) = rule.protocol.as_ref() {
-            segments.insert(
+            segments.push((
                 format!("rules[{direction}][{id}][{key}]", id = i, key = "protocol"),
                 protocol.to_string(),
-            );
+            ));
         }
 
         if let Some(tcp_flags) = rule.tcp_flags.as_ref() {
-            segments.insert(
+            segments.push((
                 format!("rules[{direction}][{id}][{key}]", id = i, key = "tcp_flags"),
                 tcp_flags.to_owned(),
-            );
+            ));
         }
 
-        segments.insert(
+        segments.push((
             format!("rules[{direction}][{id}][{key}]", id = i, key = "action"),
             rule.action.to_string(),
-        );
+        ));
     }
 
     for (index, rule) in firewall.rules.ingress.iter().enumerate() {
@@ -109,9 +108,6 @@ fn urlencode_firewall(firewall: &FirewallConfiguration) -> Result<String, std::f
     for (index, rule) in firewall.rules.egress.iter().enumerate() {
         serialize_rule("output", &mut segments, index, rule)
     }
-
-    let mut segments: Vec<(_, _)> = segments.into_iter().collect();
-    segments.sort_by(|(k1, _), (k2, _)| k1.cmp(k2));
 
     let mut query = String::new();
 
@@ -184,7 +180,6 @@ mod tests {
             // of the server.
             let explicit_discard = Rule {
                 name: "Explicit discard".to_owned(),
-                protocol: Some(Protocol::TCP),
                 action: Action::Discard,
                 ..Default::default()
             };
@@ -199,8 +194,19 @@ mod tests {
                 .unwrap();
 
             info!("Waiting for firewall to be applied to {}", server.name);
-            // It can take 30-40 seconds for the firewall to apply, but let's be cautious.
-            tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+
+            // Retry every 30 seconds, 10 times.
+            let mut tries = 0;
+            while tries < 10 {
+                tries += 1;
+                tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+                let firewall = robot.get_firewall(server.id).await.unwrap();
+                if firewall.status != State::InProcess {
+                    break;
+                } else {
+                    info!("Firewall state is still \"in process\", checking again in 15s.");
+                }
+            }
 
             let applied_configuration = robot.get_firewall(server.id).await.unwrap();
 
