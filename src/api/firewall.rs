@@ -13,19 +13,19 @@ pub(crate) fn get_firewall(server_number: u32) -> UnauthenticatedRequest<Single<
     ))
 }
 
-pub(crate) fn set_firewall(
+pub(crate) fn set_firewall_configuration(
     server_number: u32,
     firewall: &FirewallConfiguration,
 ) -> Result<UnauthenticatedRequest<Single<Firewall>>, serde_html_form::ser::Error> {
-    UnauthenticatedRequest::from(&format!(
+    Ok(UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/{server_number}"
     ))
     .with_method("POST")
-    .with_body(urlencode_firewall(firewall).map_err(|_| {
+    .with_serialized_body(urlencode_firewall(firewall).map_err(|_| {
         serde_html_form::ser::Error::custom(
             "formatting error while serializing firewall configuration",
         )
-    })?)
+    })?))
 }
 
 fn urlencode_firewall(firewall: &FirewallConfiguration) -> Result<String, std::fmt::Error> {
@@ -118,7 +118,7 @@ fn urlencode_firewall(firewall: &FirewallConfiguration) -> Result<String, std::f
     write!(query, "status={}", firewall.status)?;
     write!(
         query,
-        "&\nwhitelist_hos={}",
+        "&whitelist_hos={}",
         firewall.whitelist_hetzner_services
     )?;
 
@@ -126,9 +126,9 @@ fn urlencode_firewall(firewall: &FirewallConfiguration) -> Result<String, std::f
         trace!("{k}={v}");
         write!(
             query,
-            "&\n{}={}",
+            "&{}={}",
             urlencoding::encode(&k),
-            urlencoding::encode(&v)
+            urlencoding::encode(&v).replace("%20", "+")
         )?;
     }
 
@@ -162,6 +162,61 @@ mod tests {
         }
     }
 
+    #[tokio::test]
+    #[ignore = "unexpected failure might leave firewall in modified state."]
+    #[traced_test]
+    async fn test_set_firewall_configuration() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let servers = robot.list_servers().await.unwrap();
+        info!("{servers:#?}");
+
+        if let Some(server) = servers.iter().next() {
+            // Fetch the current firewall configuration.
+            let original_firewall = robot.get_firewall(server.id).await.unwrap();
+
+            let mut config = original_firewall.configuration();
+
+            // To not disturb the very real server, we'll just add an explicit discard
+            // rule at the end, which theoretically should not interfere with the operation
+            // of the server.
+            let explicit_discard = Rule {
+                name: "Explicit discard".to_owned(),
+                protocol: Some(Protocol::TCP),
+                action: Action::Discard,
+                ..Default::default()
+            };
+
+            config.rules.ingress.push(explicit_discard.clone());
+
+            info!("{config:#?}");
+
+            robot
+                .set_firewall_configuration(server.id, &config)
+                .await
+                .unwrap();
+
+            info!("Waiting for firewall to be applied to {}", server.name);
+            // It can take 30-40 seconds for the firewall to apply, but let's be cautious.
+            tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+
+            let applied_configuration = robot.get_firewall(server.id).await.unwrap();
+
+            assert_eq!(
+                applied_configuration.rules.ingress.last(),
+                Some(&explicit_discard)
+            );
+
+            // Revert to the original firewall config.
+            robot
+                .set_firewall_configuration(server.id, &original_firewall.configuration())
+                .await
+                .unwrap();
+        }
+    }
+
     #[test]
     #[traced_test]
     fn serializing_firewall_rules() {
@@ -172,7 +227,7 @@ mod tests {
             rules: Rules {
                 ingress: vec![Rule {
                     ip_version: Some(IPVersion::IPv4),
-                    name: "Allow all".to_owned(),
+                    name: "Some rule".to_owned(),
                     dst_ip: Some("127.0.0.0/8".to_string()),
                     src_ip: Some("0.0.0.0/0".to_string()),
                     dst_port: Some("27015-27016".to_string()),

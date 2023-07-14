@@ -106,11 +106,23 @@ impl<Response> UnauthenticatedRequest<Response> {
     ///
     /// Is automatically encoded as application/x-www-form-urlencoded.
     pub(crate) fn with_body<T: Serialize>(
-        mut self,
+        self,
         body: T,
     ) -> Result<Self, serde_html_form::ser::Error> {
-        self.body = Some(serde_html_form::to_string(&body)?);
-        Ok(self)
+        Ok(self.with_serialized_body(serde_html_form::to_string(&body)?))
+    }
+
+    /// Set the body of the request.
+    ///
+    /// This assumes that the input string has already been serialized
+    /// and therefore won't be url-encoded.
+    ///
+    /// Primarily used when configuring firewall rules since formatting
+    /// the rule list is not supported by any serde url encoding library
+    /// that I know of.
+    pub(crate) fn with_serialized_body(mut self, body: String) -> Self {
+        self.body = Some(body);
+        self
     }
 }
 

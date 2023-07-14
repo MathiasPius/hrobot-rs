@@ -300,7 +300,7 @@ mod r#async {
             Ok(self.go(api::get_firewall(server_number)).await?.0)
         }
 
-        /// Replace a [`Server`]'s [`Firewall`].
+        /// Replace a [`Server`]'s [`Firewall`] configuration.
         ///
         /// # Example
         /// ```rust,no_run
@@ -340,7 +340,7 @@ mod r#async {
             firewall: &FirewallConfiguration,
         ) -> Result<Firewall, Error> {
             Ok(self
-                .go(api::set_firewall(server_number, firewall)?)
+                .go(api::set_firewall_configuration(server_number, firewall)?)
                 .await?
                 .0)
         }
