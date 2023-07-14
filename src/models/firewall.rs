@@ -159,6 +159,28 @@ pub struct FirewallTemplateReference {
     pub is_default: bool,
 }
 
+/// Describes an entire firewall template.
+#[derive(Debug, Clone, Deserialize)]
+pub struct FirewallTemplate {
+    /// Human-readable name for the template.
+    pub name: String,
+
+    /// Whether to filter IPv6 traffic.
+    pub filter_ipv6: bool,
+
+    /// Whether to whitelist Hetzner's services,
+    /// granting them access through the firewall.
+    #[serde(rename = "whitelist_hos")]
+    pub whitelist_hetzner_services: bool,
+
+    /// Indicates whether this template shows up as the
+    /// default in the Robot webpanel.
+    pub is_default: bool,
+
+    /// Firewall rules defined for this Firewall.
+    pub rules: Rules,
+}
+
 /// Describes an entire Firewall for a server.
 ///
 /// This is returned by Hetzner when getting or updating the firewall of a server.

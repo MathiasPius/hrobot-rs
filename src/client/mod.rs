@@ -11,7 +11,8 @@ mod r#async {
         api::{self, AuthenticatedRequest, Credentials, UnauthenticatedRequest},
         error::{ApiResult, Error},
         models::{
-            Cancellation, Firewall, FirewallConfiguration, FirewallTemplateReference, Server,
+            Cancellation, Firewall, FirewallConfiguration, FirewallTemplate,
+            FirewallTemplateReference, Server,
         },
     };
 
@@ -391,6 +392,28 @@ mod r#async {
             &self,
         ) -> Result<Vec<FirewallTemplateReference>, Error> {
             Ok(self.go(api::list_firewall_templates()).await?.0)
+        }
+
+        /// Retrieve a complete [`FirewallTemplate`].
+        ///
+        /// This returns the entire template, including its rules.
+        ///
+        /// # Example
+        /// ```rust,no_run
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// let robot = hrobot::AsyncRobot::default();
+        /// let template = robot.get_firewall_template(1234).await.unwrap();
+        /// # }
+        /// ```
+        pub async fn get_firewall_template(
+            &self,
+            template_number: u32,
+        ) -> Result<FirewallTemplate, Error> {
+            Ok(self
+                .go(api::get_firewall_template(template_number))
+                .await?
+                .0)
         }
     }
 }

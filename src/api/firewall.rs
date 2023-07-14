@@ -1,7 +1,9 @@
 use serde::ser::Error;
 use tracing::trace;
 
-use crate::models::{Firewall, FirewallConfiguration, FirewallTemplateReference, Rule};
+use crate::models::{
+    Firewall, FirewallConfiguration, FirewallTemplate, FirewallTemplateReference, Rule,
+};
 
 use super::{
     wrapper::{List, Single},
@@ -39,6 +41,14 @@ pub(crate) fn delete_firewall(server_number: u32) -> UnauthenticatedRequest<Sing
 pub(crate) fn list_firewall_templates() -> UnauthenticatedRequest<List<FirewallTemplateReference>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/template"
+    ))
+}
+
+pub(crate) fn get_firewall_template(
+    template_number: u32,
+) -> UnauthenticatedRequest<Single<FirewallTemplate>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/firewall/template/{template_number}"
     ))
 }
 
@@ -297,5 +307,22 @@ mod tests {
 
         let templates = robot.list_firewall_templates().await.unwrap();
         info!("{templates:#?}");
+    }
+
+    #[tokio::test]
+    #[traced_test]
+    #[serial("firewall-templates")]
+    async fn test_get_firewall_template() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let templates = robot.list_firewall_templates().await.unwrap();
+        info!("{templates:#?}");
+
+        if let Some(template_ref) = templates.iter().next() {
+            let template = robot.get_firewall_template(template_ref.id).await.unwrap();
+            info!("{template:#?}");
+        }
     }
 }
