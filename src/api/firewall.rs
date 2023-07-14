@@ -34,71 +34,30 @@ fn urlencode_firewall(firewall: &FirewallConfiguration) -> Result<String, std::f
     fn serialize_rule(
         direction: &str,
         segments: &mut Vec<(String, String)>,
-        i: usize,
+        id: usize,
         rule: &Rule,
     ) {
-        segments.push((
-            format!("rules[{direction}][{id}][{key}]", id = i, key = "name"),
-            rule.name.to_owned(),
-        ));
+        let mut serialize_field = |name, value| {
+            if let Some(value) = value {
+                segments.push((format!("rules[{direction}][{id}][{name}]"), value))
+            }
+        };
 
-        if let Some(ip_version) = rule.ip_version.as_ref() {
-            segments.push((
-                format!(
-                    "rules[{direction}][{id}][{key}]",
-                    id = i,
-                    key = "ip_version"
-                ),
-                ip_version.to_string(),
-            ));
-        }
-
-        if let Some(dst_ip) = rule.dst_ip.as_ref() {
-            segments.push((
-                format!("rules[{direction}][{id}][{key}]", id = i, key = "dst_ip"),
-                dst_ip.to_owned(),
-            ));
-        }
-
-        if let Some(src_ip) = rule.src_ip.as_ref() {
-            segments.push((
-                format!("rules[{direction}][{id}][{key}]", id = i, key = "src_ip"),
-                src_ip.to_owned(),
-            ));
-        }
-
-        if let Some(dst_port) = rule.dst_port.as_ref() {
-            segments.push((
-                format!("rules[{direction}][{id}][{key}]", id = i, key = "dst_port"),
-                dst_port.to_owned(),
-            ));
-        }
-
-        if let Some(src_port) = rule.src_port.as_ref() {
-            segments.push((
-                format!("rules[{direction}][{id}][{key}]", id = i, key = "src_port"),
-                src_port.to_owned(),
-            ));
-        }
-
-        if let Some(protocol) = rule.protocol.as_ref() {
-            segments.push((
-                format!("rules[{direction}][{id}][{key}]", id = i, key = "protocol"),
-                protocol.to_string(),
-            ));
-        }
-
-        if let Some(tcp_flags) = rule.tcp_flags.as_ref() {
-            segments.push((
-                format!("rules[{direction}][{id}][{key}]", id = i, key = "tcp_flags"),
-                tcp_flags.to_owned(),
-            ));
-        }
-
-        segments.push((
-            format!("rules[{direction}][{id}][{key}]", id = i, key = "action"),
-            rule.action.to_string(),
-        ));
+        serialize_field("name", Some(rule.name.to_owned()));
+        serialize_field(
+            "ip_version",
+            rule.ip_version.as_ref().map(ToString::to_string),
+        );
+        serialize_field("dst_ip", rule.dst_ip.clone());
+        serialize_field("src_ip", rule.src_ip.clone());
+        serialize_field("dst_port", rule.dst_port.clone());
+        serialize_field("src_port", rule.src_port.clone());
+        serialize_field("protocol", rule.protocol.as_ref().map(ToString::to_string));
+        serialize_field(
+            "tcp_flags",
+            rule.tcp_flags.as_ref().map(ToString::to_string),
+        );
+        serialize_field("action", Some(rule.action.to_string()));
     }
 
     for (index, rule) in firewall.rules.ingress.iter().enumerate() {
@@ -109,9 +68,8 @@ fn urlencode_firewall(firewall: &FirewallConfiguration) -> Result<String, std::f
         serialize_rule("output", &mut segments, index, rule)
     }
 
-    let mut query = String::new();
-
-    write!(query, "status={}", firewall.status)?;
+    let mut query = format!("status={}", firewall.status);
+    
     write!(
         query,
         "&whitelist_hos={}",
