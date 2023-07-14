@@ -15,7 +15,7 @@ pub(crate) fn set_firewall_configuration(
     server_number: u32,
     firewall: &FirewallConfiguration,
 ) -> Result<UnauthenticatedRequest<Single<Firewall>>, serde_html_form::ser::Error> {
-    use crate::models::firewall::urlencode::UrlEncode;
+    use crate::models::urlencode::UrlEncode;
 
     Ok(UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/{server_number}"

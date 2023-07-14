@@ -3,7 +3,8 @@
 //! Contains all the object types used in both requests
 //! and responses by the API.
 
-pub(crate) mod firewall;
-pub(crate) mod server;
+mod firewall;
+mod server;
+pub(crate) mod urlencode;
 pub use firewall::*;
 pub use server::*;
