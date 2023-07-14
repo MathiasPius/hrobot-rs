@@ -302,6 +302,10 @@ mod r#async {
 
         /// Replace a [`Server`]'s [`Firewall`] configuration.
         ///
+        /// **Warning**: This replaces the entire firewall for
+        /// both directions! If you don't define any ingress or
+        /// egress rules, only the default-deny rule will apply!
+        ///
         /// # Example
         /// ```rust,no_run
         /// # use hrobot::models::{
@@ -343,6 +347,21 @@ mod r#async {
                 .go(api::set_firewall_configuration(server_number, firewall)?)
                 .await?
                 .0)
+        }
+
+        /// Clear a [`Server`]s [`Firewall`] configuration.
+        ///
+        ///
+        /// # Example
+        /// ```rust,no_run
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// let robot = hrobot::AsyncRobot::default();
+        /// robot.delete_firewall(1234567).await.unwrap();
+        /// # }
+        /// ```
+        pub async fn delete_firewall(&self, server_number: u32) -> Result<Firewall, Error> {
+            Ok(self.go(api::delete_firewall(server_number)).await?.0)
         }
     }
 }

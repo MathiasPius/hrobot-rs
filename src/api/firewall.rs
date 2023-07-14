@@ -26,6 +26,13 @@ pub(crate) fn set_firewall_configuration(
     })?))
 }
 
+pub(crate) fn delete_firewall(server_number: u32) -> UnauthenticatedRequest<Single<Firewall>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/firewall/{server_number}"
+    ))
+    .with_method("DELETE")
+}
+
 fn urlencode_firewall(firewall: &FirewallConfiguration) -> Result<String, std::fmt::Error> {
     use std::fmt::Write;
 
@@ -69,7 +76,7 @@ fn urlencode_firewall(firewall: &FirewallConfiguration) -> Result<String, std::f
     }
 
     let mut query = format!("status={}", firewall.status);
-    
+
     write!(
         query,
         "&whitelist_hos={}",
@@ -165,7 +172,7 @@ mod tests {
                 if firewall.status != State::InProcess {
                     break;
                 } else {
-                    info!("Firewall state is still \"in process\", checking again in 15s.");
+                    info!("Firewall state is still \"in process\", checking again in 30s.");
                 }
             }
 
@@ -175,6 +182,57 @@ mod tests {
                 applied_configuration.rules.ingress.last(),
                 Some(&explicit_discard)
             );
+
+            // Revert to the original firewall config.
+            robot
+                .set_firewall_configuration(server.id, &original_firewall.configuration())
+                .await
+                .unwrap();
+        }
+    }
+
+    #[tokio::test]
+    #[ignore = "removing a production server's firewall, even temporarily, is obviously always *very* dangerus."]
+    #[traced_test]
+    #[serial("firewall")]
+    async fn test_delete_firewall() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let servers = robot.list_servers().await.unwrap();
+        info!("{servers:#?}");
+
+        if let Some(server) = servers.iter().next() {
+            // Fetch the current firewall configuration.
+            let original_firewall = robot.get_firewall(server.id).await.unwrap();
+
+            let original_config = original_firewall.configuration();
+
+            info!("{original_config:#?}");
+
+            robot.delete_firewall(server.id).await.unwrap();
+
+            info!("Waiting for firewall to be applied to {}", server.name);
+
+            // Retry every 30 seconds, 10 times.
+            let mut tries = 0;
+            while tries < 10 {
+                tries += 1;
+                tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+                let firewall = robot.get_firewall(server.id).await.unwrap();
+                if firewall.status != State::InProcess {
+                    break;
+                } else {
+                    info!("Firewall state is still \"in process\", checking again in 30s.");
+                }
+            }
+
+            let applied_configuration = robot.get_firewall(server.id).await.unwrap();
+
+            // For some reason the default firewal has 2 identical "Allow all" rules.
+            assert_eq!(applied_configuration.rules.ingress.len(), 2);
+            assert_eq!(applied_configuration.rules.egress.len(), 1);
 
             // Revert to the original firewall config.
             robot
