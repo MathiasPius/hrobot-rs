@@ -76,7 +76,7 @@ mod tests {
     use tracing::info;
     use tracing_test::traced_test;
 
-    use crate::models::{Action, FirewallTemplateConfiguration, Rule, Rules, State};
+    use crate::models::{Action, FirewallTemplateConfiguration, InternalRule, Rules, State};
 
     #[tokio::test]
     #[traced_test]
@@ -117,7 +117,7 @@ mod tests {
             // To not disturb the very real server, we'll just add an explicit discard
             // rule at the end, which theoretically should not interfere with the operation
             // of the server.
-            let explicit_discard = Rule {
+            let explicit_discard = InternalRule {
                 name: "Explicit discard".to_owned(),
                 action: Action::Discard,
                 ..Default::default()
@@ -258,12 +258,12 @@ mod tests {
                 whitelist_hetzner_services: false,
                 is_default: false,
                 rules: Rules {
-                    ingress: vec![Rule {
+                    ingress: vec![InternalRule {
                         name: "Deny in".to_string(),
                         action: Action::Discard,
                         ..Default::default()
                     }],
-                    egress: vec![Rule {
+                    egress: vec![InternalRule {
                         name: "Deny out".to_string(),
                         action: Action::Discard,
                         ..Default::default()
@@ -282,12 +282,12 @@ mod tests {
                     whitelist_hetzner_services: true,
                     is_default: false,
                     rules: Rules {
-                        ingress: vec![Rule {
+                        ingress: vec![InternalRule {
                             name: "Allow in".to_string(),
                             action: Action::Accept,
                             ..Default::default()
                         }],
-                        egress: vec![Rule {
+                        egress: vec![InternalRule {
                             name: "Allow out".to_string(),
                             action: Action::Accept,
                             ..Default::default()

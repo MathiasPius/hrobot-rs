@@ -1,6 +1,6 @@
 use crate::models::urlencode::{UrlEncode, UrlEncodingBuffer};
 use serde::{Deserialize, Serialize};
-use std::{fmt::Display, net::Ipv4Addr, ops::RangeInclusive};
+use std::{fmt::Display, net::Ipv4Addr, ops::RangeInclusive, default};
 
 pub use ipnet::Ipv4Net;
 
@@ -73,7 +73,7 @@ pub enum SwitchPort {
 /// Protocol types which can be used by rules.
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum Protocol {
+pub enum InternalProtocol {
     /// Transmission Control Protocol.
     TCP,
 
@@ -96,24 +96,51 @@ pub enum Protocol {
     ESP,
 }
 
-impl AsRef<str> for Protocol {
+impl AsRef<str> for InternalProtocol {
     fn as_ref(&self) -> &str {
         match self {
-            Protocol::TCP => "tcp",
-            Protocol::UDP => "udp",
-            Protocol::GRE => "gre",
-            Protocol::ICMP => "icmp",
-            Protocol::IPIP => "ipip",
-            Protocol::AH => "ah",
-            Protocol::ESP => "esp",
+            InternalProtocol::TCP => "tcp",
+            InternalProtocol::UDP => "udp",
+            InternalProtocol::GRE => "gre",
+            InternalProtocol::ICMP => "icmp",
+            InternalProtocol::IPIP => "ipip",
+            InternalProtocol::AH => "ah",
+            InternalProtocol::ESP => "esp",
         }
     }
 }
 
-impl Display for Protocol {
+impl Display for InternalProtocol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.as_ref())
     }
+}
+
+/// Protocol types which can be used by rules.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub enum Protocol {
+    /// Transmission Control Protocol.
+    TCP {
+        flags: Option<String>
+    },
+
+    /// User Datagram Protocol.
+    UDP,
+
+    /// Generic Routing Encapsulation.
+    GRE,
+
+    /// Internet Control Message Protocol.
+    ICMP,
+
+    /// IP-in-IP tunneling.
+    IPIP,
+
+    /// IPSec Authentication Header.
+    AH,
+
+    /// IPSec Encapsulating Security Payload.
+    ESP,
 }
 
 /// Course of action to take when a rule matches.
@@ -286,11 +313,11 @@ impl From<&Firewall> for FirewallConfiguration {
 pub struct Rules {
     /// Rules applied to ingress traffic (traffic to the server).
     #[serde(rename = "input", default, skip_serializing_if = "Vec::is_empty")]
-    pub ingress: Vec<Rule>,
+    pub ingress: Vec<InternalRule>,
 
     /// Rules applied to egress traffic (traffic leaving the server).
     #[serde(rename = "output", default, skip_serializing_if = "Vec::is_empty")]
-    pub egress: Vec<Rule>,
+    pub egress: Vec<InternalRule>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -403,7 +430,7 @@ impl<'de> Deserialize<'de> for PortRange {
 
 /// Describes a single Firewall rule.
 #[derive(Default, Clone, PartialEq, Eq, Debug, Deserialize)]
-pub struct Rule {
+pub struct InternalRule {
     /// IP version which this rule applies to. None implies both.
     pub ip_version: Option<IPVersion>,
 
@@ -429,7 +456,7 @@ pub struct Rule {
     pub src_port: Option<PortRange>,
 
     /// Protocol
-    pub protocol: Option<Protocol>,
+    pub protocol: Option<InternalProtocol>,
 
     /// TCP Flags.
     pub tcp_flags: Option<String>,
@@ -438,7 +465,97 @@ pub struct Rule {
     pub action: Action,
 }
 
-impl UrlEncode for Rule {
+#[derive(Default)]
+pub enum Filter {
+    #[default]
+    Both,
+    IPv4(IPv4Rule),
+    Ipv6(IPv6Rule),
+}
+
+pub struct IPv6Rule {
+    /// Protocol.
+    pub protocol: Option<InternalProtocol>,
+
+    /// Destination Port.
+    ///
+    /// Hetzner [does not support IPv6 address filtering](https://docs.hetzner.com/robot/dedicated-server/firewall#limitations-ipv6),
+    /// hence why this is an [`Ipv4Net`], and not an [`IpNet`](ipnet::IpNet).
+    pub dst_port: Option<PortRange>,
+
+    /// Source Port.
+    pub src_port: Option<PortRange>,
+}
+
+pub struct IPv4Rule {
+    /// Destination IP address.
+    pub dst_ip: Option<Ipv4Net>,
+
+    /// Source IP address.
+    ///
+    /// Hetzner [does not support IPv6 address filtering](https://docs.hetzner.com/robot/dedicated-server/firewall#limitations-ipv6),
+    /// hence why this is an [`Ipv4Net`], and not an [`IpNet`](ipnet::IpNet).
+    pub src_ip: Option<Ipv4Net>,
+
+    /// Destination Port.
+    ///
+    /// Hetzner [does not support IPv6 address filtering](https://docs.hetzner.com/robot/dedicated-server/firewall#limitations-ipv6),
+    /// hence why this is an [`Ipv4Net`], and not an [`IpNet`](ipnet::IpNet).
+    pub dst_port: Option<PortRange>,
+
+    /// Source Port.
+    pub src_port: Option<PortRange>,
+
+    /// Protocol
+    pub protocol: Option<InternalProtocol>,
+}
+
+pub struct Rule {
+    pub name: String,
+    pub filter: Filter,
+    pub action: Action
+}
+
+impl Rule {
+    pub fn accept(name: &str) -> Self {
+        Rule {
+            name: name.to_string(),
+            filter: Filter::Both,
+            action: Action::Accept,
+        }
+    }
+
+    pub fn discard(name: &str) -> Self {
+        Rule {
+            name: name.to_string(),
+            filter: Filter::Both,
+            action: Action::Discard,
+        }
+    }
+
+    pub fn matching<F: Into<Filter>>(self, filter: F) -> Self {
+        Rule {
+            name: self.name,
+            action: self.action,
+            filter: self.filter
+        }
+    }
+}
+
+#[test]
+fn build_rule() {
+    let config = Rules {
+        ingress: vec![
+            Rule::accept("Allow all").matching({
+                name: "Allow all",
+                filter: Filter::Both,
+                action: Action::Accept
+            }
+        ]
+    }
+}
+
+impl UrlEncode for InternalRule {
     fn encode_into(&self, mut f: UrlEncodingBuffer<'_>) {
         f.set("[name]", &self.name);
 
@@ -515,7 +632,7 @@ mod tests {
     use tracing_test::traced_test;
 
     use crate::models::{
-        Action, FirewallConfiguration, IPVersion, PortRange, Protocol, Rule, Rules, State,
+        Action, FirewallConfiguration, IPVersion, PortRange, InternalProtocol, InternalRule, Rules, State,
     };
 
     use super::UrlEncode;
