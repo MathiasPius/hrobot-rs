@@ -60,7 +60,7 @@ impl Display for State {
 /// Switch port of the server.
 #[derive(Default, Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
-pub enum Port {
+pub enum SwitchPort {
     #[default]
     /// Primary port.
     Main,
@@ -238,7 +238,7 @@ pub struct Firewall {
     pub whitelist_hetzner_services: bool,
 
     /// Switch of the server to which this firewall applies.
-    pub port: Port,
+    pub port: SwitchPort,
 
     /// Firewall rules defined for this Firewall.
     pub rules: Rules,
