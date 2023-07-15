@@ -272,6 +272,7 @@ dependencies = [
  "dotenvy",
  "hyper",
  "hyper-rustls",
+ "ipnet",
  "serde",
  "serde_html_form",
  "serde_json",
@@ -365,6 +366,15 @@ checksum = "d5477fe2230a79769d8dc68e0eabf5437907c0457a5614a9e8dddb67f65eb65d"
 dependencies = [
  "equivalent",
  "hashbrown 0.14.0",
+]
+
+[[package]]
+name = "ipnet"
+version = "2.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28b29a3cd74f0f4598934efe3aeba42bae0eb4680554128851ebbecb02af14e6"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

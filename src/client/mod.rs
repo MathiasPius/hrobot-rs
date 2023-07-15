@@ -314,7 +314,7 @@ mod r#async {
         /// ```rust,no_run
         /// # use hrobot::models::{
         /// #     FirewallConfiguration, Protocol, Action,
-        /// #     IPVersion, Rule, Rules, State
+        /// #     IPVersion, Rule, Rules, State, PortRange
         /// # };
         /// # #[tokio::main]
         /// # async fn main() {
@@ -329,8 +329,8 @@ mod r#async {
         ///            Rule {
         ///                name: "Allow from home".to_owned(),
         ///                ip_version: Some(IPVersion::IPv4),
-        ///                src_ip: Some("123.123.123.123/32".to_string()),
-        ///                dst_port: Some("27015-27016".to_string()),
+        ///                src_ip: Some("123.123.123.123/32".parse().unwrap()),
+        ///                dst_port: Some(PortRange::range(27015, 27016)),
         ///                protocol: Some(Protocol::TCP),
         ///                action: Action::Accept,
         ///                ..Default::default()
@@ -420,7 +420,10 @@ mod r#async {
         ///
         /// # Example
         /// ```rust,no_run
-        /// # use hrobot::models::{FirewallTemplateConfiguration, Rules, Rule, Protocol, IPVersion, Action};
+        /// # use hrobot::models::{
+        ///     FirewallTemplateConfiguration, Rules, Rule,
+        ///     Protocol, IPVersion, Action, PortRange
+        /// };
         /// # #[tokio::main]
         /// # async fn main() {
         /// let robot = hrobot::AsyncRobot::default();
@@ -434,8 +437,8 @@ mod r#async {
         ///            Rule {
         ///                name: "Allow from home".to_owned(),
         ///                ip_version: Some(IPVersion::IPv4),
-        ///                src_ip: Some("123.123.123.123/32".to_string()),
-        ///                dst_port: Some("27015-27016".to_string()),
+        ///                src_ip: Some("123.123.123.123/32".parse().unwrap()),
+        ///                dst_port: Some(PortRange::range(27015, 27016)),
         ///                protocol: Some(Protocol::TCP),
         ///                action: Action::Accept,
         ///                ..Default::default()

@@ -89,7 +89,7 @@ mod tests {
         let servers = robot.list_servers().await.unwrap();
         info!("{servers:#?}");
 
-        if let Some(server) = servers.iter().next() {
+        if let Some(server) = servers.first() {
             let firewall = robot.get_firewall(server.id).await.unwrap();
 
             info!("{firewall:#?}");
@@ -108,7 +108,7 @@ mod tests {
         let servers = robot.list_servers().await.unwrap();
         info!("{servers:#?}");
 
-        if let Some(server) = servers.iter().next() {
+        if let Some(server) = servers.first() {
             // Fetch the current firewall configuration.
             let original_firewall = robot.get_firewall(server.id).await.unwrap();
 
@@ -174,7 +174,7 @@ mod tests {
         let servers = robot.list_servers().await.unwrap();
         info!("{servers:#?}");
 
-        if let Some(server) = servers.iter().next() {
+        if let Some(server) = servers.first() {
             // Fetch the current firewall configuration.
             let original_firewall = robot.get_firewall(server.id).await.unwrap();
 
@@ -236,7 +236,7 @@ mod tests {
         let templates = robot.list_firewall_templates().await.unwrap();
         info!("{templates:#?}");
 
-        if let Some(template_ref) = templates.iter().next() {
+        if let Some(template_ref) = templates.first() {
             let template = robot.get_firewall_template(template_ref.id).await.unwrap();
             info!("{template:#?}");
         }

@@ -2,6 +2,8 @@ use crate::models::urlencode::{UrlEncode, UrlEncodingBuffer};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, net::Ipv4Addr, ops::RangeInclusive};
 
+pub use ipnet::Ipv4Net;
+
 /// Version of the Internet Protocol supported by the firewall.
 #[derive(Default, Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -148,7 +150,7 @@ impl Display for Action {
 #[derive(Debug, Clone, Deserialize)]
 pub struct FirewallTemplateReference {
     /// Unique template ID. Can be used to fetch the entire rule
-    /// list using [`AsyncRobot::get_firewall_template()`]
+    /// list using [`AsyncRobot::get_firewall_template()`](crate::AsyncRobot::get_firewall_template)
     pub id: u32,
 
     /// Human-readable name for the template.
@@ -271,7 +273,7 @@ pub struct FirewallConfiguration {
 impl From<&Firewall> for FirewallConfiguration {
     fn from(value: &Firewall) -> Self {
         FirewallConfiguration {
-            status: value.status.clone(),
+            status: value.status,
             filter_ipv6: value.filter_ipv6,
             whitelist_hetzner_services: value.whitelist_hetzner_services,
             rules: value.rules.clone(),
@@ -373,7 +375,7 @@ impl IntoIterator for PortRange {
     type IntoIter = <RangeInclusive<u16> as IntoIterator>::IntoIter;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
+        self.0
     }
 }
 
@@ -387,12 +389,12 @@ impl<'de> Deserialize<'de> for PortRange {
         let value: &str = Deserialize::deserialize(deserializer)?;
 
         if let Some((start, end)) = value.split_once('-') {
-            let start = u16::from_str_radix(start, 10).map_err(D::Error::custom)?;
-            let end = u16::from_str_radix(end, 10).map_err(D::Error::custom)?;
+            let start = start.parse::<u16>().map_err(D::Error::custom)?;
+            let end = end.parse::<u16>().map_err(D::Error::custom)?;
 
             Ok(PortRange(RangeInclusive::new(start, end)))
         } else {
-            let port = u16::from_str_radix(value, 10).map_err(D::Error::custom)?;
+            let port = value.parse::<u16>().map_err(D::Error::custom)?;
 
             Ok(PortRange(RangeInclusive::new(port, port)))
         }
@@ -409,12 +411,18 @@ pub struct Rule {
     pub name: String,
 
     /// Destination IP address.
-    pub dst_ip: Option<String>,
+    pub dst_ip: Option<Ipv4Net>,
 
     /// Source IP address.
-    pub src_ip: Option<String>,
+    ///
+    /// Hetzner [does not support IPv6 address filtering](https://docs.hetzner.com/robot/dedicated-server/firewall#limitations-ipv6),
+    /// hence why this is an [`Ipv4Net`], and not an [`IpNet`](ipnet::IpNet).
+    pub src_ip: Option<Ipv4Net>,
 
     /// Destination Port.
+    ///
+    /// Hetzner [does not support IPv6 address filtering](https://docs.hetzner.com/robot/dedicated-server/firewall#limitations-ipv6),
+    /// hence why this is an [`Ipv4Net`], and not an [`IpNet`](ipnet::IpNet).
     pub dst_port: Option<PortRange>,
 
     /// Source Port.
@@ -511,6 +519,7 @@ mod tests {
     };
 
     use super::UrlEncode;
+    use ipnet::Ipv4Net;
 
     #[test]
     #[traced_test]
@@ -525,8 +534,8 @@ mod tests {
                     ingress: vec![Rule {
                         ip_version: Some(IPVersion::IPv4),
                         name: "Some rule".to_owned(),
-                        dst_ip: Some("127.0.0.0/8".to_string()),
-                        src_ip: Some("0.0.0.0/0".to_string()),
+                        dst_ip: Some("127.0.0.0/8".parse().unwrap()),
+                        src_ip: Some(Ipv4Net::default()),
                         dst_port: Some(PortRange::range(27015, 27016)),
                         src_port: None,
                         protocol: Some(Protocol::TCP),

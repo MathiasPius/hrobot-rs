@@ -95,7 +95,7 @@ mod tests {
         let servers = robot.list_servers().await.unwrap();
         info!("{servers:#?}");
 
-        if let Some(server) = servers.iter().next() {
+        if let Some(server) = servers.first() {
             let retrieved_server = robot.get_server(server.id).await.unwrap();
 
             assert_eq!(retrieved_server.name, server.name);
@@ -129,14 +129,14 @@ mod tests {
         let servers = robot.list_servers().await.unwrap();
         info!("{servers:#?}");
 
-        if let Some(server) = servers.iter().next() {
+        if let Some(server) = servers.first() {
             let old_name = &server.name;
             let new_name = "test-rename";
 
-            let renamed_server = robot.rename_server(server.id, &new_name).await.unwrap();
+            let renamed_server = robot.rename_server(server.id, new_name).await.unwrap();
             assert_eq!(renamed_server.name, new_name);
 
-            let rolled_back_server = robot.rename_server(server.id, &old_name).await.unwrap();
+            let rolled_back_server = robot.rename_server(server.id, old_name).await.unwrap();
             assert_eq!(&rolled_back_server.name, old_name);
         }
     }
@@ -151,7 +151,7 @@ mod tests {
         let servers = robot.list_servers().await.unwrap();
         info!("{servers:#?}");
 
-        if let Some(server) = servers.iter().next() {
+        if let Some(server) = servers.first() {
             let status = robot.get_server_cancellation(server.id).await.unwrap();
             info!("{status:#?}");
             assert!(!status.cancelled);
