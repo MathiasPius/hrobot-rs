@@ -81,9 +81,7 @@ mod tests {
     use tracing::info;
     use tracing_test::traced_test;
 
-    use crate::models::{
-        Action, FirewallTemplateConfiguration, InternalRule, InternalRules, State,
-    };
+    use crate::models::{FirewallTemplateConfiguration, Rule, Rules, State};
 
     #[tokio::test]
     #[traced_test]
@@ -124,11 +122,7 @@ mod tests {
             // To not disturb the very real server, we'll just add an explicit discard
             // rule at the end, which theoretically should not interfere with the operation
             // of the server.
-            let explicit_discard = InternalRule {
-                name: "Explicit discard".to_owned(),
-                action: Action::Discard,
-                ..Default::default()
-            };
+            let explicit_discard = Rule::discard("Explicit discard");
 
             config.rules.ingress.push(explicit_discard.clone());
 
@@ -264,17 +258,9 @@ mod tests {
                 filter_ipv6: false,
                 whitelist_hetzner_services: false,
                 is_default: false,
-                rules: InternalRules {
-                    ingress: vec![InternalRule {
-                        name: "Deny in".to_string(),
-                        action: Action::Discard,
-                        ..Default::default()
-                    }],
-                    egress: vec![InternalRule {
-                        name: "Deny out".to_string(),
-                        action: Action::Discard,
-                        ..Default::default()
-                    }],
+                rules: Rules {
+                    ingress: vec![Rule::discard("Deny in")],
+                    egress: vec![Rule::discard("Deny out")],
                 },
             })
             .await
@@ -288,17 +274,9 @@ mod tests {
                     filter_ipv6: false,
                     whitelist_hetzner_services: true,
                     is_default: false,
-                    rules: InternalRules {
-                        ingress: vec![InternalRule {
-                            name: "Allow in".to_string(),
-                            action: Action::Accept,
-                            ..Default::default()
-                        }],
-                        egress: vec![InternalRule {
-                            name: "Allow out".to_string(),
-                            action: Action::Accept,
-                            ..Default::default()
-                        }],
+                    rules: Rules {
+                        ingress: vec![Rule::accept("Allow in")],
+                        egress: vec![Rule::accept("Allow out")],
                     },
                 },
             )

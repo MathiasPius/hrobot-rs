@@ -312,9 +312,9 @@ mod r#async {
         ///
         /// # Example
         /// ```rust,no_run
+        /// # use std::net::Ipv4Addr;
         /// # use hrobot::models::{
-        /// #     FirewallConfiguration, Protocol, Action,
-        /// #     IPVersion, Rule, Rules, State, PortRange
+        /// #     FirewallConfiguration, Rule, Rules, State, Ipv4Filter
         /// # };
         /// # #[tokio::main]
         /// # async fn main() {
@@ -326,16 +326,15 @@ mod r#async {
         ///    whitelist_hetzner_services: true,
         ///    rules: Rules {
         ///        ingress: vec![
-        ///            Rule {
-        ///                name: "Allow from home".to_owned(),
-        ///                ip_version: Some(IPVersion::IPv4),
-        ///                src_ip: Some("123.123.123.123/32".parse().unwrap()),
-        ///                dst_port: Some(PortRange::range(27015, 27016)),
-        ///                protocol: Some(Protocol::TCP),
-        ///                action: Action::Accept,
-        ///                ..Default::default()
-        ///        }],
-        ///        egress: vec![]
+        ///            Rule::accept("Allow from home").matching(
+        ///                 Ipv4Filter::tcp(None)
+        ///                     .from_ip(Ipv4Addr::new(123, 123, 123, 123))
+        ///                     .to_port(27015..=27016)
+        ///            )
+        ///        ],
+        ///        egress: vec![
+        ///            Rule::accept("Allow all")
+        ///        ]
         ///    },
         /// };
         ///
@@ -422,9 +421,9 @@ mod r#async {
         ///
         /// # Example
         /// ```rust,no_run
+        /// # use std::net::Ipv4Addr;
         /// # use hrobot::models::{
-        ///     FirewallTemplateConfiguration, Rules, Rule,
-        ///     Protocol, IPVersion, Action, PortRange
+        /// #     FirewallTemplateConfiguration, Rule, Rules, State, Ipv4Filter
         /// };
         /// # #[tokio::main]
         /// # async fn main() {
@@ -436,16 +435,15 @@ mod r#async {
         ///     is_default: false,
         ///     rules: Rules {
         ///        ingress: vec![
-        ///            Rule {
-        ///                name: "Allow from home".to_owned(),
-        ///                ip_version: Some(IPVersion::IPv4),
-        ///                src_ip: Some("123.123.123.123/32".parse().unwrap()),
-        ///                dst_port: Some(PortRange::range(27015, 27016)),
-        ///                protocol: Some(Protocol::TCP),
-        ///                action: Action::Accept,
-        ///                ..Default::default()
-        ///        }],
-        ///        egress: vec![]
+        ///            Rule::accept("Allow from home").matching(
+        ///                 Ipv4Filter::tcp(None)
+        ///                     .from_ip(Ipv4Addr::new(123, 123, 123, 123))
+        ///                     .to_port(27015..=27016)
+        ///            )
+        ///        ],
+        ///        egress: vec![
+        ///             Rule::accept("Allow all")
+        ///        ]
         ///    },
         /// }).await.unwrap();
         /// # }

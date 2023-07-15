@@ -583,7 +583,7 @@ impl<'de> Deserialize<'de> for PortRange {
 }
 
 /// Describes a single Firewall rule.
-#[derive(Default, Clone, PartialEq, Eq, Debug, Deserialize)]
+#[derive(Default, Clone, Debug, Deserialize)]
 pub(crate) struct InternalRule {
     pub ip_version: Option<IPVersion>,
     pub name: String,
@@ -596,7 +596,7 @@ pub(crate) struct InternalRule {
     pub action: Action,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Filter {
     Any(AnyFilter),
     Ipv4(Ipv4Filter),
@@ -622,7 +622,7 @@ impl From<Ipv6Filter> for Filter {
 }
 
 /// Filters both IPv4 and IPv6 traffic.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct AnyFilter {
     /// Destination Port.
     pub dst_port: Option<PortRange>,
@@ -645,7 +645,7 @@ impl AnyFilter {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Ipv6Filter {
     /// Protocol.
     pub protocol: Option<Protocol>,
@@ -735,7 +735,7 @@ impl Ipv6Filter {
 }
 
 /// Filters IPv4 traffic.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Ipv4Filter {
     /// Destination IP address.
     pub dst_ip: Option<Ipv4Net>,
@@ -863,7 +863,7 @@ impl Ipv4Filter {
 }
 
 /// Describes a single firewall rule.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Rule {
     /// Human-readable name for the rule.
     pub name: String,
@@ -912,7 +912,7 @@ impl From<&Rule> for InternalRule {
                 ..Default::default()
             },
             Filter::Ipv4(ipv4) => InternalRule {
-                ip_version: Some(IPVersion::IPv6),
+                ip_version: Some(IPVersion::IPv4),
                 name: value.name.clone(),
                 dst_port: ipv4.dst_port.clone(),
                 src_port: ipv4.src_port.clone(),
@@ -983,7 +983,7 @@ impl From<InternalRule> for Rule {
 
 #[test]
 fn build_rule() {
-    let config = Rules {
+    Rules {
         ingress: vec![
             Rule::accept("Allow all").matching(Ipv6Filter::udp().from_port(32768..=60000))
         ],
@@ -1059,36 +1059,5 @@ impl UrlEncode for InternalFirewallTemplateConfiguration {
         f.set("whitelist_hos", self.whitelist_hetzner_services);
         f.set("is_default", self.is_default);
         self.rules.encode_into(f.append("rules"));
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use tracing::info;
-    use tracing_test::traced_test;
-
-    use crate::models::{FirewallConfiguration, Ipv4Filter, Rule, Rules, State};
-
-    use super::UrlEncode;
-
-    #[test]
-    #[traced_test]
-    fn serialize_firewall_config() {
-        info!(
-            "{}",
-            &FirewallConfiguration {
-                status: State::Active,
-                filter_ipv6: false,
-                whitelist_hetzner_services: true,
-                rules: Rules {
-                    ingress: vec![
-                        Rule::accept("HTTP").matching(Ipv4Filter::tcp(None).to_port(80)),
-                        Rule::accept("HTTPS").matching(Ipv4Filter::tcp(None).to_port(443))
-                    ],
-                    egress: vec![Rule::accept("Allow all")],
-                },
-            }
-            .encode()
-        );
     }
 }
