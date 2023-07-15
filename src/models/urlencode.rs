@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 pub(crate) struct UrlEncodingBuffer<'a> {
     buffer: &'a mut Vec<String>,
     prefix: String,
@@ -18,12 +20,12 @@ impl<'a> UrlEncodingBuffer<'a> {
         }
     }
 
-    pub fn set(&mut self, key: &str, value: &str) {
+    pub fn set<V: Display>(&mut self, key: &str, value: V) {
         self.buffer.push(format!(
             "{}{}={}",
             urlencoding::encode(&self.prefix),
             urlencoding::encode(key),
-            urlencoding::encode(value).replace("%20", "+")
+            urlencoding::encode(&value.to_string()).replace("%20", "+")
         ));
     }
 }

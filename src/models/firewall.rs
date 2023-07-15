@@ -1,6 +1,6 @@
 use crate::models::urlencode::{UrlEncode, UrlEncodingBuffer};
 use serde::{Deserialize, Serialize};
-use std::{fmt::Display, net::Ipv4Addr};
+use std::{fmt::Display, net::Ipv4Addr, ops::RangeInclusive};
 
 /// Version of the Internet Protocol supported by the firewall.
 #[derive(Default, Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
@@ -28,7 +28,7 @@ impl Display for IPVersion {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
 pub enum State {
     /// Firewall is active.
     #[serde(rename = "active")]
@@ -115,7 +115,7 @@ impl Display for Protocol {
 }
 
 /// Course of action to take when a rule matches.
-#[derive(Default, Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Action {
     /// Explicitly accept the packet.
@@ -291,6 +291,114 @@ pub struct Rules {
     pub egress: Vec<Rule>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PortRange(RangeInclusive<u16>);
+
+impl PortRange {
+    /// Construct a port range covering only a single port.
+    ///
+    /// Equivalent to PortRange::range(port, port);
+    ///
+    /// # Example
+    /// ```rust
+    /// # use hrobot::models::PortRange;
+    /// // Cover only HTTPS.
+    /// let range = PortRange::port(443);
+    /// ```
+    pub fn port(port: u16) -> Self {
+        PortRange(RangeInclusive::new(port, port))
+    }
+
+    /// Construct a port range given the start and end port (inclusive)
+    ///
+    /// # Example
+    /// ```rust
+    /// # use hrobot::models::PortRange;
+    /// // Covers all ephemeral ports
+    /// let range = PortRange::range(32768, 60999);
+    /// ```
+    pub fn range(start: u16, end: u16) -> Self {
+        PortRange(RangeInclusive::new(start, end))
+    }
+
+    /// Get the first port in the range.
+    pub fn start(&self) -> u16 {
+        *self.0.start()
+    }
+
+    /// Get the last port in the range.
+    pub fn end(&self) -> u16 {
+        *self.0.end()
+    }
+}
+
+impl Display for PortRange {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.start())?;
+        if self.end() != self.start() {
+            write!(f, "-{}", self.end())?;
+        }
+
+        Ok(())
+    }
+}
+
+impl From<RangeInclusive<u16>> for PortRange {
+    fn from(value: RangeInclusive<u16>) -> Self {
+        PortRange(value)
+    }
+}
+
+impl From<&RangeInclusive<u16>> for PortRange {
+    fn from(value: &RangeInclusive<u16>) -> Self {
+        PortRange(value.clone())
+    }
+}
+
+impl From<PortRange> for RangeInclusive<u16> {
+    fn from(value: PortRange) -> Self {
+        value.0
+    }
+}
+
+impl From<&PortRange> for RangeInclusive<u16> {
+    fn from(value: &PortRange) -> Self {
+        value.0.clone()
+    }
+}
+
+impl IntoIterator for PortRange {
+    type Item = u16;
+
+    type IntoIter = <RangeInclusive<u16> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<'de> Deserialize<'de> for PortRange {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+
+        let value: &str = Deserialize::deserialize(deserializer)?;
+
+        if let Some((start, end)) = value.split_once('-') {
+            let start = u16::from_str_radix(start, 10).map_err(D::Error::custom)?;
+            let end = u16::from_str_radix(end, 10).map_err(D::Error::custom)?;
+
+            Ok(PortRange(RangeInclusive::new(start, end)))
+        } else {
+            let port = u16::from_str_radix(value, 10).map_err(D::Error::custom)?;
+
+            Ok(PortRange(RangeInclusive::new(port, port)))
+        }
+    }
+}
+
 /// Describes a single Firewall rule.
 #[derive(Default, Clone, PartialEq, Eq, Debug, Deserialize)]
 pub struct Rule {
@@ -307,10 +415,10 @@ pub struct Rule {
     pub src_ip: Option<String>,
 
     /// Destination Port.
-    pub dst_port: Option<String>,
+    pub dst_port: Option<PortRange>,
 
     /// Source Port.
-    pub src_port: Option<String>,
+    pub src_port: Option<PortRange>,
 
     /// Protocol
     pub protocol: Option<Protocol>,
@@ -327,34 +435,34 @@ impl UrlEncode for Rule {
         f.set("[name]", &self.name);
 
         if let Some(ip_version) = self.ip_version.as_ref() {
-            f.set("[ip_version]", ip_version.as_ref())
+            f.set("[ip_version]", ip_version)
         }
 
         if let Some(dst_ip) = self.dst_ip.as_ref() {
-            f.set("[dst_ip]", dst_ip.as_ref())
+            f.set("[dst_ip]", dst_ip)
         }
 
         if let Some(src_ip) = self.src_ip.as_ref() {
-            f.set("[src_ip]", src_ip.as_ref())
+            f.set("[src_ip]", src_ip)
         }
 
         if let Some(dst_port) = self.dst_port.as_ref() {
-            f.set("[dst_port]", dst_port.as_ref())
+            f.set("[dst_port]", dst_port)
         }
 
         if let Some(src_port) = self.src_port.as_ref() {
-            f.set("[src_port]", src_port.as_ref())
+            f.set("[src_port]", src_port)
         }
 
         if let Some(protocol) = self.protocol.as_ref() {
-            f.set("[protocol]", protocol.as_ref())
+            f.set("[protocol]", protocol)
         }
 
         if let Some(tcp_flags) = self.tcp_flags.as_ref() {
-            f.set("[tcp_flags]", tcp_flags.as_ref())
+            f.set("[tcp_flags]", tcp_flags)
         }
 
-        f.set("[action]", self.action.as_ref());
+        f.set("[action]", self.action);
     }
 }
 
@@ -376,25 +484,19 @@ impl UrlEncode for Rules {
 
 impl UrlEncode for FirewallConfiguration {
     fn encode_into(&self, mut f: UrlEncodingBuffer<'_>) {
-        f.set("status", &self.status.to_string());
-        f.set("filter_ipv6", &self.filter_ipv6.to_string());
-        f.set(
-            "whitelist_hos",
-            &self.whitelist_hetzner_services.to_string(),
-        );
+        f.set("status", self.status);
+        f.set("filter_ipv6", self.filter_ipv6);
+        f.set("whitelist_hos", self.whitelist_hetzner_services);
         self.rules.encode_into(f.append("rules"));
     }
 }
 
 impl UrlEncode for FirewallTemplateConfiguration {
     fn encode_into(&self, mut f: UrlEncodingBuffer<'_>) {
-        f.set("name", self.name.as_ref());
-        f.set("filter_ipv6", &self.filter_ipv6.to_string());
-        f.set(
-            "whitelist_hos",
-            &self.whitelist_hetzner_services.to_string(),
-        );
-        f.set("is_default", &self.is_default.to_string());
+        f.set("name", &self.name);
+        f.set("filter_ipv6", self.filter_ipv6);
+        f.set("whitelist_hos", self.whitelist_hetzner_services);
+        f.set("is_default", self.is_default);
         self.rules.encode_into(f.append("rules"));
     }
 }
@@ -404,7 +506,9 @@ mod tests {
     use tracing::info;
     use tracing_test::traced_test;
 
-    use crate::models::{Action, FirewallConfiguration, IPVersion, Protocol, Rule, Rules, State};
+    use crate::models::{
+        Action, FirewallConfiguration, IPVersion, PortRange, Protocol, Rule, Rules, State,
+    };
 
     use super::UrlEncode;
 
@@ -423,7 +527,7 @@ mod tests {
                         name: "Some rule".to_owned(),
                         dst_ip: Some("127.0.0.0/8".to_string()),
                         src_ip: Some("0.0.0.0/0".to_string()),
-                        dst_port: Some("27015-27016".to_string()),
+                        dst_port: Some(PortRange::range(27015, 27016)),
                         src_port: None,
                         protocol: Some(Protocol::TCP),
                         tcp_flags: None,
