@@ -282,9 +282,11 @@ impl From<&Firewall> for FirewallConfiguration {
 /// Encapsulates all ingoing and outgoing rules for a Firewall.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Rules {
+    /// Rules applied to ingress traffic (traffic to the server).
     #[serde(rename = "input", default, skip_serializing_if = "Vec::is_empty")]
     pub ingress: Vec<Rule>,
 
+    /// Rules applied to egress traffic (traffic leaving the server).
     #[serde(rename = "output", default, skip_serializing_if = "Vec::is_empty")]
     pub egress: Vec<Rule>,
 }
