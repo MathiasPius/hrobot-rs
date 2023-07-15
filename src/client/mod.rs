@@ -301,7 +301,7 @@ mod r#async {
         /// # }
         /// ```
         pub async fn get_firewall(&self, server_number: u32) -> Result<Firewall, Error> {
-            Ok(self.go(api::get_firewall(server_number)).await?.0)
+            Ok(self.go(api::get_firewall(server_number)).await?.0.into())
         }
 
         /// Replace a [`Server`]'s [`Firewall`] configuration.
@@ -350,7 +350,8 @@ mod r#async {
             Ok(self
                 .go(api::set_firewall_configuration(server_number, firewall)?)
                 .await?
-                .0)
+                .0
+                .into())
         }
 
         /// Clear a [`Server`]s [`Firewall`] configuration.
@@ -368,7 +369,7 @@ mod r#async {
         /// # }
         /// ```
         pub async fn delete_firewall(&self, server_number: u32) -> Result<Firewall, Error> {
-            Ok(self.go(api::delete_firewall(server_number)).await?.0)
+            Ok(self.go(api::delete_firewall(server_number)).await?.0.into())
         }
 
         /// List all firewall templates.
@@ -391,7 +392,7 @@ mod r#async {
         pub async fn list_firewall_templates(
             &self,
         ) -> Result<Vec<FirewallTemplateReference>, Error> {
-            Ok(self.go(api::list_firewall_templates()).await?.0)
+            Ok(self.go(api::list_firewall_templates()).await?.0.into())
         }
 
         /// Retrieve a complete [`FirewallTemplate`].
@@ -413,7 +414,8 @@ mod r#async {
             Ok(self
                 .go(api::get_firewall_template(template_number))
                 .await?
-                .0)
+                .0
+                .into())
         }
 
         /// Create a new [`FirewallTemplate`].
@@ -452,7 +454,11 @@ mod r#async {
             &self,
             template: FirewallTemplateConfiguration,
         ) -> Result<FirewallTemplate, Error> {
-            Ok(self.go(api::create_firewall_template(template)).await?.0)
+            Ok(self
+                .go(api::create_firewall_template(template))
+                .await?
+                .0
+                .into())
         }
 
         /// Delete a [`FirewallTemplate`].
@@ -507,7 +513,8 @@ mod r#async {
             Ok(self
                 .go(api::update_firewall_template(template_number, template))
                 .await?
-                .0)
+                .0
+                .into())
         }
     }
 }

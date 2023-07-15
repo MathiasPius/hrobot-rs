@@ -1,6 +1,7 @@
 use crate::models::{
-    urlencode::UrlEncode, Firewall, FirewallConfiguration, FirewallTemplate,
-    FirewallTemplateConfiguration, FirewallTemplateReference,
+    urlencode::UrlEncode, FirewallConfiguration, FirewallTemplateConfiguration,
+    FirewallTemplateReference, InternalFirewall, InternalFirewallConfiguration,
+    InternalFirewallTemplate, InternalFirewallTemplateConfiguration,
 };
 
 use super::{
@@ -8,7 +9,7 @@ use super::{
     UnauthenticatedRequest,
 };
 
-pub(crate) fn get_firewall(server_number: u32) -> UnauthenticatedRequest<Single<Firewall>> {
+pub(crate) fn get_firewall(server_number: u32) -> UnauthenticatedRequest<Single<InternalFirewall>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/{server_number}"
     ))
@@ -17,15 +18,17 @@ pub(crate) fn get_firewall(server_number: u32) -> UnauthenticatedRequest<Single<
 pub(crate) fn set_firewall_configuration(
     server_number: u32,
     firewall: &FirewallConfiguration,
-) -> Result<UnauthenticatedRequest<Single<Firewall>>, serde_html_form::ser::Error> {
+) -> Result<UnauthenticatedRequest<Single<InternalFirewall>>, serde_html_form::ser::Error> {
     Ok(UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/{server_number}"
     ))
     .with_method("POST")
-    .with_serialized_body(firewall.encode()))
+    .with_serialized_body(Into::<InternalFirewallConfiguration>::into(firewall).encode()))
 }
 
-pub(crate) fn delete_firewall(server_number: u32) -> UnauthenticatedRequest<Single<Firewall>> {
+pub(crate) fn delete_firewall(
+    server_number: u32,
+) -> UnauthenticatedRequest<Single<InternalFirewall>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/{server_number}"
     ))
@@ -38,7 +41,7 @@ pub(crate) fn list_firewall_templates() -> UnauthenticatedRequest<List<FirewallT
 
 pub(crate) fn get_firewall_template(
     template_number: u32,
-) -> UnauthenticatedRequest<Single<FirewallTemplate>> {
+) -> UnauthenticatedRequest<Single<InternalFirewallTemplate>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/template/{template_number}"
     ))
@@ -46,10 +49,12 @@ pub(crate) fn get_firewall_template(
 
 pub(crate) fn create_firewall_template(
     template: FirewallTemplateConfiguration,
-) -> UnauthenticatedRequest<Single<FirewallTemplate>> {
+) -> UnauthenticatedRequest<Single<InternalFirewallTemplate>> {
     UnauthenticatedRequest::from("https://robot-ws.your-server.de/firewall/template")
         .with_method("POST")
-        .with_serialized_body(template.encode())
+        .with_serialized_body(
+            Into::<InternalFirewallTemplateConfiguration>::into(template).encode(),
+        )
 }
 
 pub(crate) fn delete_firewall_template(template_number: u32) -> UnauthenticatedRequest<()> {
@@ -62,12 +67,12 @@ pub(crate) fn delete_firewall_template(template_number: u32) -> UnauthenticatedR
 pub(crate) fn update_firewall_template(
     template_number: u32,
     template: FirewallTemplateConfiguration,
-) -> UnauthenticatedRequest<Single<FirewallTemplate>> {
+) -> UnauthenticatedRequest<Single<InternalFirewallTemplate>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/template/{template_number}"
     ))
     .with_method("POST")
-    .with_serialized_body(template.encode())
+    .with_serialized_body(Into::<InternalFirewallTemplateConfiguration>::into(template).encode())
 }
 
 #[cfg(all(test, feature = "hyper-client"))]
@@ -76,7 +81,9 @@ mod tests {
     use tracing::info;
     use tracing_test::traced_test;
 
-    use crate::models::{Action, FirewallTemplateConfiguration, InternalRule, Rules, State};
+    use crate::models::{
+        Action, FirewallTemplateConfiguration, InternalRule, InternalRules, State,
+    };
 
     #[tokio::test]
     #[traced_test]
@@ -257,7 +264,7 @@ mod tests {
                 filter_ipv6: false,
                 whitelist_hetzner_services: false,
                 is_default: false,
-                rules: Rules {
+                rules: InternalRules {
                     ingress: vec![InternalRule {
                         name: "Deny in".to_string(),
                         action: Action::Discard,
@@ -281,7 +288,7 @@ mod tests {
                     filter_ipv6: false,
                     whitelist_hetzner_services: true,
                     is_default: false,
-                    rules: Rules {
+                    rules: InternalRules {
                         ingress: vec![InternalRule {
                             name: "Allow in".to_string(),
                             action: Action::Accept,

@@ -1,6 +1,6 @@
 use crate::models::urlencode::{UrlEncode, UrlEncodingBuffer};
 use serde::{Deserialize, Serialize};
-use std::{fmt::Display, net::Ipv4Addr, ops::RangeInclusive, default};
+use std::{fmt::Display, net::Ipv4Addr, ops::RangeInclusive};
 
 pub use ipnet::Ipv4Net;
 
@@ -73,7 +73,7 @@ pub enum SwitchPort {
 /// Protocol types which can be used by rules.
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum InternalProtocol {
+pub(crate) enum InternalProtocol {
     /// Transmission Control Protocol.
     TCP,
 
@@ -120,9 +120,7 @@ impl Display for InternalProtocol {
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Protocol {
     /// Transmission Control Protocol.
-    TCP {
-        flags: Option<String>
-    },
+    TCP { flags: Option<String> },
 
     /// User Datagram Protocol.
     UDP,
@@ -141,6 +139,35 @@ pub enum Protocol {
 
     /// IPSec Encapsulating Security Payload.
     ESP,
+}
+
+impl From<&Protocol> for InternalProtocol {
+    fn from(value: &Protocol) -> Self {
+        match value {
+            Protocol::TCP { .. } => InternalProtocol::TCP,
+            Protocol::UDP => InternalProtocol::UDP,
+            Protocol::GRE => InternalProtocol::GRE,
+            Protocol::ICMP => InternalProtocol::ICMP,
+            Protocol::IPIP => InternalProtocol::IPIP,
+            Protocol::AH => InternalProtocol::AH,
+            Protocol::ESP => InternalProtocol::ESP,
+        }
+    }
+}
+
+impl Protocol {
+    pub fn tcp_with_flags(flags: &str) -> Self {
+        Protocol::TCP {
+            flags: Some(flags.to_string()),
+        }
+    }
+
+    fn flags(&self) -> Option<String> {
+        match self {
+            Protocol::TCP { flags } => flags.clone(),
+            _ => None,
+        }
+    }
 }
 
 /// Course of action to take when a rule matches.
@@ -196,7 +223,7 @@ pub struct FirewallTemplateReference {
 }
 
 /// Describes an entire firewall template.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct FirewallTemplate {
     /// Unique firewall template id
     pub id: u32,
@@ -209,7 +236,6 @@ pub struct FirewallTemplate {
 
     /// Whether to whitelist Hetzner's services,
     /// granting them access through the firewall.
-    #[serde(rename = "whitelist_hos")]
     pub whitelist_hetzner_services: bool,
 
     /// Indicates whether this template shows up as the
@@ -218,6 +244,31 @@ pub struct FirewallTemplate {
 
     /// Firewall rules defined for this Firewall.
     pub rules: Rules,
+}
+
+/// Describes an entire firewall template.
+#[derive(Debug, Clone, Deserialize)]
+pub(crate) struct InternalFirewallTemplate {
+    pub id: u32,
+    pub name: String,
+    pub filter_ipv6: bool,
+    #[serde(rename = "whitelist_hos")]
+    pub whitelist_hetzner_services: bool,
+    pub is_default: bool,
+    pub rules: InternalRules,
+}
+
+impl From<InternalFirewallTemplate> for FirewallTemplate {
+    fn from(value: InternalFirewallTemplate) -> Self {
+        FirewallTemplate {
+            id: value.id,
+            name: value.name,
+            filter_ipv6: value.filter_ipv6,
+            whitelist_hetzner_services: value.whitelist_hetzner_services,
+            is_default: value.is_default,
+            rules: value.rules.into(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -240,19 +291,38 @@ pub struct FirewallTemplateConfiguration {
     pub rules: Rules,
 }
 
+#[derive(Debug, Clone)]
+pub(crate) struct InternalFirewallTemplateConfiguration {
+    pub name: String,
+    pub filter_ipv6: bool,
+    pub whitelist_hetzner_services: bool,
+    pub is_default: bool,
+    pub rules: InternalRules,
+}
+
+impl From<FirewallTemplateConfiguration> for InternalFirewallTemplateConfiguration {
+    fn from(value: FirewallTemplateConfiguration) -> Self {
+        InternalFirewallTemplateConfiguration {
+            name: value.name,
+            filter_ipv6: value.filter_ipv6,
+            whitelist_hetzner_services: value.whitelist_hetzner_services,
+            is_default: value.is_default,
+            rules: (&value.rules).into(),
+        }
+    }
+}
+
 /// Describes an entire Firewall for a server.
 ///
 /// This is returned by Hetzner when getting or updating the firewall of a server.
 /// For configuring the firewall, instead use the [`FirewallConfiguration`] struct,
 /// which can also be extracted using [`Firewall::configuration()`]
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Firewall {
     /// Primary IPv4 address of the server which this firewall applies to.
-    #[serde(rename = "server_ip")]
     pub ipv4: Ipv4Addr,
 
     /// Unique server ID.
-    #[serde(rename = "server_number")]
     pub id: u32,
 
     /// Status of the server's firewall.
@@ -263,7 +333,6 @@ pub struct Firewall {
 
     /// Whether to whitelist Hetzner's services,
     /// granting them access through the firewall.
-    #[serde(rename = "whitelist_hos")]
     pub whitelist_hetzner_services: bool,
 
     /// Switch of the server to which this firewall applies.
@@ -277,6 +346,34 @@ impl Firewall {
     /// Extract the firewall configuration from this firewall description.
     pub fn configuration(&self) -> FirewallConfiguration {
         self.into()
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub(crate) struct InternalFirewall {
+    #[serde(rename = "server_ip")]
+    pub ipv4: Ipv4Addr,
+    #[serde(rename = "server_number")]
+    pub id: u32,
+    pub status: State,
+    pub filter_ipv6: bool,
+    #[serde(rename = "whitelist_hos")]
+    pub whitelist_hetzner_services: bool,
+    pub port: SwitchPort,
+    pub rules: InternalRules,
+}
+
+impl From<InternalFirewall> for Firewall {
+    fn from(value: InternalFirewall) -> Self {
+        Firewall {
+            ipv4: value.ipv4,
+            id: value.id,
+            status: value.status,
+            filter_ipv6: value.filter_ipv6,
+            whitelist_hetzner_services: value.whitelist_hetzner_services,
+            port: value.port,
+            rules: value.rules.into(),
+        }
     }
 }
 
@@ -297,6 +394,24 @@ pub struct FirewallConfiguration {
     pub rules: Rules,
 }
 
+pub(crate) struct InternalFirewallConfiguration {
+    pub status: State,
+    pub filter_ipv6: bool,
+    pub whitelist_hetzner_services: bool,
+    pub rules: InternalRules,
+}
+
+impl From<&FirewallConfiguration> for InternalFirewallConfiguration {
+    fn from(value: &FirewallConfiguration) -> Self {
+        InternalFirewallConfiguration {
+            status: value.status,
+            filter_ipv6: value.filter_ipv6,
+            whitelist_hetzner_services: value.whitelist_hetzner_services,
+            rules: (&value.rules).into(),
+        }
+    }
+}
+
 impl From<&Firewall> for FirewallConfiguration {
     fn from(value: &Firewall) -> Self {
         FirewallConfiguration {
@@ -308,16 +423,49 @@ impl From<&Firewall> for FirewallConfiguration {
     }
 }
 
-/// Encapsulates all ingoing and outgoing rules for a Firewall.
 #[derive(Debug, Clone, Deserialize)]
-pub struct Rules {
-    /// Rules applied to ingress traffic (traffic to the server).
+pub(crate) struct InternalRules {
     #[serde(rename = "input", default, skip_serializing_if = "Vec::is_empty")]
     pub ingress: Vec<InternalRule>,
 
-    /// Rules applied to egress traffic (traffic leaving the server).
     #[serde(rename = "output", default, skip_serializing_if = "Vec::is_empty")]
     pub egress: Vec<InternalRule>,
+}
+
+/// Encapsulates all ingoing and outgoing rules for a Firewall.
+#[derive(Debug, Clone)]
+pub struct Rules {
+    /// Rules applied to ingress traffic (traffic to the server).
+    pub ingress: Vec<Rule>,
+
+    /// Rules applied to egress traffic (traffic leaving the server).
+    pub egress: Vec<Rule>,
+}
+
+impl From<&Rules> for InternalRules {
+    fn from(value: &Rules) -> Self {
+        InternalRules {
+            ingress: value
+                .ingress
+                .iter()
+                .map(Into::<InternalRule>::into)
+                .collect(),
+            egress: value
+                .egress
+                .iter()
+                .map(Into::<InternalRule>::into)
+                .collect(),
+        }
+    }
+}
+
+impl From<InternalRules> for Rules {
+    fn from(value: InternalRules) -> Self {
+        Rules {
+            ingress: value.ingress.into_iter().map(Into::<Rule>::into).collect(),
+            egress: value.egress.into_iter().map(Into::<Rule>::into).collect(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -369,6 +517,12 @@ impl Display for PortRange {
         }
 
         Ok(())
+    }
+}
+
+impl From<u16> for PortRange {
+    fn from(value: u16) -> Self {
+        PortRange::port(value)
     }
 }
 
@@ -430,64 +584,159 @@ impl<'de> Deserialize<'de> for PortRange {
 
 /// Describes a single Firewall rule.
 #[derive(Default, Clone, PartialEq, Eq, Debug, Deserialize)]
-pub struct InternalRule {
-    /// IP version which this rule applies to. None implies both.
+pub(crate) struct InternalRule {
     pub ip_version: Option<IPVersion>,
-
-    /// Human-readable name for the rule.
     pub name: String,
-
-    /// Destination IP address.
     pub dst_ip: Option<Ipv4Net>,
-
-    /// Source IP address.
-    ///
-    /// Hetzner [does not support IPv6 address filtering](https://docs.hetzner.com/robot/dedicated-server/firewall#limitations-ipv6),
-    /// hence why this is an [`Ipv4Net`], and not an [`IpNet`](ipnet::IpNet).
     pub src_ip: Option<Ipv4Net>,
-
-    /// Destination Port.
-    ///
-    /// Hetzner [does not support IPv6 address filtering](https://docs.hetzner.com/robot/dedicated-server/firewall#limitations-ipv6),
-    /// hence why this is an [`Ipv4Net`], and not an [`IpNet`](ipnet::IpNet).
     pub dst_port: Option<PortRange>,
-
-    /// Source Port.
     pub src_port: Option<PortRange>,
-
-    /// Protocol
     pub protocol: Option<InternalProtocol>,
-
-    /// TCP Flags.
     pub tcp_flags: Option<String>,
-
-    /// Action to take if rule matches.
     pub action: Action,
 }
 
-#[derive(Default)]
+#[derive(Debug, Clone)]
 pub enum Filter {
-    #[default]
-    Both,
-    IPv4(IPv4Rule),
-    Ipv6(IPv6Rule),
+    Any(AnyFilter),
+    Ipv4(Ipv4Filter),
+    Ipv6(Ipv6Filter),
 }
 
-pub struct IPv6Rule {
-    /// Protocol.
-    pub protocol: Option<InternalProtocol>,
+impl Default for Filter {
+    fn default() -> Self {
+        Filter::Any(AnyFilter::default())
+    }
+}
 
+impl From<Ipv4Filter> for Filter {
+    fn from(value: Ipv4Filter) -> Self {
+        Filter::Ipv4(value)
+    }
+}
+
+impl From<Ipv6Filter> for Filter {
+    fn from(value: Ipv6Filter) -> Self {
+        Filter::Ipv6(value)
+    }
+}
+
+/// Filters both IPv4 and IPv6 traffic.
+#[derive(Debug, Clone, Default)]
+pub struct AnyFilter {
     /// Destination Port.
-    ///
-    /// Hetzner [does not support IPv6 address filtering](https://docs.hetzner.com/robot/dedicated-server/firewall#limitations-ipv6),
-    /// hence why this is an [`Ipv4Net`], and not an [`IpNet`](ipnet::IpNet).
     pub dst_port: Option<PortRange>,
 
     /// Source Port.
     pub src_port: Option<PortRange>,
 }
 
-pub struct IPv4Rule {
+impl AnyFilter {
+    /// Narrow filter to only match the given source port or port range.
+    pub fn from_port<IntoPortRange: Into<PortRange>>(mut self, range: IntoPortRange) -> Self {
+        self.src_port = Some(range.into());
+        self
+    }
+
+    /// Narrow filter to only match the given destination port or port range.
+    pub fn to_port<IntoPortRange: Into<PortRange>>(mut self, range: IntoPortRange) -> Self {
+        self.dst_port = Some(range.into());
+        self
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Ipv6Filter {
+    /// Protocol.
+    pub protocol: Option<Protocol>,
+
+    /// Destination Port.
+    pub dst_port: Option<PortRange>,
+
+    /// Source Port.
+    pub src_port: Option<PortRange>,
+}
+
+impl Ipv6Filter {
+    /// Match all IPv6 traffic.
+    pub fn any() -> Self {
+        Ipv6Filter {
+            protocol: None,
+            dst_port: None,
+            src_port: None,
+        }
+    }
+
+    /// Match only IPSec Authentication Header traffic.
+    pub fn ah() -> Self {
+        Ipv6Filter {
+            protocol: Some(Protocol::AH),
+            dst_port: None,
+            src_port: None,
+        }
+    }
+
+    /// Match only IPSec Encapsulating Security Payload traffic.
+    pub fn esp() -> Self {
+        Ipv6Filter {
+            protocol: Some(Protocol::ESP),
+            dst_port: None,
+            src_port: None,
+        }
+    }
+
+    /// Match only IP-in-IP tunnelling traffic.
+    pub fn ipip() -> Self {
+        Ipv6Filter {
+            protocol: Some(Protocol::IPIP),
+            dst_port: None,
+            src_port: None,
+        }
+    }
+
+    /// Match only Generic Routing Encapsulation traffic.
+    pub fn gre() -> Self {
+        Ipv6Filter {
+            protocol: Some(Protocol::GRE),
+            dst_port: None,
+            src_port: None,
+        }
+    }
+
+    /// Match only User Datagram Protocol traffic.
+    pub fn udp() -> Self {
+        Ipv6Filter {
+            protocol: Some(Protocol::UDP),
+            dst_port: None,
+            src_port: None,
+        }
+    }
+
+    /// Match only Transmission Control Protocol traffic, optionally only with the given flags.
+    pub fn tcp(flags: Option<String>) -> Self {
+        Ipv6Filter {
+            protocol: Some(Protocol::TCP { flags }),
+            dst_port: None,
+            src_port: None,
+        }
+    }
+
+    /// Narrow filter to only match the given source port or port range.
+    pub fn from_port<IntoPortRange: Into<PortRange>>(mut self, range: IntoPortRange) -> Self {
+        self.src_port = Some(range.into());
+        self
+    }
+
+    /// Narrow filter to only match the given destination port or port range.
+    pub fn to_port<IntoPortRange: Into<PortRange>>(mut self, range: IntoPortRange) -> Self {
+        self.dst_port = Some(range.into());
+        self
+    }
+}
+
+/// Filters IPv4 traffic.
+#[derive(Debug, Clone, Default)]
+pub struct Ipv4Filter {
     /// Destination IP address.
     pub dst_ip: Option<Ipv4Net>,
 
@@ -507,20 +756,130 @@ pub struct IPv4Rule {
     pub src_port: Option<PortRange>,
 
     /// Protocol
-    pub protocol: Option<InternalProtocol>,
+    pub protocol: Option<Protocol>,
 }
 
+impl Ipv4Filter {
+    /// Match all IPv4 traffic.
+    pub fn any() -> Self {
+        Ipv4Filter {
+            protocol: None,
+            dst_port: None,
+            src_port: None,
+            src_ip: None,
+            dst_ip: None,
+        }
+    }
+
+    /// Match only IPSec Authentication Header traffic.
+    pub fn ah() -> Self {
+        Ipv4Filter {
+            protocol: Some(Protocol::AH),
+            dst_port: None,
+            src_port: None,
+            src_ip: None,
+            dst_ip: None,
+        }
+    }
+
+    /// Match only IPSec Enapsulating Security Payload traffic.
+    pub fn esp() -> Self {
+        Ipv4Filter {
+            protocol: Some(Protocol::ESP),
+            dst_port: None,
+            src_port: None,
+            src_ip: None,
+            dst_ip: None,
+        }
+    }
+
+    /// Match only IP-in-IP tunnelling traffic.
+    pub fn ipip() -> Self {
+        Ipv4Filter {
+            protocol: Some(Protocol::IPIP),
+            dst_port: None,
+            src_port: None,
+            src_ip: None,
+            dst_ip: None,
+        }
+    }
+
+    /// Match only Generic Routing Encapsulation traffic.
+    pub fn gre() -> Self {
+        Ipv4Filter {
+            protocol: Some(Protocol::GRE),
+            dst_port: None,
+            src_port: None,
+            src_ip: None,
+            dst_ip: None,
+        }
+    }
+
+    /// Match only User Datagram Protocol traffic.
+    pub fn udp() -> Self {
+        Ipv4Filter {
+            protocol: Some(Protocol::UDP),
+            dst_port: None,
+            src_port: None,
+            src_ip: None,
+            dst_ip: None,
+        }
+    }
+
+    /// Match only Transmission Control Protocol traffic, optionally only the given flags.
+    pub fn tcp(flags: Option<String>) -> Self {
+        Ipv4Filter {
+            protocol: Some(Protocol::TCP { flags }),
+            dst_port: None,
+            src_port: None,
+            src_ip: None,
+            dst_ip: None,
+        }
+    }
+
+    /// Narrow filter to only match the given source port or port range.
+    pub fn from_port<IntoPortRange: Into<PortRange>>(mut self, range: IntoPortRange) -> Self {
+        self.src_port = Some(range.into());
+        self
+    }
+
+    /// Narrow filter to only match the given destination port or port range.
+    pub fn to_port<IntoPortRange: Into<PortRange>>(mut self, range: IntoPortRange) -> Self {
+        self.dst_port = Some(range.into());
+        self
+    }
+
+    /// Narrow filter to only match the given source ip address or address range.
+    pub fn from_ip<IntoIpNet: Into<Ipv4Net>>(mut self, ip: IntoIpNet) -> Self {
+        self.src_ip = Some(ip.into());
+        self
+    }
+
+    /// Narrow filter to only match the given destination ip address or address range.
+    pub fn to_ip<IntoIpNet: Into<Ipv4Net>>(mut self, ip: IntoIpNet) -> Self {
+        self.dst_ip = Some(ip.into());
+        self
+    }
+}
+
+/// Describes a single firewall rule.
+#[derive(Debug, Clone)]
 pub struct Rule {
+    /// Human-readable name for the rule.
     pub name: String,
+
+    /// Filter describing which traffic this rule applies to.
     pub filter: Filter,
-    pub action: Action
+
+    /// Action to take, if the filter matches.
+    pub action: Action,
 }
 
 impl Rule {
     pub fn accept(name: &str) -> Self {
         Rule {
             name: name.to_string(),
-            filter: Filter::Both,
+            filter: Filter::default(),
             action: Action::Accept,
         }
     }
@@ -528,7 +887,7 @@ impl Rule {
     pub fn discard(name: &str) -> Self {
         Rule {
             name: name.to_string(),
-            filter: Filter::Both,
+            filter: Filter::default(),
             action: Action::Discard,
         }
     }
@@ -537,8 +896,88 @@ impl Rule {
         Rule {
             name: self.name,
             action: self.action,
-            filter: self.filter
+            filter: filter.into(),
         }
+    }
+}
+
+impl From<&Rule> for InternalRule {
+    fn from(value: &Rule) -> Self {
+        match &value.filter {
+            Filter::Any(any) => InternalRule {
+                name: value.name.clone(),
+                src_port: any.src_port.clone(),
+                dst_port: any.dst_port.clone(),
+                action: value.action,
+                ..Default::default()
+            },
+            Filter::Ipv4(ipv4) => InternalRule {
+                ip_version: Some(IPVersion::IPv6),
+                name: value.name.clone(),
+                dst_port: ipv4.dst_port.clone(),
+                src_port: ipv4.src_port.clone(),
+                src_ip: ipv4.src_ip,
+                dst_ip: ipv4.dst_ip,
+                tcp_flags: ipv4.protocol.as_ref().and_then(Protocol::flags),
+                protocol: ipv4.protocol.as_ref().map(Into::<InternalProtocol>::into),
+                action: value.action,
+            },
+            Filter::Ipv6(ipv6) => InternalRule {
+                ip_version: Some(IPVersion::IPv6),
+                name: value.name.clone(),
+                dst_port: ipv6.dst_port.clone(),
+                src_port: ipv6.src_port.clone(),
+                src_ip: None,
+                dst_ip: None,
+                tcp_flags: ipv6.protocol.as_ref().and_then(Protocol::flags),
+                protocol: ipv6
+                    .protocol
+                    .as_ref()
+                    .map(Into::<InternalProtocol>::into)
+                    .clone(),
+                action: value.action,
+            },
+        }
+    }
+}
+
+impl From<InternalRule> for Rule {
+    fn from(value: InternalRule) -> Self {
+        let rule = match value.action {
+            Action::Accept => Rule::accept(&value.name),
+            Action::Discard => Rule::discard(&value.name),
+        };
+
+        let protocol = value.protocol.map(|protocol| match protocol {
+            InternalProtocol::TCP => Protocol::TCP {
+                flags: value.tcp_flags,
+            },
+            InternalProtocol::AH => Protocol::AH,
+            InternalProtocol::ESP => Protocol::ESP,
+            InternalProtocol::GRE => Protocol::GRE,
+            InternalProtocol::ICMP => Protocol::ICMP,
+            InternalProtocol::IPIP => Protocol::IPIP,
+            InternalProtocol::UDP => Protocol::UDP,
+        });
+
+        rule.matching(match value.ip_version {
+            Some(IPVersion::IPv4) => Filter::Ipv4(Ipv4Filter {
+                dst_ip: value.dst_ip,
+                src_ip: value.src_ip,
+                dst_port: value.dst_port,
+                src_port: value.src_port,
+                protocol,
+            }),
+            Some(IPVersion::IPv6) => Filter::Ipv6(Ipv6Filter {
+                dst_port: value.dst_port,
+                src_port: value.src_port,
+                protocol,
+            }),
+            None => Filter::Any(AnyFilter {
+                dst_port: value.dst_port,
+                src_port: value.src_port,
+            }),
+        })
     }
 }
 
@@ -546,13 +985,10 @@ impl Rule {
 fn build_rule() {
     let config = Rules {
         ingress: vec![
-            Rule::accept("Allow all").matching({
-                name: "Allow all",
-                filter: Filter::Both,
-                action: Action::Accept
-            }
-        ]
-    }
+            Rule::accept("Allow all").matching(Ipv6Filter::udp().from_port(32768..=60000))
+        ],
+        egress: vec![],
+    };
 }
 
 impl UrlEncode for InternalRule {
@@ -591,7 +1027,7 @@ impl UrlEncode for InternalRule {
     }
 }
 
-impl UrlEncode for Rules {
+impl UrlEncode for InternalRules {
     fn encode_into(&self, mut f: UrlEncodingBuffer<'_>) {
         {
             let mut ingress = f.append("[input]");
@@ -607,7 +1043,7 @@ impl UrlEncode for Rules {
     }
 }
 
-impl UrlEncode for FirewallConfiguration {
+impl UrlEncode for InternalFirewallConfiguration {
     fn encode_into(&self, mut f: UrlEncodingBuffer<'_>) {
         f.set("status", self.status);
         f.set("filter_ipv6", self.filter_ipv6);
@@ -616,7 +1052,7 @@ impl UrlEncode for FirewallConfiguration {
     }
 }
 
-impl UrlEncode for FirewallTemplateConfiguration {
+impl UrlEncode for InternalFirewallTemplateConfiguration {
     fn encode_into(&self, mut f: UrlEncodingBuffer<'_>) {
         f.set("name", &self.name);
         f.set("filter_ipv6", self.filter_ipv6);
@@ -631,12 +1067,9 @@ mod tests {
     use tracing::info;
     use tracing_test::traced_test;
 
-    use crate::models::{
-        Action, FirewallConfiguration, IPVersion, PortRange, InternalProtocol, InternalRule, Rules, State,
-    };
+    use crate::models::{FirewallConfiguration, Ipv4Filter, Rule, Rules, State};
 
     use super::UrlEncode;
-    use ipnet::Ipv4Net;
 
     #[test]
     #[traced_test]
@@ -648,28 +1081,11 @@ mod tests {
                 filter_ipv6: false,
                 whitelist_hetzner_services: true,
                 rules: Rules {
-                    ingress: vec![Rule {
-                        ip_version: Some(IPVersion::IPv4),
-                        name: "Some rule".to_owned(),
-                        dst_ip: Some("127.0.0.0/8".parse().unwrap()),
-                        src_ip: Some(Ipv4Net::default()),
-                        dst_port: Some(PortRange::range(27015, 27016)),
-                        src_port: None,
-                        protocol: Some(Protocol::TCP),
-                        tcp_flags: None,
-                        action: Action::Accept,
-                    }],
-                    egress: vec![Rule {
-                        ip_version: None,
-                        name: "Allow all".to_owned(),
-                        dst_ip: None,
-                        src_ip: None,
-                        dst_port: None,
-                        src_port: None,
-                        protocol: None,
-                        tcp_flags: None,
-                        action: Action::Accept,
-                    }],
+                    ingress: vec![
+                        Rule::accept("HTTP").matching(Ipv4Filter::tcp(None).to_port(80)),
+                        Rule::accept("HTTPS").matching(Ipv4Filter::tcp(None).to_port(443))
+                    ],
+                    egress: vec![Rule::accept("Allow all")],
                 },
             }
             .encode()
