@@ -73,7 +73,7 @@ pub struct Single<T: DeserializeOwned>(#[serde(deserialize_with = "deserialize_i
 mod tests {
     use serde::Deserialize;
 
-    use crate::models::Server;
+    use crate::api::server::Server;
 
     #[test]
     fn deserialize_wrapped() {

@@ -1,21 +1,28 @@
-use crate::api::wrapper::{List, Single};
-use crate::models::{Cancellation, Server};
+mod models;
+
+use crate::{
+    api::wrapper::{List, Single},
+    error::Error,
+    AsyncHttpClient, AsyncRobot,
+};
 use hyper::Uri;
 use serde::Serialize;
 
+pub use models::*;
+
 use super::UnauthenticatedRequest;
 
-pub(crate) fn list_servers() -> UnauthenticatedRequest<List<Server>> {
+fn list_servers() -> UnauthenticatedRequest<List<Server>> {
     UnauthenticatedRequest::new(Uri::from_static("https://robot-ws.your-server.de/server"))
 }
 
-pub(crate) fn get_server(server_number: u32) -> UnauthenticatedRequest<Single<Server>> {
+fn get_server(server_number: u32) -> UnauthenticatedRequest<Single<Server>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/server/{server_number}"
     ))
 }
 
-pub(crate) fn rename_server(
+fn rename_server(
     server_number: u32,
     name: &str,
 ) -> Result<UnauthenticatedRequest<Single<Server>>, serde_html_form::ser::Error> {
@@ -31,15 +38,13 @@ pub(crate) fn rename_server(
     .with_body(RenameServerRequest { server_name: name })
 }
 
-pub(crate) fn get_server_cancellation(
-    server_number: u32,
-) -> UnauthenticatedRequest<Single<Cancellation>> {
+fn get_server_cancellation(server_number: u32) -> UnauthenticatedRequest<Single<Cancellation>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/server/{server_number}/cancellation"
     ))
 }
 
-pub(crate) fn withdraw_server_cancellation(
+fn withdraw_server_cancellation(
     server_number: u32,
 ) -> UnauthenticatedRequest<Single<Cancellation>> {
     UnauthenticatedRequest::from(&format!(
@@ -48,7 +53,7 @@ pub(crate) fn withdraw_server_cancellation(
     .with_method("DELETE")
 }
 
-pub(crate) fn withdraw_server_order(
+fn withdraw_server_order(
     server_number: u32,
     reason: Option<&str>,
 ) -> Result<UnauthenticatedRequest<Single<Cancellation>>, serde_html_form::ser::Error> {
@@ -65,6 +70,114 @@ pub(crate) fn withdraw_server_order(
     .with_body(WithdrawalRequest {
         reversal_reason: reason,
     })
+}
+
+impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+    /// List all owned servers.
+    ///
+    /// # Example
+    /// Print the ids and names of all servers accessible by our credentials.
+    /// ```rust
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// for server in robot.list_servers().await.unwrap() {
+    ///     println!("{}: {}", server.id, server.name);
+    /// }
+    /// # }
+    /// ```
+    pub async fn list_servers(&self) -> Result<Vec<Server>, Error> {
+        Ok(self.go(list_servers()).await?.0)
+    }
+
+    /// Retrieve complete information about a specific [`Server`].
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// let server = robot.get_server(1234567).await.unwrap();
+    /// assert_eq!(server.id, 1234567);
+    /// println!("Name: {}", server.name);
+    /// # }
+    /// ```
+    pub async fn get_server(&self, server_number: u32) -> Result<Server, Error> {
+        Ok(self.go(get_server(server_number)).await?.0)
+    }
+
+    /// Rename a server.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.rename_server(1234567, "gibson").await.unwrap();
+    /// # }
+    /// ```
+    pub async fn rename_server(&self, server_number: u32, name: &str) -> Result<Server, Error> {
+        Ok(self.go(rename_server(server_number, name)?).await?.0)
+    }
+
+    /// Get the current cancellation status of a server.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// let status = robot.get_server_cancellation(1234567).await.unwrap();
+    /// assert!(!status.cancelled);
+    /// # }
+    /// ```
+    pub async fn get_server_cancellation(&self, server_number: u32) -> Result<Cancellation, Error> {
+        Ok(self.go(get_server_cancellation(server_number)).await?.0)
+    }
+
+    /// Withdraw a server cancellation.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// let status = robot.withdraw_server_cancellation(1234567).await.unwrap();
+    /// assert!(!status.cancelled);
+    /// # }
+    /// ```
+    pub async fn withdraw_server_cancellation(
+        &self,
+        server_number: u32,
+    ) -> Result<Cancellation, Error> {
+        Ok(self
+            .go(withdraw_server_cancellation(server_number))
+            .await?
+            .0)
+    }
+
+    /// Withdraw a server order.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// let status = robot.withdraw_server_order(1234567, Some("Accidental purchase.")).await.unwrap();
+    /// assert!(status.cancelled);
+    /// # }
+    /// ```
+    pub async fn withdraw_server_order(
+        &self,
+        server_number: u32,
+        reason: Option<&str>,
+    ) -> Result<Cancellation, Error> {
+        Ok(self
+            .go(withdraw_server_order(server_number, reason)?)
+            .await?
+            .0)
+    }
 }
 
 #[cfg(all(test, feature = "hyper-client"))]

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::api::Key;
+use crate::api::keys::Key;
 
 /// Keyboard layout.
 ///

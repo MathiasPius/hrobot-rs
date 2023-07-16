@@ -1,8 +1,8 @@
 pub mod api;
 pub mod error;
-pub mod models;
 
 mod client;
 mod time;
+mod urlencode;
 
 pub use client::*;

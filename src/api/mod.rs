@@ -9,13 +9,9 @@ use serde::Serialize;
 mod wrapper;
 
 pub mod boot;
-mod firewall;
+pub mod firewall;
 pub mod keys;
 mod server;
-
-pub(crate) use firewall::*;
-pub use keys::*;
-pub(crate) use server::*;
 
 /// Base64-encoded credentials used to authenticate against
 /// the Hetzner Robot API.

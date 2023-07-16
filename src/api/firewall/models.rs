@@ -1,4 +1,4 @@
-use crate::models::urlencode::{UrlEncode, UrlEncodingBuffer};
+use crate::urlencode::{UrlEncode, UrlEncodingBuffer};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, net::Ipv4Addr, ops::RangeInclusive};
 
@@ -478,7 +478,7 @@ impl PortRange {
     ///
     /// # Example
     /// ```rust
-    /// # use hrobot::models::PortRange;
+    /// # use hrobot::api::firewall::PortRange;
     /// // Cover only HTTPS.
     /// let range = PortRange::port(443);
     /// ```
@@ -490,7 +490,7 @@ impl PortRange {
     ///
     /// # Example
     /// ```rust
-    /// # use hrobot::models::PortRange;
+    /// # use hrobot::api::firewall::PortRange;
     /// // Covers all ephemeral ports
     /// let range = PortRange::range(32768, 60999);
     /// ```
