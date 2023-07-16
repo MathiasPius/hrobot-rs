@@ -30,7 +30,7 @@ pub(crate) fn assume_berlin_timezone<'de, D: Deserializer<'de>>(
 #[cfg(test)]
 mod tests {
     use serde::Deserialize;
-    use time::{macros::datetime, OffsetDateTime, Month, Date};
+    use time::{macros::datetime, Date, Month, OffsetDateTime};
 
     #[test]
     fn deserialize_berlin_timestamp() {
@@ -72,5 +72,4 @@ mod tests {
             serde_json::from_str(container).unwrap()
         )
     }
-
 }
