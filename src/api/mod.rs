@@ -14,6 +14,7 @@ mod server;
 pub(crate) use firewall::*;
 use serde::Serialize;
 pub(crate) use server::*;
+pub use keys::*;
 
 /// Base64-encoded credentials used to authenticate against
 /// the Hetzner Robot API.
