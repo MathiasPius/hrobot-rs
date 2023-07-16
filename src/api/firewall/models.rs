@@ -185,7 +185,7 @@ pub struct FirewallTemplateConfig {
 ///
 /// This is returned by Hetzner when getting or updating the firewall of a server.
 /// For configuring the firewall, instead use the [`FirewallConfig`] struct,
-/// which can also be extracted using [`Firewall::configuration()`]
+/// which can also be extracted using [`Firewall::config()`]
 #[derive(Debug, Clone)]
 pub struct Firewall {
     /// Status of the server's firewall.
