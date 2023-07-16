@@ -8,6 +8,7 @@ use hyper::Uri;
 mod wrapper;
 
 mod firewall;
+mod keys;
 mod server;
 
 pub(crate) use firewall::*;
