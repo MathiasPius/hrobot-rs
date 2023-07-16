@@ -2,9 +2,7 @@ mod models;
 
 use crate::{error::Error, AsyncHttpClient, AsyncRobot};
 
-pub use models::{ActiveRescueConfig, Keyboard, Rescue, RescueConfig};
-
-use self::models::AvailableRescueConfig;
+pub use models::{ActiveRescueConfig, AvailableRescueConfig, Keyboard, Rescue, RescueConfig};
 
 use super::{wrapper::Single, UnauthenticatedRequest};
 
@@ -41,16 +39,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::boot::{Rescue, ActiveRescue};
+    /// # use hrobot::api::boot::{Rescue, ActiveRescueConfig, AvailableRescueConfig};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// match robot.get_rescue_configuration(1234567).await.unwrap() {
-    ///     Rescue::Active(ActiveRescue { operating_system, .. }) => {
+    ///     Rescue::Active(ActiveRescueConfig { operating_system, .. }) => {
     ///         println!("currently active rescue system is: {operating_system}");
     ///         // e.g.: currently active rescue system is: vkvm
     ///     },
-    ///     Rescue::Available{ operating_systems } => {
+    ///     Rescue::Available(AvailableRescueConfig { operating_systems, .. }) => {
     ///         println!("available rescue systems are: {}", operating_systems.join(", "))
     ///         // e.g.: available rescue systems are: linux, linuxold, vkvm
     ///     }
@@ -134,6 +132,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "unexpected failure might leave the rescue system enabled."]
     #[traced_test]
     #[serial("boot-configuration")]
     async fn test_enable_disable_vkm() {
