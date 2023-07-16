@@ -28,6 +28,14 @@ fn disable_rescue_config(
     .with_method("DELETE")
 }
 
+fn get_last_rescue_config(
+    server_number: u32,
+) -> UnauthenticatedRequest<Single<ActiveRescueConfig>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/boot/{server_number}/rescue/last"
+    ))
+}
+
 impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// Retrieve a [`Server`](crate::api::server::Server)'s [`ActiveRescueConfig`] configuration,
     /// or a list of available operating systems, if the rescue
@@ -53,6 +61,26 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```
     pub async fn get_rescue_config(&self, server_number: u32) -> Result<Rescue, Error> {
         Ok(self.go(get_rescue_config(server_number)).await?.0)
+    }
+
+    /// Get the last [`ActiveRescueConfig`].
+    ///
+    /// This is the last configuration that was active on the server,
+    /// not the *currently* active configuration.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.get_last_rescue_config(1234567).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn get_last_rescue_config(
+        &self,
+        server_number: u32,
+    ) -> Result<ActiveRescueConfig, Error> {
+        Ok(self.go(get_last_rescue_config(server_number)).await?.0)
     }
 
     /// Enable a rescue configuration.
