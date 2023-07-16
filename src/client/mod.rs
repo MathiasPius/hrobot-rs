@@ -161,7 +161,7 @@ mod r#async {
 
         /// Shorthand for authenticating and sending the request.
         #[tracing::instrument]
-        async fn go<Response: DeserializeOwned + Send + 'static>(
+        pub(crate) async fn go<Response: DeserializeOwned + Send + 'static>(
             &self,
             request: UnauthenticatedRequest<Response>,
         ) -> Result<Response, Error> {
