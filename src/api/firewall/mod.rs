@@ -17,15 +17,15 @@ pub(crate) fn get_firewall(server_number: u32) -> UnauthenticatedRequest<Single<
     ))
 }
 
-pub(crate) fn set_firewall_configuration(
+pub(crate) fn set_firewall_config(
     server_number: u32,
-    firewall: &FirewallConfiguration,
+    firewall: &FirewallConfig,
 ) -> Result<UnauthenticatedRequest<Single<InternalFirewall>>, serde_html_form::ser::Error> {
     Ok(UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/{server_number}"
     ))
     .with_method("POST")
-    .with_serialized_body(Into::<InternalFirewallConfiguration>::into(firewall).encode()))
+    .with_serialized_body(Into::<InternalFirewallConfig>::into(firewall).encode()))
 }
 
 pub(crate) fn delete_firewall(
@@ -50,13 +50,11 @@ pub(crate) fn get_firewall_template(
 }
 
 pub(crate) fn create_firewall_template(
-    template: FirewallTemplateConfiguration,
+    template: FirewallTemplateConfig,
 ) -> UnauthenticatedRequest<Single<InternalFirewallTemplate>> {
     UnauthenticatedRequest::from("https://robot-ws.your-server.de/firewall/template")
         .with_method("POST")
-        .with_serialized_body(
-            Into::<InternalFirewallTemplateConfiguration>::into(template).encode(),
-        )
+        .with_serialized_body(Into::<InternalFirewallTemplateConfig>::into(template).encode())
 }
 
 pub(crate) fn delete_firewall_template(template_number: u32) -> UnauthenticatedRequest<()> {
@@ -68,13 +66,13 @@ pub(crate) fn delete_firewall_template(template_number: u32) -> UnauthenticatedR
 
 pub(crate) fn update_firewall_template(
     template_number: u32,
-    template: FirewallTemplateConfiguration,
+    template: FirewallTemplateConfig,
 ) -> UnauthenticatedRequest<Single<InternalFirewallTemplate>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/template/{template_number}"
     ))
     .with_method("POST")
-    .with_serialized_body(Into::<InternalFirewallTemplateConfiguration>::into(template).encode())
+    .with_serialized_body(Into::<InternalFirewallTemplateConfig>::into(template).encode())
 }
 
 impl<Client: AsyncHttpClient> AsyncRobot<Client> {
@@ -103,13 +101,13 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```rust,no_run
     /// # use std::net::Ipv4Addr;
     /// # use hrobot::api::firewall::{
-    /// #     FirewallConfiguration, Rule, Rules, State, Ipv4Filter
+    /// #     FirewallConfig, Rule, Rules, State, Ipv4Filter
     /// # };
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     ///
-    /// let firewall = FirewallConfiguration {
+    /// let firewall = FirewallConfig {
     ///    status: State::Active,
     ///    filter_ipv6: false,
     ///    whitelist_hetzner_services: true,
@@ -127,16 +125,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///    },
     /// };
     ///
-    /// robot.set_firewall_configuration(1234567, &firewall).await.unwrap();
+    /// robot.set_firewall_config(1234567, &firewall).await.unwrap();
     /// # }
     /// ```
-    pub async fn set_firewall_configuration(
+    pub async fn set_firewall_config(
         &self,
         server_number: u32,
-        firewall: &FirewallConfiguration,
+        firewall: &FirewallConfig,
     ) -> Result<Firewall, Error> {
         Ok(self
-            .go(set_firewall_configuration(server_number, firewall)?)
+            .go(set_firewall_config(server_number, firewall)?)
             .await?
             .0
             .into())
@@ -210,12 +208,12 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```rust,no_run
     /// # use std::net::Ipv4Addr;
     /// # use hrobot::api::firewall::{
-    /// #     FirewallTemplateConfiguration, Rule, Rules, State, Ipv4Filter
+    /// #     FirewallTemplateConfig, Rule, Rules, State, Ipv4Filter
     /// };
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.create_firewall_template(FirewallTemplateConfiguration {
+    /// robot.create_firewall_template(FirewallTemplateConfig {
     ///     name: "My First Template".to_string(),
     ///     filter_ipv6: false,
     ///     whitelist_hetzner_services: true,
@@ -237,7 +235,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```
     pub async fn create_firewall_template(
         &self,
-        template: FirewallTemplateConfiguration,
+        template: FirewallTemplateConfig,
     ) -> Result<FirewallTemplate, Error> {
         Ok(self.go(create_firewall_template(template)).await?.0.into())
     }
@@ -269,12 +267,12 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::firewall::{FirewallTemplateConfiguration, Rules, Rule};
+    /// # use hrobot::api::firewall::{FirewallTemplateConfig, Rules, Rule};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// // Remove all firewall rules
-    /// robot.update_firewall_template(1234, FirewallTemplateConfiguration {
+    /// robot.update_firewall_template(1234, FirewallTemplateConfig {
     ///     name: "More like water-wall".to_string(),
     ///     filter_ipv6: false,
     ///     whitelist_hetzner_services: true,
@@ -289,7 +287,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     pub async fn update_firewall_template(
         &self,
         template_number: u32,
-        template: FirewallTemplateConfiguration,
+        template: FirewallTemplateConfig,
     ) -> Result<FirewallTemplate, Error> {
         Ok(self
             .go(update_firewall_template(template_number, template))
@@ -305,7 +303,7 @@ mod tests {
     use tracing::info;
     use tracing_test::traced_test;
 
-    use super::models::{FirewallTemplateConfiguration, Rule, Rules, State};
+    use super::models::{FirewallTemplateConfig, Rule, Rules, State};
 
     #[tokio::test]
     #[traced_test]
@@ -341,7 +339,7 @@ mod tests {
             // Fetch the current firewall configuration.
             let original_firewall = robot.get_firewall(server.id).await.unwrap();
 
-            let mut config = original_firewall.configuration();
+            let mut config = original_firewall.config();
 
             // To not disturb the very real server, we'll just add an explicit discard
             // rule at the end, which theoretically should not interfere with the operation
@@ -352,10 +350,7 @@ mod tests {
 
             info!("{config:#?}");
 
-            robot
-                .set_firewall_configuration(server.id, &config)
-                .await
-                .unwrap();
+            robot.set_firewall_config(server.id, &config).await.unwrap();
 
             info!("Waiting for firewall to be applied to {}", server.name);
 
@@ -381,7 +376,7 @@ mod tests {
 
             // Revert to the original firewall config.
             robot
-                .set_firewall_configuration(server.id, &original_firewall.configuration())
+                .set_firewall_config(server.id, &original_firewall.config())
                 .await
                 .unwrap();
         }
@@ -403,7 +398,7 @@ mod tests {
             // Fetch the current firewall configuration.
             let original_firewall = robot.get_firewall(server.id).await.unwrap();
 
-            let original_config = original_firewall.configuration();
+            let original_config = original_firewall.config();
 
             info!("{original_config:#?}");
 
@@ -432,7 +427,7 @@ mod tests {
 
             // Revert to the original firewall config.
             robot
-                .set_firewall_configuration(server.id, &original_firewall.configuration())
+                .set_firewall_config(server.id, &original_firewall.config())
                 .await
                 .unwrap();
         }
@@ -477,7 +472,7 @@ mod tests {
         let robot = crate::AsyncRobot::default();
 
         let template = robot
-            .create_firewall_template(FirewallTemplateConfiguration {
+            .create_firewall_template(FirewallTemplateConfig {
                 name: "Lockdown".to_string(),
                 filter_ipv6: false,
                 whitelist_hetzner_services: false,
@@ -493,7 +488,7 @@ mod tests {
         robot
             .update_firewall_template(
                 template.id,
-                FirewallTemplateConfiguration {
+                FirewallTemplateConfig {
                     name: "Come on in".to_string(),
                     filter_ipv6: false,
                     whitelist_hetzner_services: true,

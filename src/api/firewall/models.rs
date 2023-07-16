@@ -1,34 +1,9 @@
 use serde::{Deserialize, Serialize};
-use std::{fmt::Display, net::Ipv4Addr, ops::RangeInclusive};
+use std::{fmt::Display, ops::RangeInclusive};
 
 pub use ipnet::Ipv4Net;
 
-/// Version of the Internet Protocol supported by the firewall.
-#[derive(Default, Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "lowercase")]
-pub enum IpVersion {
-    /// IPv4
-    #[default]
-    Ipv4,
-    /// IPv6
-    Ipv6,
-}
-
-impl AsRef<str> for IpVersion {
-    fn as_ref(&self) -> &str {
-        match self {
-            IpVersion::Ipv4 => "ipv4",
-            IpVersion::Ipv6 => "ipv6",
-        }
-    }
-}
-
-impl Display for IpVersion {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.as_ref())
-    }
-}
-
+/// Desired or current state of the server's firewall.
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
 pub enum State {
     /// Firewall is active.
@@ -185,8 +160,9 @@ pub struct FirewallTemplate {
     pub rules: Rules,
 }
 
+/// Desired configuration for a firewall template.
 #[derive(Debug, Clone)]
-pub struct FirewallTemplateConfiguration {
+pub struct FirewallTemplateConfig {
     /// Human-readable name for the template.
     pub name: String,
 
@@ -208,16 +184,10 @@ pub struct FirewallTemplateConfiguration {
 /// Describes an entire Firewall for a server.
 ///
 /// This is returned by Hetzner when getting or updating the firewall of a server.
-/// For configuring the firewall, instead use the [`FirewallConfiguration`] struct,
+/// For configuring the firewall, instead use the [`FirewallConfig`] struct,
 /// which can also be extracted using [`Firewall::configuration()`]
 #[derive(Debug, Clone)]
 pub struct Firewall {
-    /// Primary IPv4 address of the server which this firewall applies to.
-    pub ipv4: Ipv4Addr,
-
-    /// Unique server ID.
-    pub id: u32,
-
     /// Status of the server's firewall.
     pub status: State,
 
@@ -237,14 +207,14 @@ pub struct Firewall {
 
 impl Firewall {
     /// Extract the firewall configuration from this firewall description.
-    pub fn configuration(&self) -> FirewallConfiguration {
+    pub fn config(&self) -> FirewallConfig {
         self.into()
     }
 }
 
 /// Firewall configuration to apply to a server.
 #[derive(Debug)]
-pub struct FirewallConfiguration {
+pub struct FirewallConfig {
     /// Status of the server's firewall.
     pub status: State,
 
@@ -259,9 +229,9 @@ pub struct FirewallConfiguration {
     pub rules: Rules,
 }
 
-impl From<&Firewall> for FirewallConfiguration {
+impl From<&Firewall> for FirewallConfig {
     fn from(value: &Firewall) -> Self {
-        FirewallConfiguration {
+        FirewallConfig {
             status: value.status,
             filter_ipv6: value.filter_ipv6,
             whitelist_hetzner_services: value.whitelist_hetzner_services,
@@ -280,6 +250,7 @@ pub struct Rules {
     pub egress: Vec<Rule>,
 }
 
+/// Describes a port or range of ports.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PortRange(RangeInclusive<u16>);
 
@@ -394,6 +365,7 @@ impl<'de> Deserialize<'de> for PortRange {
     }
 }
 
+/// Describes a filter which narrows the scope of affected traffic for a [`Rule`]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Filter {
     Any(AnyFilter),
@@ -443,6 +415,7 @@ impl AnyFilter {
     }
 }
 
+/// Filters IPv6 traffic.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Ipv6Filter {
     /// Protocol.

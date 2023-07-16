@@ -1,4 +1,4 @@
-use std::{fmt::Display, net::Ipv4Addr};
+use std::fmt::Display;
 
 use ipnet::Ipv4Net;
 use serde::{Deserialize, Serialize};
@@ -6,9 +6,8 @@ use serde::{Deserialize, Serialize};
 use crate::urlencode::{UrlEncode, UrlEncodingBuffer};
 
 use super::{
-    Action, AnyFilter, Filter, Firewall, FirewallConfiguration, FirewallTemplate,
-    FirewallTemplateConfiguration, IpVersion, Ipv4Filter, Ipv6Filter, PortRange, Protocol, Rule,
-    Rules, State, SwitchPort,
+    Action, AnyFilter, Filter, Firewall, FirewallConfig, FirewallTemplate, FirewallTemplateConfig,
+    Ipv4Filter, Ipv6Filter, PortRange, Protocol, Rule, Rules, State, SwitchPort,
 };
 
 /// Describes an entire firewall template.
@@ -37,7 +36,7 @@ impl From<InternalFirewallTemplate> for FirewallTemplate {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct InternalFirewallTemplateConfiguration {
+pub(crate) struct InternalFirewallTemplateConfig {
     pub name: String,
     pub filter_ipv6: bool,
     pub whitelist_hetzner_services: bool,
@@ -45,9 +44,9 @@ pub(crate) struct InternalFirewallTemplateConfiguration {
     pub rules: InternalRules,
 }
 
-impl From<FirewallTemplateConfiguration> for InternalFirewallTemplateConfiguration {
-    fn from(value: FirewallTemplateConfiguration) -> Self {
-        InternalFirewallTemplateConfiguration {
+impl From<FirewallTemplateConfig> for InternalFirewallTemplateConfig {
+    fn from(value: FirewallTemplateConfig) -> Self {
+        InternalFirewallTemplateConfig {
             name: value.name,
             filter_ipv6: value.filter_ipv6,
             whitelist_hetzner_services: value.whitelist_hetzner_services,
@@ -59,10 +58,6 @@ impl From<FirewallTemplateConfiguration> for InternalFirewallTemplateConfigurati
 
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct InternalFirewall {
-    #[serde(rename = "server_ip")]
-    pub ipv4: Ipv4Addr,
-    #[serde(rename = "server_number")]
-    pub id: u32,
     pub status: State,
     pub filter_ipv6: bool,
     #[serde(rename = "whitelist_hos")]
@@ -74,8 +69,6 @@ pub(crate) struct InternalFirewall {
 impl From<InternalFirewall> for Firewall {
     fn from(value: InternalFirewall) -> Self {
         Firewall {
-            ipv4: value.ipv4,
-            id: value.id,
             status: value.status,
             filter_ipv6: value.filter_ipv6,
             whitelist_hetzner_services: value.whitelist_hetzner_services,
@@ -85,16 +78,16 @@ impl From<InternalFirewall> for Firewall {
     }
 }
 
-pub(crate) struct InternalFirewallConfiguration {
+pub(crate) struct InternalFirewallConfig {
     pub status: State,
     pub filter_ipv6: bool,
     pub whitelist_hetzner_services: bool,
     pub rules: InternalRules,
 }
 
-impl From<&FirewallConfiguration> for InternalFirewallConfiguration {
-    fn from(value: &FirewallConfiguration) -> Self {
-        InternalFirewallConfiguration {
+impl From<&FirewallConfig> for InternalFirewallConfig {
+    fn from(value: &FirewallConfig) -> Self {
+        InternalFirewallConfig {
             status: value.status,
             filter_ipv6: value.filter_ipv6,
             whitelist_hetzner_services: value.whitelist_hetzner_services,
@@ -228,6 +221,32 @@ impl From<InternalRule> for Rule {
     }
 }
 
+/// Version of the Internet Protocol supported by the firewall.
+#[derive(Default, Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum IpVersion {
+    /// IPv4
+    #[default]
+    Ipv4,
+    /// IPv6
+    Ipv6,
+}
+
+impl AsRef<str> for IpVersion {
+    fn as_ref(&self) -> &str {
+        match self {
+            IpVersion::Ipv4 => "ipv4",
+            IpVersion::Ipv6 => "ipv6",
+        }
+    }
+}
+
+impl Display for IpVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_ref())
+    }
+}
+
 /// Protocol types which can be used by rules.
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -340,7 +359,7 @@ impl UrlEncode for InternalRules {
     }
 }
 
-impl UrlEncode for InternalFirewallConfiguration {
+impl UrlEncode for InternalFirewallConfig {
     fn encode_into(&self, mut f: UrlEncodingBuffer<'_>) {
         f.set("status", self.status);
         f.set("filter_ipv6", self.filter_ipv6);
@@ -349,7 +368,7 @@ impl UrlEncode for InternalFirewallConfiguration {
     }
 }
 
-impl UrlEncode for InternalFirewallTemplateConfiguration {
+impl UrlEncode for InternalFirewallTemplateConfig {
     fn encode_into(&self, mut f: UrlEncodingBuffer<'_>) {
         f.set("name", &self.name);
         f.set("filter_ipv6", self.filter_ipv6);

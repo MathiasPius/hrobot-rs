@@ -2,13 +2,13 @@ use crate::{error::Error, AsyncHttpClient, AsyncRobot};
 
 use crate::api::{wrapper::Single, UnauthenticatedRequest};
 
-fn get_rescue_configuration(server_number: u32) -> UnauthenticatedRequest<Single<Rescue>> {
+fn get_rescue_config(server_number: u32) -> UnauthenticatedRequest<Single<Rescue>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/rescue"
     ))
 }
 
-fn enable_rescue_configuration(
+fn enable_rescue_config(
     server_number: u32,
     rescue: RescueConfig,
 ) -> Result<UnauthenticatedRequest<Single<ActiveRescueConfig>>, serde_html_form::ser::Error> {
@@ -19,7 +19,7 @@ fn enable_rescue_configuration(
     .with_body(rescue)
 }
 
-fn disable_rescue_configuration(
+fn disable_rescue_config(
     server_number: u32,
 ) -> UnauthenticatedRequest<Single<AvailableRescueConfig>> {
     UnauthenticatedRequest::from(&format!(
@@ -39,7 +39,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// match robot.get_rescue_configuration(1234567).await.unwrap() {
+    /// match robot.get_rescue_config(1234567).await.unwrap() {
     ///     Rescue::Active(ActiveRescueConfig { operating_system, .. }) => {
     ///         println!("currently active rescue system is: {operating_system}");
     ///         // e.g.: currently active rescue system is: vkvm
@@ -51,8 +51,8 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// }
     /// # }
     /// ```
-    pub async fn get_rescue_configuration(&self, server_number: u32) -> Result<Rescue, Error> {
-        Ok(self.go(get_rescue_configuration(server_number)).await?.0)
+    pub async fn get_rescue_config(&self, server_number: u32) -> Result<Rescue, Error> {
+        Ok(self.go(get_rescue_config(server_number)).await?.0)
     }
 
     /// Enable a rescue configuration.
@@ -63,20 +63,20 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.enable_rescue_configuration(1234567, RescueConfig {
+    /// robot.enable_rescue_config(1234567, RescueConfig {
     ///     operating_system: "vkvm".to_string(),
     ///     authorized_keys: vec!["d7:34:1c:8c:4e:20:e0:1f:07:66:45:d9:97:22:ec:07".to_string()],
     ///     keyboard: Keyboard::German,
     /// }).await.unwrap();
     /// # }
     /// ```
-    pub async fn enable_rescue_configuration(
+    pub async fn enable_rescue_config(
         &self,
         server_number: u32,
         config: RescueConfig,
     ) -> Result<ActiveRescueConfig, Error> {
         Ok(self
-            .go(enable_rescue_configuration(server_number, config)?)
+            .go(enable_rescue_config(server_number, config)?)
             .await?
             .0)
     }
@@ -88,17 +88,14 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.disable_rescue_configuration(1234567).await.unwrap();
+    /// robot.disable_rescue_config(1234567).await.unwrap();
     /// # }
     /// ```
-    pub async fn disable_rescue_configuration(
+    pub async fn disable_rescue_config(
         &self,
         server_number: u32,
     ) -> Result<AvailableRescueConfig, Error> {
-        Ok(self
-            .go(disable_rescue_configuration(server_number))
-            .await?
-            .0)
+        Ok(self.go(disable_rescue_config(server_number)).await?.0)
     }
 }
 
@@ -122,7 +119,7 @@ mod tests {
         info!("{servers:#?}");
 
         if let Some(server) = servers.first() {
-            let config = robot.get_rescue_configuration(server.id).await.unwrap();
+            let config = robot.get_rescue_config(server.id).await.unwrap();
             info!("{config:#?}");
         }
     }
@@ -141,7 +138,7 @@ mod tests {
 
         if let Some(server) = servers.first() {
             let activated_config = robot
-                .enable_rescue_configuration(
+                .enable_rescue_config(
                     server.id,
                     RescueConfig {
                         operating_system: "vkvm".to_string(),
@@ -151,15 +148,15 @@ mod tests {
                 .await
                 .unwrap();
 
-            let config = robot.get_rescue_configuration(server.id).await.unwrap();
+            let config = robot.get_rescue_config(server.id).await.unwrap();
             info!("{config:#?}");
 
             assert_eq!(Rescue::Active(activated_config), config);
 
-            robot.disable_rescue_configuration(server.id).await.unwrap();
+            robot.disable_rescue_config(server.id).await.unwrap();
 
             assert!(matches!(
-                robot.get_rescue_configuration(server.id).await.unwrap(),
+                robot.get_rescue_config(server.id).await.unwrap(),
                 Rescue::Available(_)
             ));
         }
@@ -192,6 +189,7 @@ pub enum Keyboard {
     Japanese,
 }
 
+/// Configuration of the rescue system to enable.
 #[derive(Debug, Default, Clone, Serialize, PartialEq, Eq)]
 pub struct RescueConfig {
     /// Rescue operating system to activate.
@@ -208,6 +206,7 @@ pub struct RescueConfig {
     pub keyboard: Keyboard,
 }
 
+/// Currently active rescue system configuration.
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub struct ActiveRescueConfig {
     /// Active rescue operating system.
