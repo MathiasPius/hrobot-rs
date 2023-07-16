@@ -1,0 +1,28 @@
+//! Time conversion and assumptions utilities
+//!
+//! Some of the Hetzner Robot API endpoints return datetimes
+//! with no accompanying timezone information.
+//!
+//! Some of them return UTC timestamps, and others return
+//! timestamps which appear to correlate with German local
+//! time (Europe/Berlin).
+
+use serde::{de::Error, Deserialize, Deserializer};
+use time::{macros::format_description, OffsetDateTime, PrimitiveDateTime};
+use time_tz::PrimitiveDateTimeExt;
+
+/// Deserialize as [`OffsetDateTime`](time::OffsetDateTime)
+/// based on the assumption that the timezone is Europe/Berlin.
+pub(crate) fn assume_berlin_timezone<'de, D: Deserializer<'de>>(
+    deserializer: D,
+) -> Result<OffsetDateTime, D::Error> {
+    let datetime = <&str>::deserialize(deserializer)?;
+
+    Ok(PrimitiveDateTime::parse(
+        datetime,
+        &format_description!("[year]-[month]-[day] [hour]:[minute]:[second]"),
+    )
+    .map_err(D::Error::custom)?
+    .assume_timezone(time_tz::timezones::db::europe::BERLIN)
+    .unwrap())
+}

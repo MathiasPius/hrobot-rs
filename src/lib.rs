@@ -1,6 +1,8 @@
 pub mod api;
-mod client;
 pub mod error;
 pub mod models;
+
+mod client;
+mod time;
 
 pub use client::*;
