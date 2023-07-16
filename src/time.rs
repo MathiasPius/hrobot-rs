@@ -42,7 +42,7 @@ mod tests {
         #[derive(Debug, Deserialize, PartialEq)]
         struct Container {
             #[serde(deserialize_with = "super::assume_berlin_timezone")]
-            timestamp: OffsetDateTime
+            timestamp: OffsetDateTime,
         }
 
         assert_eq!(

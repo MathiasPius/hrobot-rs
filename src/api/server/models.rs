@@ -1,6 +1,6 @@
-use serde::Deserialize;
-use time::{OffsetDateTime, Date};
+use serde::{Deserialize, Serialize};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use time::Date;
 
 /// Indicates the status of a server.
 #[derive(Debug, Deserialize)]
@@ -114,8 +114,8 @@ pub struct Server {
     pub extended: Option<ServerFlags>,
 }
 
-
-#[derive(Debug, Deserialize)]
+/// Describes the terms under which a server was cancelled.
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Cancelled {
     /// Date on which the cancellation will take effect.
     #[serde(rename = "cancellation_date")]
@@ -129,48 +129,28 @@ pub struct Cancelled {
     pub reserved: bool,
 }
 
-/// If the server has been cancelled the struct will reflect this status, otherwise it will
-/// contain information about when the earliest possible cancellation is, and whether reserving
-/// the server upon cancellation is possible
+/// Describes possibility of cancellation for a server.
 #[derive(Debug, Deserialize)]
-pub struct Cancellation {
-    /// Primary IPv4 address of the server.
-    #[serde(rename = "server_ip")]
-    pub ipv4: Option<Ipv4Addr>,
+pub struct Cancellable {
+    /// Earliest date at which it is possible to
+    /// cancel the server.
+    pub earliest_cancellation_date: Date,
 
-    /// Primary IPv6 address of the server.
-    ///
-    /// Note: This field is listed in the API documentation, but I have never
-    /// seen it actually get returned from the API.
-    #[serde(rename = "server_ipv6_net")]
-    pub ipv6: Option<Ipv6Addr>,
-
-    /// Unique ID of the server.
-    #[serde(rename = "server_number")]
-    pub id: u32,
-
-    /// Name of the server, as it appears in the Hetzner Robot interface.
-    #[serde(rename = "server_name")]
-    pub name: String,
-
-    /// Earliest point at which the server may be cancelled. Format: YYYY-MM-DD
-    pub earliest_cancellation_date: String,
-
-    /// Indicates if the server has already been cancelled.
-    pub cancelled: bool,
-
-    /// Indicates whether the current server location is eligible for
-    /// reservation after server cancellation.
+    /// Indicates whether the current server location
+    /// is eligible for reservation after server
+    /// cancellation
     pub reservation_possible: bool,
 
-    /// Indicates whether the current server location will be reserved
-    /// after server cancellation
-    pub reserved: bool,
+    /// List of possible reasons for cancellations.
+    pub cancellation_reasons: Vec<String>,
+}
 
-    /// Cancellation date if the server has been cancelled. Format: YYYY-MM-DD
-    pub cancellation_date: Option<String>,
-
-    /// List of possible cancellation reasons, if the server has not been
-    /// cancelled, or the single given reason, if it has.
-    pub cancellation_reason: Vec<String>,
+/// Indicates the cancellation status of the server.
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Cancellation {
+    /// Server has been cancelled.
+    Cancelled(Cancelled),
+    /// Server has not been cancelled.
+    Cancellable(Cancellable),
 }

@@ -44,6 +44,17 @@ fn get_server_cancellation(server_number: u32) -> UnauthenticatedRequest<Single<
     ))
 }
 
+fn cancel_server(
+    server_number: u32,
+    cancellation: Cancelled,
+) -> Result<UnauthenticatedRequest<Single<Cancelled>>, serde_html_form::ser::Error> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/server/{server_number}/cancellation"
+    ))
+    .with_method("POST")
+    .with_body(cancellation)
+}
+
 fn withdraw_server_cancellation(
     server_number: u32,
 ) -> UnauthenticatedRequest<Single<Cancellation>> {
@@ -125,26 +136,61 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::Cancellation;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// let status = robot.get_server_cancellation(1234567).await.unwrap();
-    /// assert!(!status.cancelled);
+    /// let cancellation = robot.get_server_cancellation(1234567).await.unwrap();
+    /// assert!(matches!(
+    ///     cancellation,
+    ///     Cancellation::Cancellable(_)
+    /// ));
     /// # }
     /// ```
     pub async fn get_server_cancellation(&self, server_number: u32) -> Result<Cancellation, Error> {
         Ok(self.go(get_server_cancellation(server_number)).await?.0)
     }
 
+    /// Get the current cancellation status of a server.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::server::Cancelled;
+    /// # use time::{Date, Month};
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.cancel_server(1234567, Cancelled {
+    ///     date: Date::from_calendar_date(2023, Month::June, 10).unwrap(),
+    ///     reason: Some("Server no longer necessary due to project ending".to_string()),
+    ///     reserved: false
+    /// }).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn cancel_server(
+        &self,
+        server_number: u32,
+        cancellation: Cancelled,
+    ) -> Result<Cancelled, Error> {
+        Ok(self
+            .go(cancel_server(server_number, cancellation)?)
+            .await?
+            .0)
+    }
+
     /// Withdraw a server cancellation.
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::Cancellation;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// let status = robot.withdraw_server_cancellation(1234567).await.unwrap();
-    /// assert!(!status.cancelled);
+    /// let cancellation = robot.withdraw_server_cancellation(1234567).await.unwrap();
+    /// assert!(matches!(
+    ///     cancellation,
+    ///     Cancellation::Cancellable(_)
+    /// ));
     /// # }
     /// ```
     pub async fn withdraw_server_cancellation(
@@ -161,11 +207,15 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::Cancellation;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// let status = robot.withdraw_server_order(1234567, Some("Accidental purchase.")).await.unwrap();
-    /// assert!(status.cancelled);
+    /// let cancellation = robot.withdraw_server_order(1234567, Some("Accidental purchase.")).await.unwrap();
+    /// assert!(matches!(
+    ///     cancellation,
+    ///     Cancellation::Cancelled(_)
+    /// ));
     /// # }
     /// ```
     pub async fn withdraw_server_order(
@@ -185,7 +235,10 @@ mod tests {
     use tracing::info;
     use tracing_test::traced_test;
 
-    use crate::error::{ApiError, Error};
+    use crate::{
+        api::server::Cancellation,
+        error::{ApiError, Error},
+    };
 
     #[tokio::test]
     #[traced_test]
@@ -267,7 +320,7 @@ mod tests {
         if let Some(server) = servers.first() {
             let status = robot.get_server_cancellation(server.id).await.unwrap();
             info!("{status:#?}");
-            assert!(!status.cancelled);
+            assert!(matches!(status, Cancellation::Cancellable(_)));
         }
     }
 }
