@@ -34,7 +34,7 @@ pub struct Key {
 
 /// SSH Public Key Reference.
 ///
-/// This is just a reference to a key, it does not contain the key itself.
+/// This is just key metadata, it does not contain the key itself.
 ///
 /// To retrieve the key, see [`AsyncRobot::get_ssh_key`].
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq)]
@@ -168,7 +168,9 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.remove_ssh_key("d7:34:1c:8c:4e:20:e0:1f:07:66:45:d9:97:22:ec:07")
+    /// robot.remove_ssh_key(
+    ///     "d7:34:1c:8c:4e:20:e0:1f:07:66:45:d9:97:22:ec:07"
+    /// ).await.unwrap();
     /// # }
     /// ```
     pub async fn remove_ssh_key(&self, fingerprint: &str) -> Result<(), Error> {
@@ -190,7 +192,10 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.rename_ssh_key("d7:34:1c:8c:4e:20:e0:1f:07:66:45:d9:97:22:ec:07", "new-name")
+    /// robot.rename_ssh_key(
+    ///     "d7:34:1c:8c:4e:20:e0:1f:07:66:45:d9:97:22:ec:07",
+    ///     "new-name"
+    /// ).await.unwrap();
     /// # }
     /// ```
     pub async fn rename_ssh_key(&self, fingerprint: &str, new_name: &str) -> Result<Key, Error> {

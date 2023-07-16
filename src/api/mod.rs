@@ -4,17 +4,18 @@ use std::{marker::PhantomData, str::FromStr};
 
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use hyper::Uri;
+use serde::Serialize;
 
 mod wrapper;
 
+pub mod boot;
 mod firewall;
-mod keys;
+pub mod keys;
 mod server;
 
 pub(crate) use firewall::*;
-use serde::Serialize;
-pub(crate) use server::*;
 pub use keys::*;
+pub(crate) use server::*;
 
 /// Base64-encoded credentials used to authenticate against
 /// the Hetzner Robot API.
@@ -42,6 +43,14 @@ impl std::fmt::Debug for Credentials {
 }
 
 impl Credentials {
+    /// Construct a new set of credentials from a username and password.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use hrobot::api::Credentials;
+    /// # fn main() {
+    /// let credentials = Credentials::new("#ws+user", "p4ssw0rd");
+    /// # }
     pub fn new(username: &str, password: &str) -> Self {
         let header = format!("Basic {}", BASE64.encode(format!("{username}:{password}")));
 
