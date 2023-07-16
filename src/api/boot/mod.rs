@@ -33,7 +33,7 @@ fn disable_rescue_configuration(
 }
 
 impl<Client: AsyncHttpClient> AsyncRobot<Client> {
-    /// Retrieve a [`Server`]'s [`ActiveRescue`] configuration,
+    /// Retrieve a [`Server`](crate::api::server::Server)'s [`ActiveRescueConfig`] configuration,
     /// or a list of available operating systems, if the rescue
     /// system is not currently active.
     ///

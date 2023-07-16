@@ -78,7 +78,7 @@ pub(crate) fn update_firewall_template(
 }
 
 impl<Client: AsyncHttpClient> AsyncRobot<Client> {
-    /// Retrieve a [`Server`]'s [`Firewall`].
+    /// Retrieve a [`Server`](crate::api::server::Server)'s [`Firewall`].
     ///
     /// # Example
     /// ```rust,no_run
@@ -93,7 +93,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
         Ok(self.go(get_firewall(server_number)).await?.0.into())
     }
 
-    /// Replace a [`Server`]'s [`Firewall`] configuration.
+    /// Replace a [`Server`](crate::api::server::Server)'s [`Firewall`] configuration.
     ///
     /// **Warning**: This replaces the entire firewall for
     /// both directions! If you don't define any ingress or
@@ -142,7 +142,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
             .into())
     }
 
-    /// Clear a [`Server`]s [`Firewall`] configuration.
+    /// Clear a [`Server`](crate::api::server::Server)s [`Firewall`] configuration.
     ///
     /// This reverts the server's firewall configuration to
     /// default Hetzner firewall, which has "Allow all" rules
