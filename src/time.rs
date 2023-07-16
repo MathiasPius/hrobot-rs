@@ -30,7 +30,7 @@ pub(crate) fn assume_berlin_timezone<'de, D: Deserializer<'de>>(
 #[cfg(test)]
 mod tests {
     use serde::Deserialize;
-    use time::{macros::datetime, OffsetDateTime};
+    use time::{macros::datetime, OffsetDateTime, Month, Date};
 
     #[test]
     fn deserialize_berlin_timestamp() {
@@ -52,4 +52,25 @@ mod tests {
             serde_json::from_str(container).unwrap()
         )
     }
+
+    #[test]
+    fn deserialize_date() {
+        let container = r#"
+            {
+                "date": "2023-06-10"
+            }"#;
+
+        #[derive(Debug, Deserialize, PartialEq)]
+        struct Container {
+            date: Date,
+        }
+
+        assert_eq!(
+            Container {
+                date: Date::from_calendar_date(2023, Month::June, 10).unwrap(),
+            },
+            serde_json::from_str(container).unwrap()
+        )
+    }
+
 }

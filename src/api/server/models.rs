@@ -142,6 +142,7 @@ pub struct Cancellable {
     pub reservation_possible: bool,
 
     /// List of possible reasons for cancellations.
+    #[serde(rename = "cancellation_reason")]
     pub cancellation_reasons: Vec<String>,
 }
 
