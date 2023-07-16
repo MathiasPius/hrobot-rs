@@ -18,7 +18,7 @@ use serde::{de::DeserializeOwned, Deserialize, Deserializer};
 /// In order to transform this result, it is necessary to first
 /// deserialize the outer map, and then extract the contained
 /// server objects.
-fn deserialize_inner_vec<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
+pub(crate) fn deserialize_inner_vec<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
     deserializer: D,
 ) -> Result<Vec<T>, D::Error> {
     let tmp = Vec::<HashMap<&str, T>>::deserialize(deserializer)?;
