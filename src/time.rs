@@ -26,3 +26,30 @@ pub(crate) fn assume_berlin_timezone<'de, D: Deserializer<'de>>(
     .assume_timezone(time_tz::timezones::db::europe::BERLIN)
     .unwrap())
 }
+
+#[cfg(test)]
+mod tests {
+    use serde::Deserialize;
+    use time::{macros::datetime, OffsetDateTime};
+
+    #[test]
+    fn deserialize_berlin_timestamp() {
+        let container = r#"
+            {
+                "timestamp": "2023-06-10 21:34:12"
+            }"#;
+
+        #[derive(Debug, Deserialize, PartialEq)]
+        struct Container {
+            #[serde(deserialize_with = "super::assume_berlin_timezone")]
+            timestamp: OffsetDateTime
+        }
+
+        assert_eq!(
+            Container {
+                timestamp: datetime!(2023-06-10 21:34:12 +02:00),
+            },
+            serde_json::from_str(container).unwrap()
+        )
+    }
+}

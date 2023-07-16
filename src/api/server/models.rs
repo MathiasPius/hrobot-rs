@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use time::{OffsetDateTime, Date};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 /// Indicates the status of a server.
@@ -111,6 +112,21 @@ pub struct Server {
     /// Server flags indicating availability of extra services.
     #[serde(flatten)]
     pub extended: Option<ServerFlags>,
+}
+
+
+#[derive(Debug, Deserialize)]
+pub struct Cancelled {
+    /// Date on which the cancellation will take effect.
+    #[serde(rename = "cancellation_date")]
+    pub date: Date,
+
+    /// Reason for the cancellation.
+    #[serde(rename = "cancellation_reason")]
+    pub reason: Option<String>,
+
+    /// Indicates if the server location will be reserved after server cancellation.
+    pub reserved: bool,
 }
 
 /// If the server has been cancelled the struct will reflect this status, otherwise it will
