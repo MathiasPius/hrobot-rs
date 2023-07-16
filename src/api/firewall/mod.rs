@@ -1,7 +1,9 @@
 mod models;
+mod serde;
 
 use crate::{error::Error, urlencode::UrlEncode, AsyncHttpClient, AsyncRobot};
 
+use self::serde::*;
 pub use models::*;
 
 use super::{
@@ -176,7 +178,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # }
     /// ```
     pub async fn list_firewall_templates(&self) -> Result<Vec<FirewallTemplateReference>, Error> {
-        Ok(self.go(list_firewall_templates()).await?.0.into())
+        Ok(self.go(list_firewall_templates()).await?.0)
     }
 
     /// Retrieve a complete [`FirewallTemplate`].
