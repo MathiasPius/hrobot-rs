@@ -163,9 +163,9 @@ pub struct ActiveVncConfig {
 
 /// Describes either the active or available VNC installation configurations.
 ///
-/// If a VNC configuration system is active, it ([`ActiveVncConfig`]) will be returned,
+/// If a VNC installation system is active, it ([`ActiveVncConfig`]) will be returned,
 /// otherwise a struct ([`AvailableVncConfig`]) representing the available VNC distributions
-/// and languages are returned.
+/// and languages is returned.
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Vnc {

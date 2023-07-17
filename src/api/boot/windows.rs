@@ -212,7 +212,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "enabling the Windows rescue system is expensive, even if the system is never activated."]
+    #[ignore = "enabling the Windows installation system is expensive, even if the system is never activated."]
     #[traced_test]
     #[serial("boot-configuration")]
     async fn test_enable_disable_windows() {
