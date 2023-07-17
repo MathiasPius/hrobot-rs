@@ -63,7 +63,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
         Ok(self.go(get_vnc_config(server_number)).await?.0)
     }
 
-    /// Get the last [`ActiveLinuxConfig`].
+    /// Get the last [`ActiveVncConfig`].
     ///
     /// This is the last configuration that was active on the server,
     /// not the *currently* active configuration.
@@ -158,6 +158,11 @@ pub struct ActiveVncConfig {
     pub password: Option<String>,
 }
 
+/// Describes either the active or available VNC installation configurations.
+///
+/// If a VNC configuration system is active, it ([`ActiveVncConfig`]) will be returned,
+/// otherwise a struct ([`AvailableVncConfig`]) representing the available VNC distributions
+/// and languages are returned.
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Vnc {

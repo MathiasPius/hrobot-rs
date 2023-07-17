@@ -191,6 +191,11 @@ pub struct AvailableLinuxConfig {
     pub languages: Vec<String>,
 }
 
+/// Describes either the active or available Linux installation configurations.
+///
+/// If a Linux installation system is active, it ([`ActiveLinuxConfig`]) will be returned,
+/// otherwise a struct ([`AvailableLinuxConfig`]) representing the available Linux distributions
+/// and languages are returned.
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Linux {
