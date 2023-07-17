@@ -68,6 +68,9 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// This is the last configuration that was active on the server,
     /// not the *currently* active configuration.
     ///
+    /// **Warning**: This is an undocumented part of the Hetzner Robot API
+    /// and *may* stop working at any time, without warning.
+    ///    
     /// # Example
     /// ```rust,no_run
     /// # #[tokio::main]
@@ -241,6 +244,24 @@ mod tests {
                 robot.get_last_vnc_config(server.id).await.unwrap(),
                 activated_config
             );
+        }
+    }
+    
+    #[tokio::test]
+    #[traced_test]
+    #[serial("boot-configuration")]
+    async fn test_last_vnc_config() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let servers = robot.list_servers().await.unwrap();
+        info!("{servers:#?}");
+
+        if let Some(server) = servers.first() {
+            let last_config = robot.get_last_vnc_config(server.id).await.unwrap();
+                
+            println!("{last_config:#?}");
         }
     }
 }
