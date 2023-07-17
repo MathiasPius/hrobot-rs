@@ -14,13 +14,13 @@ fn get_vnc_config(server_number: u32) -> UnauthenticatedRequest<Single<Vnc>> {
 
 fn enable_vnc_config(
     server_number: u32,
-    linux: VncConfig,
+    config: VncConfig,
 ) -> Result<UnauthenticatedRequest<Single<ActiveVncConfig>>, serde_html_form::ser::Error> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/vnc"
     ))
     .with_method("POST")
-    .with_body(linux)
+    .with_body(config)
 }
 
 fn disable_vnc_config(server_number: u32) -> UnauthenticatedRequest<Single<AvailableVncConfig>> {
@@ -83,7 +83,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
         Ok(self.go(get_last_vnc_config(server_number)).await?.0)
     }
 
-    /// Enable a linux installation configuration.
+    /// Enable a VNC installation configuration.
     ///
     /// # Example
     /// ```rust,no_run
@@ -105,14 +105,14 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
         Ok(self.go(enable_vnc_config(server_number, config)?).await?.0)
     }
 
-    /// Disable the active linux installation configuration.
+    /// Disable the active VNC installation configuration.
     ///
     /// # Example
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.disable_linux_config(1234567).await.unwrap();
+    /// robot.disable_vnc_config(1234567).await.unwrap();
     /// # }
     /// ```
     pub async fn disable_vnc_config(
