@@ -181,7 +181,7 @@ pub struct ActivePleskConfig {
 /// If a Plesk installation system is active, it ([`ActivePleskConfig`]) will be returned,
 /// otherwise a struct ([`AvailablePleskConfig`]) representing the available Plesk distributions
 /// and languages is returned.
-#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Plesk {
     /// Currently active Plesk configuration.

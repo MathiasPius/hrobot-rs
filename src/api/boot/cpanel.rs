@@ -32,7 +32,9 @@ fn disable_cpanel_config(
     .with_method("DELETE")
 }
 
-fn get_last_cpanel_config(server_number: u32) -> UnauthenticatedRequest<Single<ActiveCpanelConfig>> {
+fn get_last_cpanel_config(
+    server_number: u32,
+) -> UnauthenticatedRequest<Single<ActiveCpanelConfig>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/cpanel/last"
     ))
@@ -181,7 +183,7 @@ pub struct ActiveCpanelConfig {
 /// If a Cpanel installation system is active, it ([`ActiveCpanelConfig`]) will be returned,
 /// otherwise a struct ([`AvailableCpanelConfig`]) representing the available Cpanel distributions
 /// and languages is returned.
-#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Cpanel {
     /// Currently active Cpanel configuration.
