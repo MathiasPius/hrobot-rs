@@ -134,7 +134,7 @@ use crate::api::keys::KeyReference;
 /// Keyboard layout.
 ///
 /// Defaults to US.
-#[derive(Debug, Clone, Copy, Default, Serialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Default, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Keyboard {
     #[default]
     #[serde(rename = "us")]
@@ -151,6 +151,8 @@ pub enum Keyboard {
     French,
     #[serde(rename = "jp")]
     Japanese,
+    #[serde(untagged)]
+    Other(String),
 }
 
 /// Configuration of the rescue system to enable.
@@ -219,6 +221,17 @@ mod tests {
     use tracing_test::traced_test;
 
     use crate::api::boot::{Rescue, RescueConfig};
+
+    use super::Keyboard;
+
+    #[test]
+    fn serialize_keyboard() {
+        let german = Keyboard::German;
+        let danish = Keyboard::Other("da".to_string());
+
+        assert_eq!(serde_json::to_string(&german).unwrap(), r#""de""#);
+        assert_eq!(serde_json::to_string(&danish).unwrap(), r#""da""#);
+    }
 
     #[tokio::test]
     #[traced_test]
