@@ -110,6 +110,10 @@ pub struct Server {
     pub subnets: Vec<SubnetReference>,
 
     /// Server flags indicating availability of extra services.
+    ///
+    /// This field is only populated when fetching a server directly,
+    /// and is not included when listing servers using
+    /// [`AsyncRobot::list_servers()`](crate::AsyncRobot::list_servers)
     #[serde(flatten)]
     pub availability: Option<ServerFlags>,
 }
