@@ -111,7 +111,7 @@ pub struct Server {
 
     /// Server flags indicating availability of extra services.
     #[serde(flatten)]
-    pub extended: Option<ServerFlags>,
+    pub availability: Option<ServerFlags>,
 }
 
 /// Describes the terms under which a server was cancelled.

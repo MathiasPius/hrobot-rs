@@ -246,7 +246,7 @@ mod tests {
             );
         }
     }
-    
+
     #[tokio::test]
     #[traced_test]
     #[serial("boot-configuration")]
@@ -260,7 +260,7 @@ mod tests {
 
         if let Some(server) = servers.first() {
             let last_config = robot.get_last_vnc_config(server.id).await.unwrap();
-                
+
             println!("{last_config:#?}");
         }
     }
