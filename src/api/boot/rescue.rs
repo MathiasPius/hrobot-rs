@@ -178,7 +178,7 @@ pub struct ActiveRescueConfig {
     pub operating_system: String,
 
     /// Root password for the currently active rescue system.
-    pub password: String,
+    pub password: Option<String>,
 
     /// Rescue system host keys
     #[serde(rename = "host_key")]
@@ -241,7 +241,7 @@ mod tests {
     #[ignore = "unexpected failure might leave the rescue system enabled."]
     #[traced_test]
     #[serial("boot-configuration")]
-    async fn test_enable_disable_vkm() {
+    async fn test_enable_disable_vkvm() {
         dotenvy::dotenv().ok();
 
         let robot = crate::AsyncRobot::default();
@@ -250,7 +250,7 @@ mod tests {
         info!("{servers:#?}");
 
         if let Some(server) = servers.first() {
-            let activated_config = robot
+            let mut activated_config = robot
                 .enable_rescue_config(
                     server.id,
                     RescueConfig {
@@ -264,7 +264,7 @@ mod tests {
             let config = robot.get_rescue_config(server.id).await.unwrap();
             info!("{config:#?}");
 
-            assert_eq!(Rescue::Active(activated_config), config);
+            assert_eq!(Rescue::Active(activated_config.clone()), config);
 
             robot.disable_rescue_config(server.id).await.unwrap();
 
@@ -272,6 +272,15 @@ mod tests {
                 robot.get_rescue_config(server.id).await.unwrap(),
                 Rescue::Available(_)
             ));
+
+            // We null out the password so we can compare to the latest
+            // config, since the latest does not include passwords.
+            activated_config.password = None;
+
+            assert_eq!(
+                robot.get_last_rescue_config(server.id).await.unwrap(),
+                activated_config
+            );
         }
     }
 }
