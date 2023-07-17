@@ -227,7 +227,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "unexpected failure might leave the rescue system enabled."]
+    #[ignore = "unexpected failure might leave the linux installation system enabled."]
     #[traced_test]
     #[serial("boot-configuration")]
     async fn test_enable_disable_linux() {
