@@ -1,8 +1,17 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 use crate::{error::Error, AsyncHttpClient, AsyncRobot};
 
-use super::{wrapper::Single, UnauthenticatedRequest};
+use super::{
+    wrapper::{List, Single},
+    UnauthenticatedRequest,
+};
+
+fn list_reset_options() -> UnauthenticatedRequest<List<ResetOptions>> {
+    UnauthenticatedRequest::from("https://robot-ws.your-server.de/reset")
+}
 
 fn get_reset_options(server_number: u32) -> UnauthenticatedRequest<Single<ResetOptions>> {
     UnauthenticatedRequest::from(&format!(
@@ -22,7 +31,27 @@ fn trigger_reset(
 }
 
 impl<Client: AsyncHttpClient> AsyncRobot<Client> {
-    /// Retrieve list of reset options for a server.
+    /// List reset options for all servers.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.list_reset_options().await.unwrap();
+    /// # }
+    /// ```
+    pub async fn list_reset_options(&self) -> Result<HashMap<u32, Vec<Reset>>, Error> {
+        Ok(self
+            .go(list_reset_options())
+            .await?
+            .0
+            .into_iter()
+            .map(|option| (option.server_number, option.options))
+            .collect())
+    }
+
+    /// Retrieve list of reset options for a single server.
     ///
     /// # Example
     /// ```rust,no_run
@@ -60,6 +89,7 @@ struct ExecutedReset {
 
 #[derive(Deserialize)]
 struct ResetOptions {
+    server_number: u32,
     #[serde(rename = "type")]
     options: Vec<Reset>,
 }
@@ -94,9 +124,11 @@ pub enum Reset {
     #[serde(rename = "man")]
     Manual,
 
-    /// Trigger a software reset.
+    /// Send CTRL+ALT+DEL to the server.
     ///
-    /// This is equivalent to hitting Ctrl+Alt+Del.
+    /// With Linux/Unix systems, this triggers a clean reboot in the standard
+    /// configuration and should therefore be tried first. Sending a Ctrl+Alt+Del
+    /// has no effect in Windows systems.
     #[serde(rename = "sw")]
     Software,
 
@@ -139,6 +171,18 @@ mod tests {
     #[traced_test]
     #[serial("boot-configuration")]
     async fn test_list_reset_options() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+        let options = robot.list_reset_options().await.unwrap();
+
+        info!("{options:#?}");
+    }
+
+    #[tokio::test]
+    #[traced_test]
+    #[serial("boot-configuration")]
+    async fn test_get_reset_options() {
         dotenvy::dotenv().ok();
 
         let robot = crate::AsyncRobot::default();
