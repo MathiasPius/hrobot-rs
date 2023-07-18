@@ -163,13 +163,11 @@ pub enum Reset {
 
 #[cfg(test)]
 mod tests {
-    use serial_test::serial;
     use tracing::info;
     use tracing_test::traced_test;
 
     #[tokio::test]
     #[traced_test]
-    #[serial("boot-configuration")]
     async fn test_list_reset_options() {
         dotenvy::dotenv().ok();
 
@@ -181,7 +179,6 @@ mod tests {
 
     #[tokio::test]
     #[traced_test]
-    #[serial("boot-configuration")]
     async fn test_get_reset_options() {
         dotenvy::dotenv().ok();
 
