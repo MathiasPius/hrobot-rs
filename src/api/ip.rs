@@ -1,6 +1,6 @@
 use std::{collections::HashMap, net::Ipv4Addr};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{error::Error, AsyncHttpClient, AsyncRobot};
 
@@ -15,6 +15,26 @@ fn list_ips() -> UnauthenticatedRequest<List<InternalIp>> {
 
 fn get_ip(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<Ip>> {
     UnauthenticatedRequest::from(&format!("https://robot-ws.your-server.de/ip/{ip}"))
+}
+
+fn enable_traffic_warnings(
+    ip: Ipv4Addr,
+    traffic_warnings: Option<TrafficWarnings>,
+) -> Result<UnauthenticatedRequest<Single<Ip>>, serde_html_form::ser::Error> {
+    let request = UnauthenticatedRequest::from(&format!("https://robot-ws.your-server.de/ip/{ip}"))
+        .with_method("POST");
+
+    if let Some(warnings) = traffic_warnings {
+        request.with_body(InternalTrafficWarnings::from(warnings))
+    } else {
+        Ok(request.with_serialized_body("traffic_warnings=true".to_string()))
+    }
+}
+
+fn disable_traffic_warnings(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<Ip>> {
+    UnauthenticatedRequest::from(&format!("https://robot-ws.your-server.de/ip/{ip}"))
+        .with_method("POST")
+        .with_serialized_body("traffic_warnings=false".to_string())
 }
 
 fn get_separate_mac(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<InternalMac>> {
@@ -64,6 +84,50 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```
     pub async fn get_ip(&self, ip: Ipv4Addr) -> Result<Ip, Error> {
         Ok(self.go(get_ip(ip)).await?.0)
+    }
+
+    /// Enable traffic warnings for the IP address, optionally overriding
+    /// the existing traffic limits.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::ip::TrafficWarnings;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.enable_traffic_warnings(
+    ///     "123.123.123.123".parse().unwrap(),
+    ///     Some(TrafficWarnings {
+    ///         hourly: 200, /* MB */
+    ///         daily: 2000, /* MB */
+    ///         monthly: 20, /* GB */
+    ///     })
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn enable_traffic_warnings(
+        &self,
+        ip: Ipv4Addr,
+        traffic_warnings: Option<TrafficWarnings>,
+    ) -> Result<Ip, Error> {
+        Ok(self
+            .go(enable_traffic_warnings(ip, traffic_warnings)?)
+            .await?
+            .0)
+    }
+
+    /// Disable traffic warnings for the IP address.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.disable_traffic_warnings("123.123.123.123".parse().unwrap()).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn disable_traffic_warnings(&self, ip: Ipv4Addr) -> Result<Ip, Error> {
+        Ok(self.go(disable_traffic_warnings(ip)).await?.0)
     }
 
     /// Get the separate MAC address for this IP address.
@@ -145,7 +209,7 @@ impl Default for TrafficWarnings {
 
 // This structure is used to deserialize and convert from for traffic warnings,
 // yielding None if the traffic warnings are disabled.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 struct InternalTrafficWarnings {
     traffic_warnings: bool,
     traffic_hourly: u32,
@@ -165,6 +229,17 @@ impl TryFrom<InternalTrafficWarnings> for TrafficWarnings {
             })
         } else {
             Err("traffic warnings disabled")
+        }
+    }
+}
+
+impl From<TrafficWarnings> for InternalTrafficWarnings {
+    fn from(value: TrafficWarnings) -> Self {
+        InternalTrafficWarnings {
+            traffic_warnings: true,
+            traffic_hourly: value.hourly,
+            traffic_daily: value.daily,
+            traffic_monthly: value.monthly,
         }
     }
 }
@@ -229,10 +304,14 @@ struct ExecutedMacRemoval {
 
 #[cfg(test)]
 mod tests {
+    use serial_test::serial;
     use tracing::info;
     use tracing_test::traced_test;
 
-    use crate::error::{ApiError, Error};
+    use crate::{
+        api::ip::TrafficWarnings,
+        error::{ApiError, Error},
+    };
 
     #[tokio::test]
     #[traced_test]
@@ -258,6 +337,48 @@ mod tests {
         if let Some(ip) = servers.into_iter().find_map(|server| server.ipv4) {
             let ip = robot.get_ip(ip).await.unwrap();
             info!("{ip:#?}");
+        }
+    }
+
+    #[tokio::test]
+    #[ignore = "unexpected failure can leave the traffic warning in undesired configuration"]
+    #[traced_test]
+    #[serial("ip")]
+    async fn test_enable_and_disable_traffic_warnings() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let servers = robot.list_servers().await.unwrap();
+        info!("{servers:#?}");
+
+        if let Some(ip) = servers.into_iter().find_map(|server| server.ipv4) {
+            let ip = robot.get_ip(ip).await.unwrap();
+            info!("{ip:#?}");
+
+            let original_traffic_warning = ip.traffic_warnings;
+
+            robot
+                .enable_traffic_warnings(
+                    ip.ip,
+                    Some(TrafficWarnings {
+                        hourly: 9999,
+                        daily: 9999,
+                        monthly: 9999,
+                    }),
+                )
+                .await
+                .unwrap();
+
+            robot.disable_traffic_warnings(ip.ip).await.unwrap();
+
+            // Restore the original traffic warning settings.
+            if let Some(warnings) = original_traffic_warning {
+                robot
+                    .enable_traffic_warnings(ip.ip, Some(warnings))
+                    .await
+                    .unwrap();
+            }
         }
     }
 
