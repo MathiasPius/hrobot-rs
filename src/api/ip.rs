@@ -17,6 +17,20 @@ fn get_ip(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<Ip>> {
     UnauthenticatedRequest::from(&format!("https://robot-ws.your-server.de/ip/{ip}"))
 }
 
+fn get_separate_mac(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<InternalMac>> {
+    UnauthenticatedRequest::from(&format!("https://robot-ws.your-server.de/ip/{ip}/mac"))
+}
+
+fn generate_separate_mac(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<InternalMac>> {
+    UnauthenticatedRequest::from(&format!("https://robot-ws.your-server.de/ip/{ip}/mac"))
+        .with_method("PUT")
+}
+
+fn delete_separate_mac(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<ExecutedMacRemoval>> {
+    UnauthenticatedRequest::from(&format!("https://robot-ws.your-server.de/ip/{ip}/mac"))
+        .with_method("DELETE")
+}
+
 impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// List all single IP addresses, grouped by server they are assigned to.
     ///
@@ -38,7 +52,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
         Ok(ips)
     }
 
-    /// List all single IP addresses, grouped by server they are assigned to.
+    /// Get information about a single IP address.
     ///
     /// # Example
     /// ```rust,no_run
@@ -50,6 +64,54 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```
     pub async fn get_ip(&self, ip: Ipv4Addr) -> Result<Ip, Error> {
         Ok(self.go(get_ip(ip)).await?.0)
+    }
+
+    /// Get the separate MAC address for this IP address.
+    ///
+    /// Note that only non-primary IPv4 addresses can have separate MACs set.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.get_separate_mac("123.123.123.123".parse().unwrap()).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn get_separate_mac(&self, ip: Ipv4Addr) -> Result<String, Error> {
+        Ok(self.go(get_separate_mac(ip)).await?.0.mac)
+    }
+
+    /// Generate a separate MAC address for an IP address.
+    ///
+    /// Note that only non-primary IPv4 addresses can have separate MACs set.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.generate_separate_mac("123.123.123.123".parse().unwrap()).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn generate_separate_mac(&self, ip: Ipv4Addr) -> Result<String, Error> {
+        Ok(self.go(generate_separate_mac(ip)).await?.0.mac)
+    }
+
+    /// Remove the separate MAC address for an IP address.
+    ///
+    /// Note that only non-primary IPv4 addresses can have separate MACs set.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.remove_separate_mac("123.123.123.123".parse().unwrap()).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn remove_separate_mac(&self, ip: Ipv4Addr) -> Result<(), Error> {
+        self.go(delete_separate_mac(ip)).await.map(|_| ())
     }
 }
 
@@ -150,10 +212,27 @@ struct InternalIp {
     pub inner: Ip,
 }
 
+#[derive(Deserialize)]
+struct InternalMac {
+    pub mac: String,
+}
+
+/// Deleting the separate MAC address for an IP returns a `mac` object
+/// with the MAC address set to null. Since our internal representation
+/// of a MAC address is not nullable, we use this struct here for that
+/// specific response, and then just void the information.
+#[derive(Deserialize)]
+struct ExecutedMacRemoval {
+    #[serde(rename = "ip")]
+    _ip: Ipv4Addr,
+}
+
 #[cfg(test)]
 mod tests {
     use tracing::info;
     use tracing_test::traced_test;
+
+    use crate::error::{ApiError, Error};
 
     #[tokio::test]
     #[traced_test]
@@ -179,6 +258,25 @@ mod tests {
         if let Some(ip) = servers.into_iter().find_map(|server| server.ipv4) {
             let ip = robot.get_ip(ip).await.unwrap();
             info!("{ip:#?}");
+        }
+    }
+
+    #[tokio::test]
+    #[traced_test]
+    async fn test_get_separate_mac() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let servers = robot.list_servers().await.unwrap();
+        info!("{servers:#?}");
+
+        if let Some(ip) = servers.into_iter().find_map(|server| server.ipv4) {
+            // Server primary IPs do not have configurable MAC addresses
+            assert!(matches!(
+                robot.get_separate_mac(ip).await,
+                Err(Error::Api(ApiError::MacNotAvailable { .. })),
+            ));
         }
     }
 }
