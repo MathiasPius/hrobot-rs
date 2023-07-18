@@ -13,6 +13,7 @@ pub mod firewall;
 pub mod keys;
 pub mod reset;
 pub mod server;
+pub mod wol;
 
 /// Base64-encoded credentials used to authenticate against
 /// the Hetzner Robot API.
