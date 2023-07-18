@@ -1,6 +1,7 @@
 use std::{collections::HashMap, net::Ipv4Addr};
 
 use serde::{Deserialize, Serialize};
+use time::Date;
 
 use crate::{error::Error, AsyncHttpClient, AsyncRobot};
 
@@ -49,6 +50,27 @@ fn generate_separate_mac(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<Internal
 fn delete_separate_mac(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<ExecutedMacRemoval>> {
     UnauthenticatedRequest::from(&format!("https://robot-ws.your-server.de/ip/{ip}/mac"))
         .with_method("DELETE")
+}
+
+fn get_ip_cancellation(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<Cancellation>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/ip/{ip}/cancellation"
+    ))
+}
+
+fn cancel_ip(ip: Ipv4Addr, date: Date) -> UnauthenticatedRequest<Single<Cancelled>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/ip/{ip}/cancellation"
+    ))
+    .with_method("POST")
+    .with_serialized_body(format!("cancellation_date={date}"))
+}
+
+fn revoke_ip_cancellation(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<Cancellable>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/ip/{ip}/cancellation"
+    ))
+    .with_method("DELETE")
 }
 
 impl<Client: AsyncHttpClient> AsyncRobot<Client> {
@@ -177,6 +199,53 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     pub async fn remove_separate_mac(&self, ip: Ipv4Addr) -> Result<(), Error> {
         self.go(delete_separate_mac(ip)).await.map(|_| ())
     }
+
+    /// Get cancellation status for a single IP address.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.get_ip_cancellation("123.123.123.123".parse().unwrap()).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn get_ip_cancellation(&self, ip: Ipv4Addr) -> Result<Cancellation, Error> {
+        Ok(self.go(get_ip_cancellation(ip)).await?.0)
+    }
+
+    /// Cancel an IP address.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// use time::{Date, Month};
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.cancel_ip(
+    ///     "123.123.123.123".parse().unwrap(),
+    ///     Date::from_calendar_date(2023, Month::July, 17).unwrap()
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn cancel_ip(&self, ip: Ipv4Addr, date: Date) -> Result<Cancelled, Error> {
+        Ok(self.go(cancel_ip(ip, date)).await?.0)
+    }
+
+    /// Revoke IP address cancellation.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.revoke_ip_cancellation("123.123.123.123".parse().unwrap()).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn revoke_ip_cancellation(&self, ip: Ipv4Addr) -> Result<Cancellable, Error> {
+        Ok(self.go(revoke_ip_cancellation(ip)).await?.0)
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -302,6 +371,35 @@ struct ExecutedMacRemoval {
     _ip: Ipv4Addr,
 }
 
+/// IP address has been cancelled.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Cancelled {
+    /// Date at which the IP address is terminated.
+    #[serde(rename = "cancellation_date")]
+    pub date: Date,
+}
+
+/// IP address has not yet been cancelled.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Cancellable {
+    /// Earliest possible date at which the IP address can be cancelled.
+    pub earliest_cancellation_date: Date,
+}
+
+/// Describes the cancellation state of the IP address.
+///
+/// If the address has already been cancelled, this contains a [`Cancelled`]
+/// otherwise a [`Cancellable`] structure which describes the earliest date
+/// at which the IP address can be cancelled.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum Cancellation {
+    /// IP address has been cancelled.
+    Cancelled(Cancelled),
+    /// IP address has not yet been cancelled.
+    Cancellable(Cancellable),
+}
+
 #[cfg(test)]
 mod tests {
     use serial_test::serial;
@@ -359,10 +457,7 @@ mod tests {
             let original_traffic_warning = ip.traffic_warnings;
 
             robot
-                .enable_traffic_warnings(
-                    ip.ip,
-                    Some(TrafficWarnings::default()),
-                )
+                .enable_traffic_warnings(ip.ip, Some(TrafficWarnings::default()))
                 .await
                 .unwrap();
 
@@ -394,6 +489,22 @@ mod tests {
                 robot.get_separate_mac(ip).await,
                 Err(Error::Api(ApiError::MacNotAvailable { .. })),
             ));
+        }
+    }
+
+    #[tokio::test]
+    #[traced_test]
+    async fn test_get_server_ip_cancellation() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let servers = robot.list_servers().await.unwrap();
+        info!("{servers:#?}");
+
+        if let Some(ip) = servers.into_iter().find_map(|server| server.ipv4) {
+            let cancellation = robot.get_ip_cancellation(ip).await.unwrap();
+            info!("{cancellation:#?}");
         }
     }
 }

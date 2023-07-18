@@ -11,6 +11,8 @@ use serde::{de::Error, Deserialize, Deserializer};
 use time::{macros::format_description, OffsetDateTime, PrimitiveDateTime};
 use time_tz::PrimitiveDateTimeExt;
 
+pub use time::Date;
+
 /// Deserialize as [`OffsetDateTime`](time::OffsetDateTime)
 /// based on the assumption that the timezone is Europe/Berlin.
 pub(crate) fn assume_berlin_timezone<'de, D: Deserializer<'de>>(
