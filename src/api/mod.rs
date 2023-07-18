@@ -14,6 +14,7 @@ pub mod ip;
 pub mod keys;
 pub mod reset;
 pub mod server;
+pub mod subnet;
 pub mod wol;
 
 /// Base64-encoded credentials used to authenticate against
