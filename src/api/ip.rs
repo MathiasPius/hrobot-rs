@@ -361,11 +361,7 @@ mod tests {
             robot
                 .enable_traffic_warnings(
                     ip.ip,
-                    Some(TrafficWarnings {
-                        hourly: 9999,
-                        daily: 9999,
-                        monthly: 9999,
-                    }),
+                    Some(TrafficWarnings::default()),
                 )
                 .await
                 .unwrap();
