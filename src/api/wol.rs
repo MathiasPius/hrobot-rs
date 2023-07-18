@@ -52,7 +52,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # }
     /// ```
     pub async fn trigger_wake_on_lan(&self, server_number: u32) -> Result<(), Error> {
-        Ok(self.go(post_wake_on_lan(server_number)).await.map(|_| ())?)
+        self.go(post_wake_on_lan(server_number)).await.map(|_| ())
     }
 }
 
