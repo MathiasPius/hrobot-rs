@@ -10,6 +10,7 @@ mod wrapper;
 
 pub mod boot;
 pub mod firewall;
+pub mod ip;
 pub mod keys;
 pub mod reset;
 pub mod server;
