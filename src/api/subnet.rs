@@ -75,6 +75,7 @@ impl From<InternalSubnet> for Subnet {
         Subnet {
             // UNWRAP: Assume prefix lengths given by Hetzner are valid.
             ip: IpNet::new(value.ip, value.mask).unwrap(),
+            server_number: value.server_number,
             gateway: value.gateway,
             locked: value.locked,
             failover: value.failover,
@@ -87,6 +88,9 @@ impl From<InternalSubnet> for Subnet {
 pub struct Subnet {
     /// Address
     pub ip: IpNet,
+
+    /// Server the subnet belongs to
+    pub server_number: u32,
 
     /// Gateway address for the subnet.
     pub gateway: IpAddr,
@@ -145,5 +149,25 @@ mod tests {
         let subnets = robot.list_subnets().await.unwrap();
 
         info!("{subnets:#?}");
+    }
+
+    #[tokio::test]
+    #[traced_test]
+    async fn test_get_subnets() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+        let subnets = robot.list_subnets().await.unwrap();
+        info!("{subnets:#?}");
+
+        let subnet = subnets
+            .values()
+            .into_iter()
+            .find_map(|subnet| subnet.first());
+
+        if let Some(subnet) = subnet {
+            let subnet = robot.get_subnet(subnet.ip.addr()).await.unwrap();
+            info!("{subnet:#?}");
+        }
     }
 }
