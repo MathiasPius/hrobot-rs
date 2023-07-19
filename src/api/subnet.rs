@@ -8,6 +8,7 @@ use crate::{error::Error, AsyncHttpClient, AsyncRobot};
 
 use super::{
     ip::TrafficWarnings,
+    server::ServerId,
     wrapper::{List, Single},
     UnauthenticatedRequest,
 };
@@ -31,8 +32,8 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// robot.list_subnets().await.unwrap();
     /// # }
     /// ```
-    pub async fn list_subnets(&self) -> Result<HashMap<u32, Vec<Subnet>>, Error> {
-        let mut subnets: HashMap<u32, Vec<Subnet>> = HashMap::new();
+    pub async fn list_subnets(&self) -> Result<HashMap<ServerId, Vec<Subnet>>, Error> {
+        let mut subnets: HashMap<ServerId, Vec<Subnet>> = HashMap::new();
 
         for ip in self.go(list_subnets()).await?.0 {
             subnets.entry(ip.server_number).or_default().push(ip.into());
@@ -60,7 +61,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
 // and condensing it into [`ipnet`] structures.
 #[derive(Debug, Clone, Deserialize)]
 struct InternalSubnet {
-    pub server_number: u32,
+    pub server_number: ServerId,
     pub ip: IpAddr,
     pub mask: u8,
     pub gateway: IpAddr,
@@ -90,7 +91,7 @@ pub struct Subnet {
     pub ip: IpNet,
 
     /// Server the subnet belongs to
-    pub server_number: u32,
+    pub server_number: ServerId,
 
     /// Gateway address for the subnet.
     pub gateway: IpAddr,

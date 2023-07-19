@@ -16,14 +16,14 @@ fn list_servers() -> UnauthenticatedRequest<List<Server>> {
     UnauthenticatedRequest::new(Uri::from_static("https://robot-ws.your-server.de/server"))
 }
 
-fn get_server(server_number: u32) -> UnauthenticatedRequest<Single<Server>> {
+fn get_server(server_number: ServerId) -> UnauthenticatedRequest<Single<Server>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/server/{server_number}"
     ))
 }
 
 fn rename_server(
-    server_number: u32,
+    server_number: ServerId,
     name: &str,
 ) -> Result<UnauthenticatedRequest<Single<Server>>, serde_html_form::ser::Error> {
     #[derive(Serialize)]
@@ -38,14 +38,16 @@ fn rename_server(
     .with_body(RenameServerRequest { server_name: name })
 }
 
-fn get_server_cancellation(server_number: u32) -> UnauthenticatedRequest<Single<Cancellation>> {
+fn get_server_cancellation(
+    server_number: ServerId,
+) -> UnauthenticatedRequest<Single<Cancellation>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/server/{server_number}/cancellation"
     ))
 }
 
 fn cancel_server(
-    server_number: u32,
+    server_number: ServerId,
     cancellation: Cancelled,
 ) -> Result<UnauthenticatedRequest<Single<Cancelled>>, serde_html_form::ser::Error> {
     UnauthenticatedRequest::from(&format!(
@@ -56,7 +58,7 @@ fn cancel_server(
 }
 
 fn withdraw_server_cancellation(
-    server_number: u32,
+    server_number: ServerId,
 ) -> UnauthenticatedRequest<Single<Cancellation>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/server/{server_number}/cancellation"
@@ -65,7 +67,7 @@ fn withdraw_server_cancellation(
 }
 
 fn withdraw_server_order(
-    server_number: u32,
+    server_number: ServerId,
     reason: Option<&str>,
 ) -> Result<UnauthenticatedRequest<Single<Cancellation>>, serde_html_form::ser::Error> {
     #[derive(Serialize)]
@@ -106,15 +108,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// let server = robot.get_server(1234567).await.unwrap();
+    /// let server = robot.get_server(ServerId(1234567)).await.unwrap();
     /// assert_eq!(server.id, 1234567);
     /// println!("Name: {}", server.name);
     /// # }
     /// ```
-    pub async fn get_server(&self, server_number: u32) -> Result<Server, Error> {
+    pub async fn get_server(&self, server_number: ServerId) -> Result<Server, Error> {
         Ok(self.go(get_server(server_number)).await?.0)
     }
 
@@ -122,13 +125,18 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.rename_server(1234567, "gibson").await.unwrap();
+    /// robot.rename_server(ServerId(1234567), "gibson").await.unwrap();
     /// # }
     /// ```
-    pub async fn rename_server(&self, server_number: u32, name: &str) -> Result<Server, Error> {
+    pub async fn rename_server(
+        &self,
+        server_number: ServerId,
+        name: &str,
+    ) -> Result<Server, Error> {
         Ok(self.go(rename_server(server_number, name)?).await?.0)
     }
 
@@ -136,18 +144,22 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # use hrobot::api::server::Cancellation;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// let cancellation = robot.get_server_cancellation(1234567).await.unwrap();
+    /// let cancellation = robot.get_server_cancellation(ServerId(1234567)).await.unwrap();
     /// assert!(matches!(
     ///     cancellation,
     ///     Cancellation::Cancellable(_)
     /// ));
     /// # }
     /// ```
-    pub async fn get_server_cancellation(&self, server_number: u32) -> Result<Cancellation, Error> {
+    pub async fn get_server_cancellation(
+        &self,
+        server_number: ServerId,
+    ) -> Result<Cancellation, Error> {
         Ok(self.go(get_server_cancellation(server_number)).await?.0)
     }
 
@@ -155,12 +167,12 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::server::Cancelled;
+    /// # use hrobot::api::server::{ServerId, Cancelled};
     /// # use time::{Date, Month};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.cancel_server(1234567, Cancelled {
+    /// robot.cancel_server(ServerId(1234567), Cancelled {
     ///     date: Date::from_calendar_date(2023, Month::June, 10).unwrap(),
     ///     reason: Some("Server no longer necessary due to project ending".to_string()),
     ///     reserved: false
@@ -169,7 +181,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```
     pub async fn cancel_server(
         &self,
-        server_number: u32,
+        server_number: ServerId,
         cancellation: Cancelled,
     ) -> Result<Cancelled, Error> {
         Ok(self
@@ -182,11 +194,11 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::server::Cancellation;
+    /// # use hrobot::api::server::{ServerId, Cancellation};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// let cancellation = robot.withdraw_server_cancellation(1234567).await.unwrap();
+    /// let cancellation = robot.withdraw_server_cancellation(ServerId(1234567)).await.unwrap();
     /// assert!(matches!(
     ///     cancellation,
     ///     Cancellation::Cancellable(_)
@@ -195,7 +207,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```
     pub async fn withdraw_server_cancellation(
         &self,
-        server_number: u32,
+        server_number: ServerId,
     ) -> Result<Cancellation, Error> {
         Ok(self
             .go(withdraw_server_cancellation(server_number))
@@ -207,11 +219,11 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::server::Cancellation;
+    /// # use hrobot::api::server::{ServerId, Cancellation};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// let cancellation = robot.withdraw_server_order(1234567, Some("Accidental purchase.")).await.unwrap();
+    /// let cancellation = robot.withdraw_server_order(ServerId(1234567), Some("Accidental purchase.")).await.unwrap();
     /// assert!(matches!(
     ///     cancellation,
     ///     Cancellation::Cancelled(_)
@@ -220,7 +232,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```
     pub async fn withdraw_server_order(
         &self,
-        server_number: u32,
+        server_number: ServerId,
         reason: Option<&str>,
     ) -> Result<Cancellation, Error> {
         Ok(self
@@ -236,7 +248,7 @@ mod tests {
     use tracing_test::traced_test;
 
     use crate::{
-        api::server::Cancellation,
+        api::server::{Cancellation, ServerId},
         error::{ApiError, Error},
     };
 
@@ -275,7 +287,7 @@ mod tests {
 
         let robot = crate::AsyncRobot::default();
 
-        let result = robot.get_server(1).await;
+        let result = robot.get_server(ServerId(1)).await;
         info!("{result:#?}");
 
         assert!(matches!(

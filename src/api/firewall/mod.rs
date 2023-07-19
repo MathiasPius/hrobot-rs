@@ -7,18 +7,21 @@ use self::serde::*;
 pub use models::*;
 
 use super::{
+    server::ServerId,
     wrapper::{List, Single},
     UnauthenticatedRequest,
 };
 
-pub(crate) fn get_firewall(server_number: u32) -> UnauthenticatedRequest<Single<InternalFirewall>> {
+pub(crate) fn get_firewall(
+    server_number: ServerId,
+) -> UnauthenticatedRequest<Single<InternalFirewall>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/{server_number}"
     ))
 }
 
 pub(crate) fn set_firewall_config(
-    server_number: u32,
+    server_number: ServerId,
     firewall: &FirewallConfig,
 ) -> Result<UnauthenticatedRequest<Single<InternalFirewall>>, serde_html_form::ser::Error> {
     Ok(UnauthenticatedRequest::from(&format!(
@@ -29,7 +32,7 @@ pub(crate) fn set_firewall_config(
 }
 
 pub(crate) fn delete_firewall(
-    server_number: u32,
+    server_number: ServerId,
 ) -> UnauthenticatedRequest<Single<InternalFirewall>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/{server_number}"
@@ -80,14 +83,15 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// let firewall = robot.get_firewall(1234567).await.unwrap();
+    /// let firewall = robot.get_firewall(ServerId(1234567)).await.unwrap();
     /// println!("Ingress rule count: {}", firewall.rules.ingress.len());
     /// # }
     /// ```
-    pub async fn get_firewall(&self, server_number: u32) -> Result<Firewall, Error> {
+    pub async fn get_firewall(&self, server_number: ServerId) -> Result<Firewall, Error> {
         Ok(self.go(get_firewall(server_number)).await?.0.into())
     }
 
@@ -100,6 +104,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # Example
     /// ```rust,no_run
     /// # use std::net::Ipv4Addr;
+    /// # use hrobot::api::server::ServerId;
     /// # use hrobot::api::firewall::{
     /// #     FirewallConfig, Rule, Rules, State, Ipv4Filter
     /// # };
@@ -125,12 +130,12 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///    },
     /// };
     ///
-    /// robot.set_firewall_config(1234567, &firewall).await.unwrap();
+    /// robot.set_firewall_config(ServerId(1234567), &firewall).await.unwrap();
     /// # }
     /// ```
     pub async fn set_firewall_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
         firewall: &FirewallConfig,
     ) -> Result<Firewall, Error> {
         Ok(self
@@ -148,13 +153,14 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///  
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.delete_firewall(1234567).await.unwrap();
+    /// robot.delete_firewall(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
-    pub async fn delete_firewall(&self, server_number: u32) -> Result<Firewall, Error> {
+    pub async fn delete_firewall(&self, server_number: ServerId) -> Result<Firewall, Error> {
         Ok(self.go(delete_firewall(server_number)).await?.0.into())
     }
 

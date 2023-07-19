@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::{error::Error, AsyncHttpClient, AsyncRobot};
 
 use super::{
+    server::ServerId,
     wrapper::{List, Single},
     UnauthenticatedRequest,
 };
@@ -13,14 +14,14 @@ fn list_reset_options() -> UnauthenticatedRequest<List<ResetOptions>> {
     UnauthenticatedRequest::from("https://robot-ws.your-server.de/reset")
 }
 
-fn get_reset_options(server_number: u32) -> UnauthenticatedRequest<Single<ResetOptions>> {
+fn get_reset_options(server_number: ServerId) -> UnauthenticatedRequest<Single<ResetOptions>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/reset/{server_number}"
     ))
 }
 
 fn trigger_reset(
-    server_number: u32,
+    server_number: ServerId,
     reset: Reset,
 ) -> Result<UnauthenticatedRequest<ExecutedReset>, serde_html_form::ser::Error> {
     UnauthenticatedRequest::from(&format!(
@@ -41,7 +42,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// robot.list_reset_options().await.unwrap();
     /// # }
     /// ```
-    pub async fn list_reset_options(&self) -> Result<HashMap<u32, Vec<Reset>>, Error> {
+    pub async fn list_reset_options(&self) -> Result<HashMap<ServerId, Vec<Reset>>, Error> {
         Ok(self
             .go(list_reset_options())
             .await?
@@ -55,13 +56,14 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.get_reset_options(1234567).await.unwrap();
+    /// robot.get_reset_options(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
-    pub async fn get_reset_options(&self, server_number: u32) -> Result<Vec<Reset>, Error> {
+    pub async fn get_reset_options(&self, server_number: ServerId) -> Result<Vec<Reset>, Error> {
         Ok(self.go(get_reset_options(server_number)).await?.0.options)
     }
 
@@ -69,14 +71,19 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # use hrobot::api::reset::Reset;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.trigger_reset(1234567, Reset::Power).await.unwrap();
+    /// robot.trigger_reset(ServerId(1234567), Reset::Power).await.unwrap();
     /// # }
     /// ```
-    pub async fn trigger_reset(&self, server_number: u32, reset: Reset) -> Result<Reset, Error> {
+    pub async fn trigger_reset(
+        &self,
+        server_number: ServerId,
+        reset: Reset,
+    ) -> Result<Reset, Error> {
         Ok(self.go(trigger_reset(server_number, reset)?).await?.reset)
     }
 }
@@ -89,7 +96,7 @@ struct ExecutedReset {
 
 #[derive(Deserialize)]
 struct ResetOptions {
-    server_number: u32,
+    server_number: ServerId,
     #[serde(rename = "type")]
     options: Vec<Reset>,
 }

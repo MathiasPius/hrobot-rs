@@ -1,16 +1,17 @@
 use serde::{Deserialize, Serialize};
 
+use crate::api::server::ServerId;
 use crate::api::{wrapper::Single, UnauthenticatedRequest};
 use crate::{error::Error, AsyncHttpClient, AsyncRobot};
 
-fn get_windows_config(server_number: u32) -> UnauthenticatedRequest<Single<Windows>> {
+fn get_windows_config(server_number: ServerId) -> UnauthenticatedRequest<Single<Windows>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/windows"
     ))
 }
 
 fn enable_windows_config(
-    server_number: u32,
+    server_number: ServerId,
     config: WindowsConfig,
 ) -> Result<UnauthenticatedRequest<Single<ActiveWindowsConfig>>, serde_html_form::ser::Error> {
     UnauthenticatedRequest::from(&format!(
@@ -21,7 +22,7 @@ fn enable_windows_config(
 }
 
 fn disable_windows_config(
-    server_number: u32,
+    server_number: ServerId,
 ) -> UnauthenticatedRequest<Single<AvailableWindowsConfig>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/windows"
@@ -30,7 +31,7 @@ fn disable_windows_config(
 }
 
 fn get_last_windows_config(
-    server_number: u32,
+    server_number: ServerId,
 ) -> UnauthenticatedRequest<Single<ActiveWindowsConfig>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/windows/last"
@@ -45,10 +46,11 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::boot::{Windows, ActiveWindowsConfig, AvailableWindowsConfig};
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// match robot.get_windows_config(1234567).await.unwrap() {
+    /// match robot.get_windows_config(ServerId(1234567)).await.unwrap() {
     ///     Windows::Active(ActiveWindowsConfig { distribution, .. }) => {
     ///         println!("currently active windows installation distribution is: {distribution}");
     ///         // e.g.: currently active rescue system is: vkvm
@@ -60,7 +62,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// }
     /// # }
     /// ```
-    pub async fn get_windows_config(&self, server_number: u32) -> Result<Windows, Error> {
+    pub async fn get_windows_config(&self, server_number: ServerId) -> Result<Windows, Error> {
         Ok(self.go(get_windows_config(server_number)).await?.0)
     }
 
@@ -74,15 +76,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///    
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.get_last_rescue_config(1234567).await.unwrap();
+    /// robot.get_last_rescue_config(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
     pub async fn get_last_windows_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
     ) -> Result<ActiveWindowsConfig, Error> {
         Ok(self.go(get_last_windows_config(server_number)).await?.0)
     }
@@ -91,11 +94,12 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # use hrobot::api::boot::WindowsConfig;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.enable_windows_config(1234567, WindowsConfig {
+    /// robot.enable_windows_config(ServerId(1234567), WindowsConfig {
     ///     distribution: "standard".to_string(),
     ///     language: "en".to_string()
     /// }).await.unwrap();
@@ -103,7 +107,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```
     pub async fn enable_windows_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
         config: WindowsConfig,
     ) -> Result<ActiveWindowsConfig, Error> {
         Ok(self
@@ -116,15 +120,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.disable_windows_config(1234567).await.unwrap();
+    /// robot.disable_windows_config(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
     pub async fn disable_windows_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
     ) -> Result<AvailableWindowsConfig, Error> {
         Ok(self.go(disable_windows_config(server_number)).await?.0)
     }

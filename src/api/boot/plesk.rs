@@ -1,19 +1,19 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    api::{wrapper::Single, UnauthenticatedRequest},
+    api::{server::ServerId, wrapper::Single, UnauthenticatedRequest},
     error::Error,
     AsyncHttpClient, AsyncRobot,
 };
 
-fn get_plesk_config(server_number: u32) -> UnauthenticatedRequest<Single<Plesk>> {
+fn get_plesk_config(server_number: ServerId) -> UnauthenticatedRequest<Single<Plesk>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/plesk"
     ))
 }
 
 fn enable_plesk_config(
-    server_number: u32,
+    server_number: ServerId,
     config: PleskConfig,
 ) -> Result<UnauthenticatedRequest<Single<ActivePleskConfig>>, serde_html_form::ser::Error> {
     UnauthenticatedRequest::from(&format!(
@@ -24,7 +24,7 @@ fn enable_plesk_config(
 }
 
 fn disable_plesk_config(
-    server_number: u32,
+    server_number: ServerId,
 ) -> UnauthenticatedRequest<Single<AvailablePleskConfig>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/plesk"
@@ -32,7 +32,9 @@ fn disable_plesk_config(
     .with_method("DELETE")
 }
 
-fn get_last_plesk_config(server_number: u32) -> UnauthenticatedRequest<Single<ActivePleskConfig>> {
+fn get_last_plesk_config(
+    server_number: ServerId,
+) -> UnauthenticatedRequest<Single<ActivePleskConfig>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/plesk/last"
     ))
@@ -46,10 +48,11 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::boot::{Plesk, ActivePleskConfig, AvailablePleskConfig};
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// match robot.get_plesk_config(1234567).await.unwrap() {
+    /// match robot.get_plesk_config(ServerId(1234567)).await.unwrap() {
     ///     Plesk::Active(ActivePleskConfig { distribution, .. }) => {
     ///         println!("currently active plesk distribution is: {distribution}");
     ///         // e.g.: currently active plesk distribution is: CentOS-Stream
@@ -61,7 +64,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// }
     /// # }
     /// ```
-    pub async fn get_plesk_config(&self, server_number: u32) -> Result<Plesk, Error> {
+    pub async fn get_plesk_config(&self, server_number: ServerId) -> Result<Plesk, Error> {
         Ok(self.go(get_plesk_config(server_number)).await?.0)
     }
 
@@ -75,15 +78,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.get_last_plesk_config(1234567).await.unwrap();
+    /// robot.get_last_plesk_config(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
     pub async fn get_last_plesk_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
     ) -> Result<ActivePleskConfig, Error> {
         Ok(self.go(get_last_plesk_config(server_number)).await?.0)
     }
@@ -92,11 +96,12 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # use hrobot::api::boot::{Plesk, PleskConfig};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.enable_plesk_config(1234567, PleskConfig {
+    /// robot.enable_plesk_config(ServerId(1234567), PleskConfig {
     ///     distribution: "CentOS-Stream".to_string(),
     ///     language: "en_US".to_string(),
     ///     hostname: "plesk.example.com".to_string(),
@@ -105,7 +110,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```
     pub async fn enable_plesk_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
         config: PleskConfig,
     ) -> Result<ActivePleskConfig, Error> {
         Ok(self
@@ -118,15 +123,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.disable_plesk_config(1234567).await.unwrap();
+    /// robot.disable_plesk_config(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
     pub async fn disable_plesk_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
     ) -> Result<AvailablePleskConfig, Error> {
         Ok(self.go(disable_plesk_config(server_number)).await?.0)
     }

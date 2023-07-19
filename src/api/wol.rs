@@ -5,15 +5,15 @@ use crate::{
     AsyncHttpClient, AsyncRobot,
 };
 
-use super::{wrapper::Single, UnauthenticatedRequest};
+use super::{server::ServerId, wrapper::Single, UnauthenticatedRequest};
 
-fn get_wake_on_lan(server_number: u32) -> UnauthenticatedRequest<Single<Wol>> {
+fn get_wake_on_lan(server_number: ServerId) -> UnauthenticatedRequest<Single<Wol>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/wol/{server_number}"
     ))
 }
 
-fn post_wake_on_lan(server_number: u32) -> UnauthenticatedRequest<Single<Wol>> {
+fn post_wake_on_lan(server_number: ServerId) -> UnauthenticatedRequest<Single<Wol>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/wol/{server_number}"
     ))
@@ -25,13 +25,14 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// assert!(robot.is_wake_on_lan_available(1234567).await.unwrap());
+    /// assert!(robot.is_wake_on_lan_available(ServerId(1234567)).await.unwrap());
     /// # }
     /// ```
-    pub async fn is_wake_on_lan_available(&self, server_number: u32) -> Result<bool, Error> {
+    pub async fn is_wake_on_lan_available(&self, server_number: ServerId) -> Result<bool, Error> {
         let response = self.go(get_wake_on_lan(server_number)).await;
 
         match response {
@@ -45,13 +46,14 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.trigger_wake_on_lan(1234567).await.unwrap();
+    /// robot.trigger_wake_on_lan(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
-    pub async fn trigger_wake_on_lan(&self, server_number: u32) -> Result<(), Error> {
+    pub async fn trigger_wake_on_lan(&self, server_number: ServerId) -> Result<(), Error> {
         self.go(post_wake_on_lan(server_number)).await.map(|_| ())
     }
 }
@@ -61,7 +63,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
 #[derive(Debug, Deserialize)]
 struct Wol {
     #[serde(rename = "server_number")]
-    _server_number: u32,
+    _server_number: ServerId,
 }
 
 #[cfg(test)]

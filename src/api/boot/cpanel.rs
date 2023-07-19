@@ -1,19 +1,19 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    api::{wrapper::Single, UnauthenticatedRequest},
+    api::{server::ServerId, wrapper::Single, UnauthenticatedRequest},
     error::Error,
     AsyncHttpClient, AsyncRobot,
 };
 
-fn get_cpanel_config(server_number: u32) -> UnauthenticatedRequest<Single<Cpanel>> {
+fn get_cpanel_config(server_number: ServerId) -> UnauthenticatedRequest<Single<Cpanel>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/cpanel"
     ))
 }
 
 fn enable_cpanel_config(
-    server_number: u32,
+    server_number: ServerId,
     config: CpanelConfig,
 ) -> Result<UnauthenticatedRequest<Single<ActiveCpanelConfig>>, serde_html_form::ser::Error> {
     UnauthenticatedRequest::from(&format!(
@@ -24,7 +24,7 @@ fn enable_cpanel_config(
 }
 
 fn disable_cpanel_config(
-    server_number: u32,
+    server_number: ServerId,
 ) -> UnauthenticatedRequest<Single<AvailableCpanelConfig>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/cpanel"
@@ -33,7 +33,7 @@ fn disable_cpanel_config(
 }
 
 fn get_last_cpanel_config(
-    server_number: u32,
+    server_number: ServerId,
 ) -> UnauthenticatedRequest<Single<ActiveCpanelConfig>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/cpanel/last"
@@ -47,11 +47,12 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # use hrobot::api::boot::{Cpanel, ActiveCpanelConfig, AvailableCpanelConfig};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// match robot.get_cpanel_config(1234567).await.unwrap() {
+    /// match robot.get_cpanel_config(ServerId(1234567)).await.unwrap() {
     ///     Cpanel::Active(ActiveCpanelConfig { distribution, .. }) => {
     ///         println!("currently active cpanel distribution is: {distribution}");
     ///         // e.g.: currently active cpanel distribution is: CentOS-Stream
@@ -63,7 +64,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// }
     /// # }
     /// ```
-    pub async fn get_cpanel_config(&self, server_number: u32) -> Result<Cpanel, Error> {
+    pub async fn get_cpanel_config(&self, server_number: ServerId) -> Result<Cpanel, Error> {
         Ok(self.go(get_cpanel_config(server_number)).await?.0)
     }
 
@@ -77,15 +78,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.get_last_cpanel_config(1234567).await.unwrap();
+    /// robot.get_last_cpanel_config(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
     pub async fn get_last_cpanel_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
     ) -> Result<ActiveCpanelConfig, Error> {
         Ok(self.go(get_last_cpanel_config(server_number)).await?.0)
     }
@@ -95,10 +97,11 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::boot::{Cpanel, CpanelConfig};
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.enable_cpanel_config(1234567, CpanelConfig {
+    /// robot.enable_cpanel_config(ServerId(1234567), CpanelConfig {
     ///     distribution: "CentOS-Stream".to_string(),
     ///     language: "en_US".to_string(),
     ///     hostname: "cpanel.example.com".to_string(),
@@ -107,7 +110,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```
     pub async fn enable_cpanel_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
         config: CpanelConfig,
     ) -> Result<ActiveCpanelConfig, Error> {
         Ok(self
@@ -120,15 +123,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.disable_cpanel_config(1234567).await.unwrap();
+    /// robot.disable_cpanel_config(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
     pub async fn disable_cpanel_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
     ) -> Result<AvailableCpanelConfig, Error> {
         Ok(self.go(disable_cpanel_config(server_number)).await?.0)
     }

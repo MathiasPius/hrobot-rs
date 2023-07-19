@@ -6,6 +6,7 @@ use time::Date;
 use crate::{error::Error, AsyncHttpClient, AsyncRobot};
 
 use super::{
+    server::ServerId,
     wrapper::{List, Single},
     UnauthenticatedRequest,
 };
@@ -84,8 +85,8 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// robot.list_ips().await.unwrap();
     /// # }
     /// ```
-    pub async fn list_ips(&self) -> Result<HashMap<u32, Vec<Ip>>, Error> {
-        let mut ips: HashMap<u32, Vec<Ip>> = HashMap::new();
+    pub async fn list_ips(&self) -> Result<HashMap<ServerId, Vec<Ip>>, Error> {
+        let mut ips: HashMap<ServerId, Vec<Ip>> = HashMap::new();
 
         for ip in self.go(list_ips()).await?.0 {
             ips.entry(ip.server_number).or_default().push(ip);
@@ -331,7 +332,7 @@ pub struct Ip {
     pub ip: Ipv4Addr,
 
     /// Server the ip belongs to
-    pub server_number: u32,
+    pub server_number: ServerId,
 
     /// Status of locking.
     pub locked: bool,

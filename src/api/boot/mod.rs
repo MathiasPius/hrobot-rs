@@ -19,6 +19,8 @@ use crate::{
 };
 use serde::Deserialize;
 
+use super::server::ServerId;
+
 /// Describes the status of each of the available boot configuration systems.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
@@ -83,7 +85,7 @@ impl Config {
     }
 }
 
-fn get_config(server_number: u32) -> UnauthenticatedRequest<Single<Config>> {
+fn get_config(server_number: ServerId) -> UnauthenticatedRequest<Single<Config>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}"
     ))
@@ -95,15 +97,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// let config = robot.get_boot_config(1234567).await.unwrap();
+    /// let config = robot.get_boot_config(ServerId(1234567)).await.unwrap();
     /// // Make sure no boot configurations are currently active.
     /// assert!(config.active().is_none());
     /// # }
     /// ```
-    pub async fn get_boot_config(&self, server_number: u32) -> Result<Config, Error> {
+    pub async fn get_boot_config(&self, server_number: ServerId) -> Result<Config, Error> {
         Ok(self.go(get_config(server_number)).await?.0)
     }
 }

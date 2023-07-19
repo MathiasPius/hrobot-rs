@@ -1,19 +1,19 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    api::{wrapper::Single, UnauthenticatedRequest},
+    api::{server::ServerId, wrapper::Single, UnauthenticatedRequest},
     error::Error,
     AsyncHttpClient, AsyncRobot,
 };
 
-fn get_vnc_config(server_number: u32) -> UnauthenticatedRequest<Single<Vnc>> {
+fn get_vnc_config(server_number: ServerId) -> UnauthenticatedRequest<Single<Vnc>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/vnc"
     ))
 }
 
 fn enable_vnc_config(
-    server_number: u32,
+    server_number: ServerId,
     config: VncConfig,
 ) -> Result<UnauthenticatedRequest<Single<ActiveVncConfig>>, serde_html_form::ser::Error> {
     UnauthenticatedRequest::from(&format!(
@@ -23,14 +23,16 @@ fn enable_vnc_config(
     .with_body(config)
 }
 
-fn disable_vnc_config(server_number: u32) -> UnauthenticatedRequest<Single<AvailableVncConfig>> {
+fn disable_vnc_config(
+    server_number: ServerId,
+) -> UnauthenticatedRequest<Single<AvailableVncConfig>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/vnc"
     ))
     .with_method("DELETE")
 }
 
-fn get_last_vnc_config(server_number: u32) -> UnauthenticatedRequest<Single<ActiveVncConfig>> {
+fn get_last_vnc_config(server_number: ServerId) -> UnauthenticatedRequest<Single<ActiveVncConfig>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/vnc/last"
     ))
@@ -44,10 +46,11 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::boot::{Vnc, ActiveVncConfig, AvailableVncConfig};
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// match robot.get_vnc_config(1234567).await.unwrap() {
+    /// match robot.get_vnc_config(ServerId(1234567)).await.unwrap() {
     ///     Vnc::Active(ActiveVncConfig { distribution, .. }) => {
     ///         println!("currently active vnc distribution is: {distribution}");
     ///         // e.g.: currently active vnc distribution is: Fedora-37
@@ -59,7 +62,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// }
     /// # }
     /// ```
-    pub async fn get_vnc_config(&self, server_number: u32) -> Result<Vnc, Error> {
+    pub async fn get_vnc_config(&self, server_number: ServerId) -> Result<Vnc, Error> {
         Ok(self.go(get_vnc_config(server_number)).await?.0)
     }
 
@@ -73,13 +76,17 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///    
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.get_last_vnc_config(1234567).await.unwrap();
+    /// robot.get_last_vnc_config(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
-    pub async fn get_last_vnc_config(&self, server_number: u32) -> Result<ActiveVncConfig, Error> {
+    pub async fn get_last_vnc_config(
+        &self,
+        server_number: ServerId,
+    ) -> Result<ActiveVncConfig, Error> {
         Ok(self.go(get_last_vnc_config(server_number)).await?.0)
     }
 
@@ -87,11 +94,12 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # use hrobot::api::boot::{Vnc, VncConfig};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.enable_vnc_config(1234567, VncConfig {
+    /// robot.enable_vnc_config(ServerId(1234567), VncConfig {
     ///     distribution: "Fedora-37".to_string(),
     ///     language: "en_US".to_string(),
     /// }).await.unwrap();
@@ -99,7 +107,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```
     pub async fn enable_vnc_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
         config: VncConfig,
     ) -> Result<ActiveVncConfig, Error> {
         Ok(self.go(enable_vnc_config(server_number, config)?).await?.0)
@@ -109,15 +117,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.disable_vnc_config(1234567).await.unwrap();
+    /// robot.disable_vnc_config(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
     pub async fn disable_vnc_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
     ) -> Result<AvailableVncConfig, Error> {
         Ok(self.go(disable_vnc_config(server_number)).await?.0)
     }

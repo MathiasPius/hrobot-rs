@@ -1,15 +1,16 @@
+use crate::api::server::ServerId;
 use crate::{error::Error, AsyncHttpClient, AsyncRobot};
 
 use crate::api::{wrapper::Single, UnauthenticatedRequest};
 
-fn get_rescue_config(server_number: u32) -> UnauthenticatedRequest<Single<Rescue>> {
+fn get_rescue_config(server_number: ServerId) -> UnauthenticatedRequest<Single<Rescue>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/rescue"
     ))
 }
 
 fn enable_rescue_config(
-    server_number: u32,
+    server_number: ServerId,
     rescue: RescueConfig,
 ) -> Result<UnauthenticatedRequest<Single<ActiveRescueConfig>>, serde_html_form::ser::Error> {
     UnauthenticatedRequest::from(&format!(
@@ -20,7 +21,7 @@ fn enable_rescue_config(
 }
 
 fn disable_rescue_config(
-    server_number: u32,
+    server_number: ServerId,
 ) -> UnauthenticatedRequest<Single<AvailableRescueConfig>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/rescue"
@@ -29,7 +30,7 @@ fn disable_rescue_config(
 }
 
 fn get_last_rescue_config(
-    server_number: u32,
+    server_number: ServerId,
 ) -> UnauthenticatedRequest<Single<ActiveRescueConfig>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/rescue/last"
@@ -44,10 +45,11 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::boot::{Rescue, ActiveRescueConfig, AvailableRescueConfig};
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// match robot.get_rescue_config(1234567).await.unwrap() {
+    /// match robot.get_rescue_config(ServerId(1234567)).await.unwrap() {
     ///     Rescue::Active(ActiveRescueConfig { operating_system, .. }) => {
     ///         println!("currently active rescue system is: {operating_system}");
     ///         // e.g.: currently active rescue system is: vkvm
@@ -59,7 +61,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// }
     /// # }
     /// ```
-    pub async fn get_rescue_config(&self, server_number: u32) -> Result<Rescue, Error> {
+    pub async fn get_rescue_config(&self, server_number: ServerId) -> Result<Rescue, Error> {
         Ok(self.go(get_rescue_config(server_number)).await?.0)
     }
 
@@ -70,15 +72,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.get_last_rescue_config(1234567).await.unwrap();
+    /// robot.get_last_rescue_config(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
     pub async fn get_last_rescue_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
     ) -> Result<ActiveRescueConfig, Error> {
         Ok(self.go(get_last_rescue_config(server_number)).await?.0)
     }
@@ -87,11 +90,12 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # use hrobot::api::boot::{Rescue, RescueConfig, Keyboard};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.enable_rescue_config(1234567, RescueConfig {
+    /// robot.enable_rescue_config(ServerId(1234567), RescueConfig {
     ///     operating_system: "vkvm".to_string(),
     ///     authorized_keys: vec!["d7:34:1c:8c:4e:20:e0:1f:07:66:45:d9:97:22:ec:07".to_string()],
     ///     keyboard: Keyboard::German,
@@ -100,7 +104,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```
     pub async fn enable_rescue_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
         config: RescueConfig,
     ) -> Result<ActiveRescueConfig, Error> {
         Ok(self
@@ -113,15 +117,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.disable_rescue_config(1234567).await.unwrap();
+    /// robot.disable_rescue_config(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
     pub async fn disable_rescue_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
     ) -> Result<AvailableRescueConfig, Error> {
         Ok(self.go(disable_rescue_config(server_number)).await?.0)
     }

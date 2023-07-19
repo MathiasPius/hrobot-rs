@@ -1,6 +1,36 @@
 use serde::{Deserialize, Serialize};
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::{
+    fmt::Display,
+    net::{IpAddr, Ipv4Addr, Ipv6Addr},
+};
 use time::Date;
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ServerId(pub u32);
+
+impl From<u32> for ServerId {
+    fn from(value: u32) -> Self {
+        ServerId(value)
+    }
+}
+
+impl From<ServerId> for u32 {
+    fn from(value: ServerId) -> Self {
+        value.0
+    }
+}
+
+impl Display for ServerId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl PartialEq<u32> for ServerId {
+    fn eq(&self, other: &u32) -> bool {
+        self.0.eq(other)
+    }
+}
 
 /// Indicates the status of a server.
 #[derive(Debug, Deserialize)]
@@ -72,7 +102,7 @@ pub struct Server {
 
     /// Unique ID of the server.
     #[serde(rename = "server_number")]
-    pub id: u32,
+    pub id: ServerId,
 
     /// Name as shown in the Robot interface for the server.
     #[serde(rename = "server_name")]

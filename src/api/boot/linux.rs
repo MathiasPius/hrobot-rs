@@ -1,3 +1,4 @@
+use crate::api::server::ServerId;
 use crate::client::{AsyncHttpClient, AsyncRobot};
 use crate::{
     api::{keys::KeyReference, wrapper::Single, UnauthenticatedRequest},
@@ -5,14 +6,14 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-fn get_linux_config(server_number: u32) -> UnauthenticatedRequest<Single<Linux>> {
+fn get_linux_config(server_number: ServerId) -> UnauthenticatedRequest<Single<Linux>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/linux"
     ))
 }
 
 fn enable_linux_config(
-    server_number: u32,
+    server_number: ServerId,
     linux: LinuxConfig,
 ) -> Result<UnauthenticatedRequest<Single<ActiveLinuxConfig>>, serde_html_form::ser::Error> {
     UnauthenticatedRequest::from(&format!(
@@ -23,7 +24,7 @@ fn enable_linux_config(
 }
 
 fn disable_linux_config(
-    server_number: u32,
+    server_number: ServerId,
 ) -> UnauthenticatedRequest<Single<AvailableLinuxConfig>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/linux"
@@ -31,7 +32,9 @@ fn disable_linux_config(
     .with_method("DELETE")
 }
 
-fn get_last_linux_config(server_number: u32) -> UnauthenticatedRequest<Single<ActiveLinuxConfig>> {
+fn get_last_linux_config(
+    server_number: ServerId,
+) -> UnauthenticatedRequest<Single<ActiveLinuxConfig>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/boot/{server_number}/linux/last"
     ))
@@ -45,10 +48,11 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::boot::{Linux, ActiveLinuxConfig, AvailableLinuxConfig};
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// match robot.get_linux_config(1234567).await.unwrap() {
+    /// match robot.get_linux_config(ServerId(1234567)).await.unwrap() {
     ///     Linux::Active(ActiveLinuxConfig { distribution, .. }) => {
     ///         println!("currently active linux distribution is: {distribution}");
     ///         // e.g.: currently active linux distribution is: Arch Linux latest minimal
@@ -60,7 +64,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// }
     /// # }
     /// ```
-    pub async fn get_linux_config(&self, server_number: u32) -> Result<Linux, Error> {
+    pub async fn get_linux_config(&self, server_number: ServerId) -> Result<Linux, Error> {
         Ok(self.go(get_linux_config(server_number)).await?.0)
     }
 
@@ -71,15 +75,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.get_last_linux_config(1234567).await.unwrap();
+    /// robot.get_last_linux_config(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
     pub async fn get_last_linux_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
     ) -> Result<ActiveLinuxConfig, Error> {
         Ok(self.go(get_last_linux_config(server_number)).await?.0)
     }
@@ -89,10 +94,11 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::boot::{Linux, LinuxConfig, Keyboard};
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.enable_linux_config(1234567, LinuxConfig {
+    /// robot.enable_linux_config(ServerId(1234567), LinuxConfig {
     ///     distribution: "Arch Linux latest minimal".to_string(),
     ///     authorized_keys: vec!["d7:34:1c:8c:4e:20:e0:1f:07:66:45:d9:97:22:ec:07".to_string()],
     ///     language: "en".to_string(),
@@ -101,7 +107,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```
     pub async fn enable_linux_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
         config: LinuxConfig,
     ) -> Result<ActiveLinuxConfig, Error> {
         Ok(self
@@ -114,15 +120,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.disable_linux_config(1234567).await.unwrap();
+    /// robot.disable_linux_config(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
     pub async fn disable_linux_config(
         &self,
-        server_number: u32,
+        server_number: ServerId,
     ) -> Result<AvailableLinuxConfig, Error> {
         Ok(self.go(disable_linux_config(server_number)).await?.0)
     }
