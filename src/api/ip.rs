@@ -10,7 +10,7 @@ use super::{
     UnauthenticatedRequest,
 };
 
-fn list_ips() -> UnauthenticatedRequest<List<InternalIp>> {
+fn list_ips() -> UnauthenticatedRequest<List<Ip>> {
     UnauthenticatedRequest::from("https://robot-ws.your-server.de/ip")
 }
 
@@ -88,7 +88,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
         let mut ips: HashMap<u32, Vec<Ip>> = HashMap::new();
 
         for ip in self.go(list_ips()).await?.0 {
-            ips.entry(ip.server_number).or_default().push(ip.inner);
+            ips.entry(ip.server_number).or_default().push(ip);
         }
 
         Ok(ips)
@@ -330,6 +330,9 @@ pub struct Ip {
     /// Address
     pub ip: Ipv4Addr,
 
+    /// Server the ip belongs to
+    pub server_number: u32,
+
     /// Status of locking.
     pub locked: bool,
 
@@ -346,14 +349,6 @@ pub struct Ip {
     /// Traffic warnings for this IP address.
     #[serde(flatten)]
     pub traffic_warnings: Option<TrafficWarnings>,
-}
-
-#[derive(Deserialize)]
-struct InternalIp {
-    pub server_number: u32,
-
-    #[serde(flatten)]
-    pub inner: Ip,
 }
 
 #[derive(Deserialize)]
