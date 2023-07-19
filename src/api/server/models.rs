@@ -5,6 +5,14 @@ use std::{
 };
 use time::Date;
 
+/// Unique Server ID.
+/// 
+/// Simple wrapper around a u32, to avoid confusion with for example [`TemplateId`](hrobot::api::firewall::TemplateId)
+/// and to make it intuitive what kind of argument you need to give to functions like [`AsyncRobot::get_server`].
+///
+/// Using a plain integer means it isn't clear what the argument is, is it a counter of my servers, where the argument
+/// is in range `0..N` where `N` is the number of dedicated servers in my account, or is it a limiter, like get first `N`
+/// servers, for example.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ServerId(pub u32);
 
