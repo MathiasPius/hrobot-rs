@@ -3,6 +3,42 @@ use std::{fmt::Display, ops::RangeInclusive};
 
 pub use ipnet::Ipv4Net;
 
+/// Unique Template ID.
+///
+/// Simple wrapper around a u32, to avoid confusion with for example [`ServerId`](crate::api::server::ServerId)
+/// and to make it intuitive what kind of argument you need to give to functions like
+/// [`AsyncRobot::get_firewall_template`](crate::AsyncRobot::get_firewall_template()).
+///
+/// Using a plain integer means it isn't clear what the argument is, is it a counter of my templates, where the argument
+/// is in range `0..N` where `N` is the number of templates I have in my account, or is it a limiter, like get first `N`
+/// templates, for example.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct TemplateId(pub u32);
+
+impl From<u32> for TemplateId {
+    fn from(value: u32) -> Self {
+        TemplateId(value)
+    }
+}
+
+impl From<TemplateId> for u32 {
+    fn from(value: TemplateId) -> Self {
+        value.0
+    }
+}
+
+impl Display for TemplateId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl PartialEq<u32> for TemplateId {
+    fn eq(&self, other: &u32) -> bool {
+        self.0.eq(other)
+    }
+}
+
 /// Desired or current state of the server's firewall.
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
 pub enum State {

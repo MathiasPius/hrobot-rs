@@ -45,7 +45,7 @@ pub(crate) fn list_firewall_templates() -> UnauthenticatedRequest<List<FirewallT
 }
 
 pub(crate) fn get_firewall_template(
-    template_number: u32,
+    template_number: TemplateId,
 ) -> UnauthenticatedRequest<Single<InternalFirewallTemplate>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/template/{template_number}"
@@ -60,7 +60,7 @@ pub(crate) fn create_firewall_template(
         .with_serialized_body(Into::<InternalFirewallTemplateConfig>::into(template).encode())
 }
 
-pub(crate) fn delete_firewall_template(template_number: u32) -> UnauthenticatedRequest<()> {
+pub(crate) fn delete_firewall_template(template_number: TemplateId) -> UnauthenticatedRequest<()> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/template/{template_number}"
     ))
@@ -68,7 +68,7 @@ pub(crate) fn delete_firewall_template(template_number: u32) -> UnauthenticatedR
 }
 
 pub(crate) fn update_firewall_template(
-    template_number: u32,
+    template_number: TemplateId,
     template: FirewallTemplateConfig,
 ) -> UnauthenticatedRequest<Single<InternalFirewallTemplate>> {
     UnauthenticatedRequest::from(&format!(
@@ -191,15 +191,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::firewall::TemplateId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// let template = robot.get_firewall_template(1234).await.unwrap();
+    /// let template = robot.get_firewall_template(TemplateId(1234)).await.unwrap();
     /// # }
     /// ```
     pub async fn get_firewall_template(
         &self,
-        template_number: u32,
+        template_number: TemplateId,
     ) -> Result<FirewallTemplate, Error> {
         Ok(self
             .go(get_firewall_template(template_number))
@@ -250,13 +251,14 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::firewall::TemplateId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.delete_firewall_template(1234).await.unwrap();
+    /// robot.delete_firewall_template(TemplateId(1234)).await.unwrap();
     /// # }
     /// ```
-    pub async fn delete_firewall_template(&self, template_number: u32) -> Result<(), Error> {
+    pub async fn delete_firewall_template(&self, template_number: TemplateId) -> Result<(), Error> {
         self.go(delete_firewall_template(template_number))
             .await
             .or_else(|err| {
@@ -273,12 +275,12 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::firewall::{FirewallTemplateConfig, Rules, Rule};
+    /// # use hrobot::api::firewall::{FirewallTemplateConfig, Rules, Rule, TemplateId};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// // Remove all firewall rules
-    /// robot.update_firewall_template(1234, FirewallTemplateConfig {
+    /// robot.update_firewall_template(TemplateId(1234), FirewallTemplateConfig {
     ///     name: "More like water-wall".to_string(),
     ///     filter_ipv6: false,
     ///     whitelist_hetzner_services: true,
@@ -292,7 +294,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ```
     pub async fn update_firewall_template(
         &self,
-        template_number: u32,
+        template_number: TemplateId,
         template: FirewallTemplateConfig,
     ) -> Result<FirewallTemplate, Error> {
         Ok(self
