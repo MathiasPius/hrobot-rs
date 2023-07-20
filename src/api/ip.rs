@@ -118,7 +118,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.enable_traffic_warnings(
+    /// robot.enable_ip_traffic_warnings(
     ///     "123.123.123.123".parse().unwrap(),
     ///     Some(TrafficWarnings {
     ///         hourly: 200, /* MB */
@@ -128,7 +128,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// ).await.unwrap();
     /// # }
     /// ```
-    pub async fn enable_traffic_warnings(
+    pub async fn enable_ip_traffic_warnings(
         &self,
         ip: Ipv4Addr,
         traffic_warnings: Option<TrafficWarnings>,
@@ -146,10 +146,10 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.disable_traffic_warnings("123.123.123.123".parse().unwrap()).await.unwrap();
+    /// robot.disable_ip_traffic_warnings("123.123.123.123".parse().unwrap()).await.unwrap();
     /// # }
     /// ```
-    pub async fn disable_traffic_warnings(&self, ip: Ipv4Addr) -> Result<Ip, Error> {
+    pub async fn disable_ip_traffic_warnings(&self, ip: Ipv4Addr) -> Result<Ip, Error> {
         Ok(self.go(disable_traffic_warnings(ip)).await?.0)
     }
 
@@ -162,10 +162,10 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.get_separate_mac("123.123.123.123".parse().unwrap()).await.unwrap();
+    /// robot.get_ip_separate_mac("123.123.123.123".parse().unwrap()).await.unwrap();
     /// # }
     /// ```
-    pub async fn get_separate_mac(&self, ip: Ipv4Addr) -> Result<String, Error> {
+    pub async fn get_ip_separate_mac(&self, ip: Ipv4Addr) -> Result<String, Error> {
         Ok(self.go(get_separate_mac(ip)).await?.0.mac)
     }
 
@@ -178,10 +178,10 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.generate_separate_mac("123.123.123.123".parse().unwrap()).await.unwrap();
+    /// robot.generate_ip_separate_mac("123.123.123.123".parse().unwrap()).await.unwrap();
     /// # }
     /// ```
-    pub async fn generate_separate_mac(&self, ip: Ipv4Addr) -> Result<String, Error> {
+    pub async fn generate_ip_separate_mac(&self, ip: Ipv4Addr) -> Result<String, Error> {
         Ok(self.go(generate_separate_mac(ip)).await?.0.mac)
     }
 
@@ -194,10 +194,10 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.remove_separate_mac("123.123.123.123".parse().unwrap()).await.unwrap();
+    /// robot.remove_ip_separate_mac("123.123.123.123".parse().unwrap()).await.unwrap();
     /// # }
     /// ```
-    pub async fn remove_separate_mac(&self, ip: Ipv4Addr) -> Result<(), Error> {
+    pub async fn remove_ip_separate_mac(&self, ip: Ipv4Addr) -> Result<(), Error> {
         self.go(delete_separate_mac(ip)).await.map(|_| ())
     }
 
@@ -280,7 +280,7 @@ impl Default for TrafficWarnings {
 // This structure is used to deserialize and convert from for traffic warnings,
 // yielding None if the traffic warnings are disabled.
 #[derive(Debug, Clone, Deserialize, Serialize)]
-struct InternalTrafficWarnings {
+pub(crate) struct InternalTrafficWarnings {
     traffic_warnings: bool,
     traffic_hourly: u32,
     traffic_daily: u32,
@@ -353,7 +353,7 @@ pub struct Ip {
 }
 
 #[derive(Deserialize)]
-struct InternalMac {
+pub(crate) struct InternalMac {
     pub mac: String,
 }
 
@@ -362,7 +362,7 @@ struct InternalMac {
 /// of a MAC address is not nullable, we use this struct here for that
 /// specific response, and then just void the information.
 #[derive(Deserialize)]
-struct ExecutedMacRemoval {
+pub(crate) struct ExecutedMacRemoval {
     #[serde(rename = "ip")]
     _ip: Ipv4Addr,
 }
@@ -453,16 +453,16 @@ mod tests {
             let original_traffic_warning = ip.traffic_warnings;
 
             robot
-                .enable_traffic_warnings(ip.ip, Some(TrafficWarnings::default()))
+                .enable_ip_traffic_warnings(ip.ip, Some(TrafficWarnings::default()))
                 .await
                 .unwrap();
 
-            robot.disable_traffic_warnings(ip.ip).await.unwrap();
+            robot.disable_ip_traffic_warnings(ip.ip).await.unwrap();
 
             // Restore the original traffic warning settings.
             if let Some(warnings) = original_traffic_warning {
                 robot
-                    .enable_traffic_warnings(ip.ip, Some(warnings))
+                    .enable_ip_traffic_warnings(ip.ip, Some(warnings))
                     .await
                     .unwrap();
             }
@@ -482,7 +482,7 @@ mod tests {
         if let Some(ip) = servers.into_iter().find_map(|server| server.ipv4) {
             // Server primary IPs do not have configurable MAC addresses
             assert!(matches!(
-                robot.get_separate_mac(ip).await,
+                robot.get_ip_separate_mac(ip).await,
                 Err(Error::Api(ApiError::MacNotAvailable { .. })),
             ));
         }

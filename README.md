@@ -68,17 +68,17 @@ foobar: AX51-NVMe in FSN1-DC18
         - [x] Get cancellation status.
         - [x] Cancel IP address[^1]
         - [x] Revoke cancellation[^1]
-- [ ] **Subnet.**
+- [x] **Subnet.**
     - [x] List subnets.
     - [x] Get subnet.
-    - [ ] **Separate MAC.**
-        - [ ] Get separate MAC.
-        - [ ] Generate separate MAC.[^1]
-        - [ ] Disable separate MAC.[^1]
-    - [ ] **Cancellation.**[^1]
-        - [ ] Get cancellation status.
-        - [ ] Cancel subnet.[^1]
-        - [ ] Revoke cancellation.[^1]
+    - [x] **Separate MAC.**
+        - [x] Get separate MAC.
+        - [x] Generate separate MAC.[^1]
+        - [x] Disable separate MAC.[^1]
+    - [x] **Cancellation.**[^1]
+        - [x] Get cancellation status.[^1]
+        - [x] Cancel subnet.[^1]
+        - [x] Revoke cancellation.[^1]
 - [x] **Reset**
     - [x] List reset options for all servers.
     - [x] Get reset options for single server
