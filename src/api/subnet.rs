@@ -101,7 +101,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
         Ok(subnets)
     }
 
-    // Get subnet information.
+    /// Get subnet information.
     ///
     /// # Example
     /// ```rust,no_run
