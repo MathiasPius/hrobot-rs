@@ -41,11 +41,11 @@ pub(crate) fn apply_firewall_template(
         template_id: TemplateId,
     }
 
-    Ok(UnauthenticatedRequest::from(&format!(
+    UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/{server_number}"
     ))
     .with_method("POST")
-    .with_body(ApplyTemplate { template_id })?)
+    .with_body(ApplyTemplate { template_id })
 }
 
 pub(crate) fn delete_firewall(
@@ -468,7 +468,10 @@ mod tests {
                 .await
                 .unwrap();
 
-            info!("Waiting for firewall template to be applied to {}", server.name);
+            info!(
+                "Waiting for firewall template to be applied to {}",
+                server.name
+            );
 
             // Retry every 30 seconds, 10 times.
             let mut tries = 0;
@@ -485,22 +488,16 @@ mod tests {
 
             let applied_configuration = robot.get_firewall(server.id).await.unwrap();
 
-            assert_eq!(
-                applied_configuration.rules,
-                config.rules,
-            );
-            
-            assert_eq!(
-                applied_configuration.rules,
-                template.rules
-            );
+            assert_eq!(applied_configuration.rules, config.rules,);
+
+            assert_eq!(applied_configuration.rules, template.rules);
 
             // Revert to the original firewall config.
             robot
                 .set_firewall_config(server.id, &original_firewall.config())
                 .await
                 .unwrap();
-                
+
             // Delete the temporary template.
             robot.delete_firewall_template(template.id).await.unwrap();
         }
