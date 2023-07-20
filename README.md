@@ -90,7 +90,7 @@ foobar: AX51-NVMe in FSN1-DC18
 - [x] **Wake on LAN**
     - [x] Check availability of Wake-on-LAN.
     - [x] Send Wake-on-LAN packet to server.
-- [ ] **Boot Configuration**
+- [x] **Boot Configuration**
     - [x] Get status of all boot configurations.
     - [x] **Rescue.**
         - [x] Get rescue config.
