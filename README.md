@@ -122,11 +122,11 @@ foobar: AX51-NVMe in FSN1-DC18
         - [x] Get last CPanel config.[^1] [^2]
         - [x] Enable CPanel config.[^1]
         - [x] Disable CPanel config.[^1]
-- [ ] **Reverse DNS.**
-    - [ ] List reverse DNS entries.
-    - [ ] Get reverse DNS entry
-    - [ ] Create reverse DNS entry.
-    - [ ] Update/create reverse DNS entry.
+- [x] **Reverse DNS.**
+    - [x] List reverse DNS entries.
+    - [x] Get reverse DNS entry
+    - [x] Create reverse DNS entry.
+    - [x] Update/create reverse DNS entry.
 - [ ] **Traffic.**
     - [ ] Query traffic data.
 - [x] **SSH Keys.**
