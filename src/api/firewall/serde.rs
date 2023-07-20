@@ -7,13 +7,13 @@ use crate::urlencode::{UrlEncode, UrlEncodingBuffer};
 
 use super::{
     Action, AnyFilter, Filter, Firewall, FirewallConfig, FirewallTemplate, FirewallTemplateConfig,
-    Ipv4Filter, Ipv6Filter, PortRange, Protocol, Rule, Rules, State, SwitchPort,
+    Ipv4Filter, Ipv6Filter, PortRange, Protocol, Rule, Rules, State, SwitchPort, TemplateId,
 };
 
 /// Describes an entire firewall template.
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct InternalFirewallTemplate {
-    pub id: u32,
+    pub id: TemplateId,
     pub name: String,
     pub filter_ipv6: bool,
     #[serde(rename = "whitelist_hos")]
@@ -352,7 +352,7 @@ impl UrlEncode for InternalRules {
             }
 
             let mut egress = f.append("[output]");
-            for (index, rule) in self.ingress.iter().enumerate() {
+            for (index, rule) in self.egress.iter().enumerate() {
                 rule.encode_into(egress.append(&format!("[{index}]")));
             }
         }

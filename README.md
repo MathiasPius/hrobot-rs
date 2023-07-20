@@ -172,11 +172,11 @@ foobar: AX51-NVMe in FSN1-DC18
         - [ ] Update subaccount configuration.
         - [ ] Delete subaccount.
         - [ ] Change subaccount password.
-- [ ] **Firewall.**
+- [x] **Firewall.**
     - [x] Get firewall configuration for server.
     - [x] Apply firewall configuration to server.
         - [x] Override rules.
-        - [ ] Apply template.
+        - [x] Apply template.
     - [x] Clear firewall configuration for server.
     - [x] **Template.**
         - [x] List firewall templates.

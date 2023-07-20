@@ -155,7 +155,7 @@ impl Display for Action {
 pub struct FirewallTemplateReference {
     /// Unique template ID. Can be used to fetch the entire rule
     /// list using [`AsyncRobot::get_firewall_template()`](crate::AsyncRobot::get_firewall_template)
-    pub id: u32,
+    pub id: TemplateId,
 
     /// Human-readable name for the template.
     pub name: String,
@@ -176,7 +176,7 @@ pub struct FirewallTemplateReference {
 #[derive(Debug, Clone)]
 pub struct FirewallTemplate {
     /// Unique firewall template id
-    pub id: u32,
+    pub id: TemplateId,
 
     /// Human-readable name for the template.
     pub name: String,
@@ -265,6 +265,20 @@ pub struct FirewallConfig {
     pub rules: Rules,
 }
 
+impl FirewallConfig {
+    /// Transform into a template configuration, which can be used to create a template from.
+    #[must_use = "This doesn't create the template, only produces a config which you can then upload with AsyncRobot::create_firewall_template"]
+    pub fn to_template_config(&self, name: &str) -> FirewallTemplateConfig {
+        FirewallTemplateConfig {
+            name: name.to_string(),
+            filter_ipv6: self.filter_ipv6,
+            whitelist_hetzner_services: self.whitelist_hetzner_services,
+            is_default: false,
+            rules: self.rules.clone(),
+        }
+    }
+}
+
 impl From<&Firewall> for FirewallConfig {
     fn from(value: &Firewall) -> Self {
         FirewallConfig {
@@ -277,7 +291,7 @@ impl From<&Firewall> for FirewallConfig {
 }
 
 /// Encapsulates all ingoing and outgoing rules for a Firewall.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Rules {
     /// Rules applied to ingress traffic (traffic to the server).
     pub ingress: Vec<Rule>,

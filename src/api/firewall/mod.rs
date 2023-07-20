@@ -4,6 +4,7 @@ mod serde;
 use crate::{error::Error, urlencode::UrlEncode, AsyncHttpClient, AsyncRobot};
 
 use self::serde::*;
+use ::serde::Serialize;
 pub use models::*;
 
 use super::{
@@ -23,12 +24,28 @@ pub(crate) fn get_firewall(
 pub(crate) fn set_firewall_config(
     server_number: ServerId,
     firewall: &FirewallConfig,
+) -> UnauthenticatedRequest<Single<InternalFirewall>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/firewall/{server_number}"
+    ))
+    .with_method("POST")
+    .with_serialized_body(Into::<InternalFirewallConfig>::into(firewall).encode())
+}
+
+pub(crate) fn apply_firewall_template(
+    server_number: ServerId,
+    template_id: TemplateId,
 ) -> Result<UnauthenticatedRequest<Single<InternalFirewall>>, serde_html_form::ser::Error> {
+    #[derive(Serialize)]
+    struct ApplyTemplate {
+        template_id: TemplateId,
+    }
+
     Ok(UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/{server_number}"
     ))
     .with_method("POST")
-    .with_serialized_body(Into::<InternalFirewallConfig>::into(firewall).encode()))
+    .with_body(ApplyTemplate { template_id })?)
 }
 
 pub(crate) fn delete_firewall(
@@ -139,7 +156,36 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
         firewall: &FirewallConfig,
     ) -> Result<Firewall, Error> {
         Ok(self
-            .go(set_firewall_config(server_number, firewall)?)
+            .go(set_firewall_config(server_number, firewall))
+            .await?
+            .0
+            .into())
+    }
+
+    /// Replace a [`Server`](crate::api::server::Server)'s [`Firewall`] configuration
+    /// with the one defined in the given template.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use std::net::Ipv4Addr;
+    /// # use hrobot::api::server::ServerId;
+    /// # use hrobot::api::firewall::{
+    /// #     FirewallConfig, Rule, Rules, State, Ipv4Filter,
+    /// #     TemplateId,
+    /// # };
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.apply_firewall_template(ServerId(1234567), TemplateId(1234)).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn apply_firewall_template(
+        &self,
+        server_number: ServerId,
+        template_id: TemplateId,
+    ) -> Result<Firewall, Error> {
+        Ok(self
+            .go(apply_firewall_template(server_number, template_id)?)
             .await?
             .0
             .into())
@@ -387,6 +433,76 @@ mod tests {
                 .set_firewall_config(server.id, &original_firewall.config())
                 .await
                 .unwrap();
+        }
+    }
+
+    #[tokio::test]
+    #[ignore = "unexpected failure might leave firewall in modified state."]
+    #[traced_test]
+    #[serial("firewall")]
+    async fn test_apply_firewall_template() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let servers = robot.list_servers().await.unwrap();
+        info!("{servers:#?}");
+
+        if let Some(server) = servers.first() {
+            // Fetch the current firewall configuration.
+            let original_firewall = robot.get_firewall(server.id).await.unwrap();
+
+            let config = original_firewall.config();
+
+            info!("{config:#?}");
+
+            // Create a firewall template that mimics the server's current configuration.
+            // so as to be as non-disruptive as possible.
+            let template = robot
+                .create_firewall_template(config.to_template_config("test-template-from-config"))
+                .await
+                .unwrap();
+
+            robot
+                .apply_firewall_template(server.id, template.id)
+                .await
+                .unwrap();
+
+            info!("Waiting for firewall template to be applied to {}", server.name);
+
+            // Retry every 30 seconds, 10 times.
+            let mut tries = 0;
+            while tries < 10 {
+                tries += 1;
+                tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+                let firewall = robot.get_firewall(server.id).await.unwrap();
+                if firewall.status != State::InProcess {
+                    break;
+                } else {
+                    info!("Firewall state is still \"in process\", checking again in 30s.");
+                }
+            }
+
+            let applied_configuration = robot.get_firewall(server.id).await.unwrap();
+
+            assert_eq!(
+                applied_configuration.rules,
+                config.rules,
+            );
+            
+            assert_eq!(
+                applied_configuration.rules,
+                template.rules
+            );
+
+            // Revert to the original firewall config.
+            robot
+                .set_firewall_config(server.id, &original_firewall.config())
+                .await
+                .unwrap();
+                
+            // Delete the temporary template.
+            robot.delete_firewall_template(template.id).await.unwrap();
         }
     }
 
