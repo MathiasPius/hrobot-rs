@@ -9,11 +9,11 @@ use super::{
     UnauthenticatedRequest,
 };
 
-fn list_rdns_entries() -> UnauthenticatedRequest<List<Rdns>> {
+fn list_rdns_entries() -> UnauthenticatedRequest<List<RdnsEntry>> {
     UnauthenticatedRequest::from("https://robot-ws.your-server.de/rdns")
 }
 
-fn get_rdns_entry(ip: IpAddr) -> UnauthenticatedRequest<Single<Rdns>> {
+fn get_rdns_entry(ip: IpAddr) -> UnauthenticatedRequest<Single<RdnsEntry>> {
     UnauthenticatedRequest::from(&format!("https://robot-ws.your-server.de/rdns/{ip}"))
 }
 
@@ -25,7 +25,7 @@ struct SetPtr<'a> {
 fn create_rdns_entry(
     ip: IpAddr,
     ptr: &str,
-) -> Result<UnauthenticatedRequest<Single<Rdns>>, serde_html_form::ser::Error> {
+) -> Result<UnauthenticatedRequest<Single<RdnsEntry>>, serde_html_form::ser::Error> {
     UnauthenticatedRequest::from(&format!("https://robot-ws.your-server.de/rdns/{ip}"))
         .with_method("PUT")
         .with_body(SetPtr { ptr })
@@ -34,7 +34,7 @@ fn create_rdns_entry(
 fn update_rdns_entry(
     ip: IpAddr,
     ptr: &str,
-) -> Result<UnauthenticatedRequest<Single<Rdns>>, serde_html_form::ser::Error> {
+) -> Result<UnauthenticatedRequest<Single<RdnsEntry>>, serde_html_form::ser::Error> {
     UnauthenticatedRequest::from(&format!("https://robot-ws.your-server.de/rdns/{ip}"))
         .with_method("POST")
         .with_body(SetPtr { ptr })
@@ -57,7 +57,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// robot.list_rdns_entries().await.unwrap();
     /// # }
     /// ```
-    pub async fn list_rdns_entries(&self) -> Result<Vec<Rdns>, Error> {
+    pub async fn list_rdns_entries(&self) -> Result<Vec<RdnsEntry>, Error> {
         Ok(self.go(list_rdns_entries()).await?.0)
     }
 
@@ -127,9 +127,15 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     }
 }
 
+/// Reverse DNS Entry.
+///
+/// Maps an IP address to a single domain.
 #[derive(Debug, Clone, Deserialize)]
-pub struct Rdns {
+pub struct RdnsEntry {
+    /// IP Address this entry represents.
     pub ip: IpAddr,
+    
+    /// The target domain/record.
     pub ptr: String,
 }
 
