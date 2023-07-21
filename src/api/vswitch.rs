@@ -100,7 +100,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # }
     /// ```
     pub async fn list_vswitches(&self) -> Result<Vec<VSwitchReference>, Error> {
-        Ok(self.go(list_vswitches()).await?)
+        self.go(list_vswitches()).await
     }
 
     /// Get vSwitch information.
@@ -134,7 +134,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
         name: &str,
         vlan_id: VlanId,
     ) -> Result<VSwitchReference, Error> {
-        Ok(self.go(create_vswitch(name, vlan_id)?).await?)
+        self.go(create_vswitch(name, vlan_id)?).await
     }
 
     /// Update vSwitch.
