@@ -39,10 +39,10 @@
 pub mod api;
 pub mod error;
 
+pub mod bytes;
 mod client;
 mod timezones;
 mod urlencode;
-pub mod bytes;
 
 pub use ::time;
 pub use client::*;

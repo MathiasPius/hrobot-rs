@@ -1,5 +1,6 @@
 use std::{collections::HashMap, net::Ipv4Addr};
 
+use bytesize::ByteSize;
 use serde::{Deserialize, Serialize};
 use time::Date;
 
@@ -249,20 +250,23 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 #[serde(try_from = "InternalTrafficWarnings")]
 pub struct TrafficWarnings {
-    /// Hourly traffic warning in *MB*.
+    /// Produce a warning if the hourly traffic exceeds this limit.
     #[serde(rename = "traffic_hourly")]
-    pub hourly: u32,
+    #[serde(with = "crate::bytes::mb")]
+    pub hourly: ByteSize,
 
-    /// Daily traffic warning in *MB*.
+    /// Produce a warning if the daily traffic exceeds this limit.
     #[serde(rename = "traffic_daily")]
-    pub daily: u32,
+    #[serde(with = "crate::bytes::mb")]
+    pub daily: ByteSize,
 
-    /// Monthly traffic warning in *GB*.
+    /// Produce a warning if the monthly traffic exceeds this limit.
     #[serde(rename = "traffic_monthly")]
-    pub monthly: u32,
+    #[serde(with = "crate::bytes::gb")]
+    pub monthly: ByteSize,
 }
 
 // This is the default configuration for servers,
@@ -270,9 +274,9 @@ pub struct TrafficWarnings {
 impl Default for TrafficWarnings {
     fn default() -> Self {
         TrafficWarnings {
-            hourly: 200,
-            daily: 2000,
-            monthly: 20,
+            hourly: ByteSize::mb(200),
+            daily: ByteSize::mb(2000),
+            monthly: ByteSize::gb(20),
         }
     }
 }
@@ -282,9 +286,12 @@ impl Default for TrafficWarnings {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub(crate) struct InternalTrafficWarnings {
     traffic_warnings: bool,
-    traffic_hourly: u32,
-    traffic_daily: u32,
-    traffic_monthly: u32,
+    #[serde(with = "crate::bytes::mb")]
+    traffic_hourly: ByteSize,
+    #[serde(with = "crate::bytes::mb")]
+    traffic_daily: ByteSize,
+    #[serde(with = "crate::bytes::gb")]
+    traffic_monthly: ByteSize,
 }
 
 impl TryFrom<InternalTrafficWarnings> for TrafficWarnings {
@@ -452,10 +459,15 @@ mod tests {
 
             let original_traffic_warning = ip.traffic_warnings;
 
-            robot
+            let new_warnings = robot
                 .enable_ip_traffic_warnings(ip.ip, Some(TrafficWarnings::default()))
                 .await
                 .unwrap();
+
+            assert_eq!(
+                new_warnings.traffic_warnings.unwrap(),
+                TrafficWarnings::default()
+            );
 
             robot.disable_ip_traffic_warnings(ip.ip).await.unwrap();
 
