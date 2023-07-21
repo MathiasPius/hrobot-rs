@@ -163,6 +163,7 @@ pub struct AvailableWindowsConfig {
     pub language: Vec<String>,
 }
 
+/// Describes either the active or available Windows configurations.
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub enum Windows {
     /// Currently active Windows installation configuration.
