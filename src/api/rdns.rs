@@ -134,7 +134,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
 pub struct RdnsEntry {
     /// IP Address this entry represents.
     pub ip: IpAddr,
-    
+
     /// The target domain/record.
     pub ptr: String,
 }
