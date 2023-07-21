@@ -24,10 +24,10 @@ and fetching a list of all dedicated servers owned by the account identified by 
 ```rust
 use hrobot::*;
 
-// Robot is instantiated using the environment
-// variables HROBOT_USERNAME an HROBOT_PASSWORD.
 #[tokio::main]
 async fn main() {
+    // Robot is instantiated using the environment
+    // variables HROBOT_USERNAME an HROBOT_PASSWORD.
     let robot = AsyncRobot::default();
 
     for server in robot.list_servers().await.unwrap() {

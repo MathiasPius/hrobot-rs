@@ -15,10 +15,10 @@
 //! ```rust,no_run
 //! use hrobot::*;
 //!
-//! // Robot is instantiated using the environment
-//! // variables HROBOT_USERNAME an HROBOT_PASSWORD.
 //! #[tokio::main]
 //! async fn main() {
+//!     // Robot is instantiated using the environment
+//!     // variables HROBOT_USERNAME an HROBOT_PASSWORD.
 //!     let robot = AsyncRobot::default();
 //!
 //!     for server in robot.list_servers().await.unwrap() {
