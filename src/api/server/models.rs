@@ -1,3 +1,4 @@
+use bytesize::ByteSize;
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::Display,
@@ -124,8 +125,9 @@ pub struct Server {
     /// See [here](https://www.hetzner.com/unternehmen/rechenzentrum) for a list of datacenters.
     pub dc: String,
 
-    /// Monthly traffic limitation if any, e.g. `5 TB`, `Unlimited` otherwise.
-    pub traffic: String,
+    /// Monthly traffic limitation if any, e.g. `5 TB`.
+    #[serde(deserialize_with = "crate::bytes::traffic")]
+    pub traffic: Option<ByteSize>,
 
     /// Current status of the server.
     pub status: Status,
