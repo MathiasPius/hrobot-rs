@@ -16,8 +16,8 @@ pub mod rdns;
 pub mod reset;
 pub mod server;
 pub mod subnet;
-pub mod wol;
 pub mod vswitch;
+pub mod wol;
 
 /// Base64-encoded credentials used to authenticate against
 /// the Hetzner Robot API.

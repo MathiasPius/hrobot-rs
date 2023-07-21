@@ -184,14 +184,14 @@ foobar: AX51-NVMe in FSN1-DC18
         - [x] Get firewall template.
         - [x] Update firewall template.
         - [x] Delete firewall template.
-- [ ] **vSwitch.**
-    - [ ] List vSwitches.
-    - [ ] Create new vSwitch.
-    - [ ] Get vSwitch.
-    - [ ] Update vSwitch.
-    - [ ] Cancel vSwitch.
-    - [ ] Add server to vSwitch.
-    - [ ] Remove server from vSwitch.
+- [x] **vSwitch.**
+    - [x] List vSwitches.
+    - [x] Create new vSwitch.
+    - [x] Get vSwitch.
+    - [x] Update vSwitch.
+    - [x] Cancel vSwitch.
+    - [x] Add servers to vSwitch.
+    - [x] Remove servers from vSwitch.
 
 [^1]: Not tested, but *should* work. Use at own risk.
 [^2]: Not officially documented by Hetzner, use at own risk.
