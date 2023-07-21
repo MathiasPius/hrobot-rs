@@ -44,5 +44,6 @@ mod client;
 mod timezones;
 mod urlencode;
 
+pub use ::bytesize::ByteSize;
 pub use ::time;
 pub use client::*;

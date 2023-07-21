@@ -116,15 +116,16 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::ip::TrafficWarnings;
+    /// # use hrobot::ByteSize;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.enable_ip_traffic_warnings(
     ///     "123.123.123.123".parse().unwrap(),
     ///     Some(TrafficWarnings {
-    ///         hourly: 200, /* MB */
-    ///         daily: 2000, /* MB */
-    ///         monthly: 20, /* GB */
+    ///         hourly:  ByteSize::mb(200),
+    ///         daily:   ByteSize::gb(2),
+    ///         monthly: ByteSize::gb(20),
     ///     })
     /// ).await.unwrap();
     /// # }
