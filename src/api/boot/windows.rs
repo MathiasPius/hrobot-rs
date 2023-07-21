@@ -151,7 +151,7 @@ pub struct ActiveWindowsConfig {
     pub password: Option<String>,
 }
 
-/// Describes availble Windows installation configuration options.
+/// availble Windows installation configuration options.
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub struct AvailableWindowsConfig {
     /// Available Windows installation distributions.
@@ -171,7 +171,7 @@ pub enum Windows {
     Available(AvailableWindowsConfig),
 }
 
-/// Describes a Windows installation configuration to activate.
+/// Aplicable Windows boot configuration.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct WindowsConfig {
     /// Distribution of Windows to install.

@@ -132,6 +132,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     }
 }
 
+/// Applicable VNC boot configuration.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct VncConfig {
     /// Distribution for the VNC installation.

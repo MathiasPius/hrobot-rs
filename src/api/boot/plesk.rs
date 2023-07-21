@@ -138,6 +138,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     }
 }
 
+/// Applicable Plesk boot configuration.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct PleskConfig {
     /// Distribution for the Plesk installation.

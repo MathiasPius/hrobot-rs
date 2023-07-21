@@ -135,6 +135,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     }
 }
 
+/// Applicable Linux boot configuration.
 #[derive(Debug, Clone, Serialize)]
 pub struct LinuxConfig {
     /// Distribution to install.

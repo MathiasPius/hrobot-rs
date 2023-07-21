@@ -138,6 +138,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     }
 }
 
+/// Applicable CPanel configuration.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct CpanelConfig {
     /// Distribution for the Cpanel installation.
