@@ -1,3 +1,5 @@
+//! Typed error handling for API responses.
+
 use std::fmt::Display;
 
 use serde::{Deserialize, Deserializer};
