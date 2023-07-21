@@ -2,6 +2,37 @@
 
 This document aims to list some of the discrepancies, oddities, unexpected behaviours and undocumented features discovered while developing this library.
 
+## Consistency Issues
+
+### Json object nesting
+* Most (almost all?) endpoints *except* the vSwitch endpoints return objects in the form of an outer object containing a single field indicating the type of object, and an
+  inner object which actually constitutes the object itself.
+  
+  For instance, `GET https://robot-ws.your-server.de/server/321` will return something like:
+  ```json
+  {
+    "server":{
+      "server_ip":"123.123.123.123",
+      "server_ipv6_net":"2a01:f48:111:4221::",
+      "server_number":321,
+      (and so on)
+    }
+  }
+  ```
+  Instead of just the plain object:
+  ```json
+  {
+    "server_ip":"123.123.123.123",
+    "server_ipv6_net":"2a01:f48:111:4221::",
+    "server_number":321,
+    (and so on)
+  }
+  ```
+  This is a little strange, but if used consistenctly across the API might make sense, and could potentially resolve ambiguity for endpoints where the type of the 
+  returned object is not obvious, though I can't think of any examples in the API.
+  
+  However, the vSwitch endpoints specifically *do not* follow this convention, and instead return the "naked" objects themselves.  
+
 ## Undocumented Features
 
 ### Boot Configuration
