@@ -53,7 +53,7 @@ pub struct KeyReference {
     #[serde(rename = "size")]
     pub bits: u16,
 
-    #[serde(deserialize_with = "crate::time::assume_berlin_timezone")]
+    #[serde(deserialize_with = "crate::timezones::assume_berlin_timezone")]
     pub created_at: OffsetDateTime,
 }
 

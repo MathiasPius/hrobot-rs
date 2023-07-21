@@ -107,6 +107,7 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::vswitch::VSwitchId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
@@ -121,8 +122,8 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # #[tokio::main]
     /// # use hrobot::api::vswitch::VlanId;
+    /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.create_vswitch("vswitch-test-1", VlanId(4078)).await.unwrap();
@@ -140,8 +141,8 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # #[tokio::main]
     /// # use hrobot::api::vswitch::{VSwitchId, VlanId};
+    /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.update_vswitch(
@@ -173,14 +174,15 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # #[tokio::main]
     /// # use hrobot::api::vswitch::VSwitchId;
-    /// # use hrobot::time::Date;
+    /// # use hrobot::time::{Date, Month};
+    /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.cancel_vswitch(
     ///     VSwitchId(124567),
-    ///     Date::from_calendar_days(2023, Month::July, 10)).await.unwrap();
+    ///     Date::from_calendar_date(2023, Month::July, 10).unwrap()
+    /// ).await.unwrap();
     /// # }
     /// ```
     pub async fn cancel_vswitch(
@@ -204,9 +206,9 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # #[tokio::main]
     /// # use hrobot::api::vswitch::VSwitchId;
-    /// # use hrobot::api::server::ServerId,
+    /// # use hrobot::api::server::ServerId;
+    /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.connect_vswitch_servers(
@@ -236,9 +238,9 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # #[tokio::main]
     /// # use hrobot::api::vswitch::VSwitchId;
-    /// # use hrobot::api::server::ServerId,
+    /// # use hrobot::api::server::ServerId;
+    /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.disconnect_vswitch_servers(
@@ -267,7 +269,11 @@ impl<Client: AsyncHttpClient> AsyncRobot<Client> {
 
 /// VLAN ID.
 ///
-/// Simple wrapper around a u16, to avoid confusion with vSwitch ID.
+/// Simple wrapper around a u16, to avoid confusion with vSwitch ID, for example.
+///
+/// VLAN IDs must be in the range 4000..=4091.
+///
+/// Multiple vSwitches can have the same VLAN ID.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VlanId(pub u16);
 
@@ -295,14 +301,15 @@ impl PartialEq<u16> for VlanId {
     }
 }
 
-/// Uniquely identifies a vSwitch..
+/// Uniquely identifies a vSwitch.
 ///
-/// Simple wrapper around a u32, to avoid confusion with for example [`VlanId`](crate::api::vswitch::VlanId)
-/// and to make it intuitive what kind of argument you need to give to functions.
+/// Simple wrapper around a u32, to avoid confusion with other simple integer-based IDs
+/// such as [`VlanId`](crate::api::vswitch::VlanId) and to make it intuitive what kind
+/// of argument you need to give to functions.
 ///
-/// Using a plain integer means it isn't clear what the argument is, is it a counter of my vSwitches, where the argument
-/// is in range `0..N` where `N` is the number of vswitches in my account, or is it a limiter, like get first `N`
-/// vswitches, for example.
+/// Using a plain integer means it isn't clear what the argument is, is it a counter of
+/// my vSwitches, where the argument is in range `0..N` where `N` is the number of
+/// vswitches in my account, or is it a limiter, like get first `N` vswitches, for example.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VSwitchId(pub u32);
 
@@ -330,11 +337,25 @@ impl PartialEq<u32> for VSwitchId {
     }
 }
 
+/// Simplified view of a VSwitch.
+///
+/// This is returned when [listing](AsyncRobot::list_vswitches()) vSwitches, and only contains
+/// the basic vSwitch configuration options. For information on which servers, subnets and
+/// cloud networks are connected to the vSwitch see [`AsyncRobot::get_vswitch`]
 #[derive(Debug, Clone, Deserialize)]
 pub struct VSwitchReference {
+    /// Unique vSwitch ID.
     pub id: VSwitchId,
+
+    /// Name of the vSwitch
     pub name: String,
+
+    /// VLAN ID for the vSwitch.
+    ///
+    /// VLAN IDs must be in the range 4000..=4091.
     pub vlan: VlanId,
+
+    /// Indicates if the vSwitch has been cancelled or not.
     pub cancelled: bool,
 }
 
@@ -379,32 +400,59 @@ impl From<InternalSubnet> for IpNet {
     }
 }
 
+/// Describes a complete vSwitch configuration.
 #[derive(Debug, Clone)]
 pub struct VSwitch {
+    /// Unique vSwitch ID.
     pub id: VSwitchId,
+
+    /// Name for this vSwitch.
     pub name: String,
+
+    /// VLAN ID associated with traffic over this vSwitch.
     pub vlan: VlanId,
+
+    /// Indicates if the vSwitch has been cancelled.
     pub cancelled: bool,
+
+    /// List of servers connected to this vSwitch.
     pub servers: Vec<VSwitchServer>,
+
+    /// List of subnets associated with this vSwitch.
     pub subnets: Vec<IpNet>,
+
+    /// List of Cloud Networks connected to this vSwitch.
     pub cloud_networks: Vec<CloudNetwork>,
 }
 
+/// Indicates the connection status of a server to a vSwitch.
+///
+/// Connecting or disconnecting a server to/from a vSwitch requires some
+/// processing time, and the server won't be immediately available on the vSwitch
+/// network.
 #[derive(Debug, Clone, Deserialize)]
 pub enum ConnectionStatus {
+    /// Server is connected and ready.
     #[serde(rename = "ready")]
     Ready,
+
+    /// Server is currently in the process of connecting or disconnecting from the vSwitch.
     #[serde(rename = "in process")]
     InProcess,
+
+    /// Server connect/disconnect failed.
     #[serde(rename = "failed")]
     Failed,
 }
 
+/// Connection status of a server to a vSwitch.
 #[derive(Debug, Clone, Deserialize)]
 pub struct VSwitchServer {
+    /// Server's unique ID.
     #[serde(rename = "server_number")]
     pub id: ServerId,
 
+    /// Status of the server's connection to the vSwitch.
     pub status: ConnectionStatus,
 }
 
@@ -424,11 +472,13 @@ impl From<InternalCloudNetwork> for CloudNetwork {
     }
 }
 
+/// Identifies a Cloud Network connected to a vSwitch.
 #[derive(Debug, Clone)]
 pub struct CloudNetwork {
     /// Unique ID for the Cloud Network the vSwitch is connected to.
     pub id: CloudNetworkId,
 
+    /// Subnet of the Cloud Network the vSwitch inhabits.
     pub network: IpNet,
 }
 
