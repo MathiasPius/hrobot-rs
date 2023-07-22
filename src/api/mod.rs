@@ -9,6 +9,7 @@ use serde::Serialize;
 mod wrapper;
 
 pub mod boot;
+pub mod failover;
 pub mod firewall;
 pub mod ip;
 pub mod keys;

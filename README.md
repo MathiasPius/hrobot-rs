@@ -91,10 +91,10 @@ bar: Server Auction in FSN1-DC5
     - [x] List reset options for all servers.
     - [x] Get reset options for single server
     - [x] Trigger reset.[^1]
-- [ ] **Failover**
-    - [ ] Get failover IP.
-    - [ ] Switch routing of failover traffic.
-    - [ ] Disable failover routing.
+- [x] **Failover**
+    - [x] Get failover IP.[^1]
+    - [x] Switch routing of failover traffic.[^1]
+    - [x] Disable failover routing.[^1]
 - [x] **Wake on LAN**
     - [x] Check availability of Wake-on-LAN.
     - [x] Send Wake-on-LAN packet to server.
