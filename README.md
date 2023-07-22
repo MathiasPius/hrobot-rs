@@ -50,8 +50,10 @@ bar: Server Auction in FSN1-DC5
 
 # API Endpoint Implementation Progress
 
-Note[^1]: Not tested, but *should* work. Use at own risk.
-Note[^2]: Not officially documented by Hetzner, use at own risk.
+Note:
+
+* [^1] means the endpoint has not been tested, use at your own risk.
+* [^2] not officially documented by Hetzner, use at own risk.
 
 - [x] **Server.**
     - [x] List servers.
@@ -198,6 +200,9 @@ Note[^2]: Not officially documented by Hetzner, use at own risk.
     - [x] Cancel vSwitch.
     - [x] Add servers to vSwitch.
     - [x] Remove servers from vSwitch.
+
+[^1]: Not tested, but *should* work. Use at own risk.
+[^2]: Not officially documented by Hetzner, use at own risk.
 
 # Testing
 Testing relies on `$HROBOT_USERNAME` and `$HROBOT_PASSWORD` being defined in the environment, corresponding to a Hetzner WebService/app login.
