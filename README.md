@@ -50,9 +50,9 @@ bar: Server Auction in FSN1-DC5
 
 # API Endpoint Implementation Progress
 
-Note:
+**Warning**:
 
-* [^1] means the endpoint has not been tested, use at your own risk.
+* [^1] not tested, use at your own risk.
 * [^2] not officially documented by Hetzner, use at own risk.
 
 - [x] **Server.**
