@@ -79,9 +79,10 @@ impl AsyncRobot {
     /// List all single IP addresses, grouped by server they are assigned to.
     ///
     /// # Example
-    /// ```rust,no_run
+    /// ```rust
     /// # #[tokio::main]
     /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.list_ips().await.unwrap();
     /// # }
