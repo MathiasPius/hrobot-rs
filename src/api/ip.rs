@@ -124,9 +124,9 @@ impl AsyncRobot {
     /// robot.enable_ip_traffic_warnings(
     ///     "123.123.123.123".parse().unwrap(),
     ///     Some(TrafficWarnings {
-    ///         hourly:  ByteSize::mb(200),
-    ///         daily:   ByteSize::gb(2),
-    ///         monthly: ByteSize::gb(20),
+    ///         hourly:  ByteSize::mib(200),
+    ///         daily:   ByteSize::gib(2),
+    ///         monthly: ByteSize::gib(20),
     ///     })
     /// ).await.unwrap();
     /// # }
@@ -257,17 +257,17 @@ impl AsyncRobot {
 pub struct TrafficWarnings {
     /// Produce a warning if the hourly traffic exceeds this limit.
     #[serde(rename = "traffic_hourly")]
-    #[serde(with = "crate::bytes::mb")]
+    #[serde(with = "crate::bytes::mib")]
     pub hourly: ByteSize,
 
     /// Produce a warning if the daily traffic exceeds this limit.
     #[serde(rename = "traffic_daily")]
-    #[serde(with = "crate::bytes::mb")]
+    #[serde(with = "crate::bytes::mib")]
     pub daily: ByteSize,
 
     /// Produce a warning if the monthly traffic exceeds this limit.
     #[serde(rename = "traffic_monthly")]
-    #[serde(with = "crate::bytes::gb")]
+    #[serde(with = "crate::bytes::gib")]
     pub monthly: ByteSize,
 }
 
@@ -276,9 +276,9 @@ pub struct TrafficWarnings {
 impl Default for TrafficWarnings {
     fn default() -> Self {
         TrafficWarnings {
-            hourly: ByteSize::mb(200),
-            daily: ByteSize::mb(2000),
-            monthly: ByteSize::gb(20),
+            hourly: ByteSize::mib(200),
+            daily: ByteSize::mib(2000),
+            monthly: ByteSize::gib(20),
         }
     }
 }
@@ -288,11 +288,11 @@ impl Default for TrafficWarnings {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub(crate) struct InternalTrafficWarnings {
     traffic_warnings: bool,
-    #[serde(with = "crate::bytes::mb")]
+    #[serde(with = "crate::bytes::mib")]
     traffic_hourly: ByteSize,
-    #[serde(with = "crate::bytes::mb")]
+    #[serde(with = "crate::bytes::mib")]
     traffic_daily: ByteSize,
-    #[serde(with = "crate::bytes::gb")]
+    #[serde(with = "crate::bytes::gib")]
     traffic_monthly: ByteSize,
 }
 
