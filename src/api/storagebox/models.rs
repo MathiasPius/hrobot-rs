@@ -104,9 +104,22 @@ pub struct StorageBox {
     /// Date until which this storagebox has been paid for.
     pub paid_until: Date,
 
+    /// Whether the storagebox is ZFS-based.
+    pub zfs: bool,
+
+    /// Servername through which the storagebox can be accessed.
+    pub server: String,
+
+    /// Name of the host system for the storagebox.
+    pub host_system: String,
+
     /// Disk usage and quota.
     #[serde(flatten)]
     pub disk: Disk,
+
+    /// Accessibility.
+    #[serde(flatten)]
+    pub accessibility: Accessibility,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -126,4 +139,19 @@ pub struct Disk {
     /// Storage used by snapshots.
     #[serde(rename = "disk_usage_snapshots", with = "crate::bytes::mib")]
     pub snapshots: ByteSize,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Accessibility {
+    /// Indicates whether the storagebox is accessible via WebDav.
+    pub webdav: bool,
+
+    /// Indicates whether the storagebox is available over Samba.
+    pub samba: bool,
+
+    /// Indicates whether the storagebox is accessible via SSH.
+    pub ssh: bool,
+
+    /// Indicates whether the server is externally reachable.
+    pub external_reachability: bool,
 }
