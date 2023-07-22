@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::api::server::ServerId;
 use crate::api::{wrapper::Single, UnauthenticatedRequest};
-use crate::{error::Error, AsyncHttpClient, AsyncRobot};
+use crate::{error::Error, AsyncRobot};
 
 fn get_windows_config(server_number: ServerId) -> UnauthenticatedRequest<Single<Windows>> {
     UnauthenticatedRequest::from(&format!(
@@ -38,7 +38,7 @@ fn get_last_windows_config(
     ))
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// Retrieve a [`Server`](crate::api::server::Server)'s [`ActiveWindowsConfig`] configuration,
     /// or a list of available distributions and languages, if the Windows installation system
     /// is not currently active.

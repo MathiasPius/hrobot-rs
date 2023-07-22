@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     api::{server::ServerId, wrapper::Single, UnauthenticatedRequest},
     error::Error,
-    AsyncHttpClient, AsyncRobot,
+    AsyncRobot,
 };
 
 fn get_plesk_config(server_number: ServerId) -> UnauthenticatedRequest<Single<Plesk>> {
@@ -40,7 +40,7 @@ fn get_last_plesk_config(
     ))
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// Retrieve a [`Server`](crate::api::server::Server)'s [`ActivePleskConfig`]
     /// configuration, or a list of available distributions and languages,
     /// if the Plesk installation system is not currently active.

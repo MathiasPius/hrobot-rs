@@ -4,7 +4,7 @@ use ipnet::IpNet;
 use serde::{Deserialize, Serialize};
 use time::Date;
 
-use crate::{error::Error, urlencode::UrlEncode, AsyncHttpClient, AsyncRobot};
+use crate::{error::Error, urlencode::UrlEncode, AsyncRobot};
 
 use super::{server::ServerId, UnauthenticatedRequest};
 
@@ -88,7 +88,7 @@ fn remove_servers(vswitch_id: VSwitchId, servers: &[ServerId]) -> Unauthenticate
     .with_serialized_body(ServerList { server: servers }.encode())
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// List all vSwitches.
     ///
     /// # Example

@@ -15,7 +15,7 @@ pub use windows::*;
 use crate::{
     api::{wrapper::Single, UnauthenticatedRequest},
     error::Error,
-    AsyncHttpClient, AsyncRobot,
+    AsyncRobot,
 };
 use serde::Deserialize;
 
@@ -91,7 +91,7 @@ fn get_config(server_number: ServerId) -> UnauthenticatedRequest<Single<Config>>
     ))
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// Retrieve the status of all boot configuration systems,
     /// whether active or available or a server.
     ///

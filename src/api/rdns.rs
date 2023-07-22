@@ -2,7 +2,7 @@ use std::net::IpAddr;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{error::Error, AsyncHttpClient, AsyncRobot};
+use crate::{error::Error, AsyncRobot};
 
 use super::{
     wrapper::{List, Single},
@@ -45,7 +45,7 @@ fn delete_rdns_entry(ip: IpAddr) -> UnauthenticatedRequest<()> {
         .with_method("DELETE")
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// List all Reverse DNS entries.
     ///
     /// # Example

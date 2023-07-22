@@ -4,7 +4,7 @@ use bytesize::ByteSize;
 use serde::{Deserialize, Serialize};
 use time::Date;
 
-use crate::{error::Error, AsyncHttpClient, AsyncRobot};
+use crate::{error::Error, AsyncRobot};
 
 use super::{
     server::ServerId,
@@ -75,7 +75,7 @@ fn revoke_ip_cancellation(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<Cancell
     .with_method("DELETE")
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// List all single IP addresses, grouped by server they are assigned to.
     ///
     /// # Example

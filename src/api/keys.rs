@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
-use crate::{error::Error, AsyncHttpClient, AsyncRobot};
+use crate::{error::Error, AsyncRobot};
 
 use super::{
     wrapper::{List, Single},
@@ -105,7 +105,7 @@ fn rename_ssh_key(
     .with_body(RenameSshKey { name: new_name })
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// List all SSH [`Key`]s.
     ///
     /// # Example

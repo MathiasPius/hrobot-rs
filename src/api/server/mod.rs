@@ -3,7 +3,7 @@ mod models;
 use crate::{
     api::wrapper::{List, Single},
     error::Error,
-    AsyncHttpClient, AsyncRobot,
+    AsyncRobot,
 };
 use hyper::Uri;
 use serde::Serialize;
@@ -85,7 +85,7 @@ fn withdraw_server_order(
     })
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// List all owned servers.
     ///
     /// # Example

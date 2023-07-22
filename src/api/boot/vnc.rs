@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     api::{server::ServerId, wrapper::Single, UnauthenticatedRequest},
     error::Error,
-    AsyncHttpClient, AsyncRobot,
+    AsyncRobot,
 };
 
 fn get_vnc_config(server_number: ServerId) -> UnauthenticatedRequest<Single<Vnc>> {
@@ -38,7 +38,7 @@ fn get_last_vnc_config(server_number: ServerId) -> UnauthenticatedRequest<Single
     ))
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// Retrieve a [`Server`](crate::api::server::Server)'s [`ActiveVncConfig`]
     /// configuration, or a list of available distributions and languages,
     /// if the vnc installation system is not currently active.

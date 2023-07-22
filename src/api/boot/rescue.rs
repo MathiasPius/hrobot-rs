@@ -1,5 +1,5 @@
 use crate::api::server::ServerId;
-use crate::{error::Error, AsyncHttpClient, AsyncRobot};
+use crate::{error::Error, AsyncRobot};
 
 use crate::api::{wrapper::Single, UnauthenticatedRequest};
 
@@ -37,7 +37,7 @@ fn get_last_rescue_config(
     ))
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// Retrieve a [`Server`](crate::api::server::Server)'s [`ActiveRescueConfig`] configuration,
     /// or a list of available operating systems, if the rescue
     /// system is not currently active.

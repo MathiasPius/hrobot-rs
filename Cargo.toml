@@ -25,9 +25,8 @@ serde_html_form = "0.2.1"
 base64 = "0.21.2"
 urlencoding = "2"
 
-hyper = "0.14.27"
-hyper-rustls = { version = "0.24.1", optional = true }
-async-trait = { version = "0.1.71", optional = true }
+hyper = { version = "0.14.27", features = ["http1", "client"] }
+hyper-rustls = { version = "0.24.1" }
 
 [dev-dependencies]
 tracing-subscriber = "0.3.17"
@@ -36,8 +35,3 @@ tracing-test = { version = "0.2.4" }
 tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread"] }
 dotenvy = "0.15"
 serial_test = "2"
-
-[features]
-default = ["hyper-client"]
-async = ["dep:async-trait"]
-hyper-client = ["async", "hyper/client", "hyper/http1", "dep:hyper-rustls"]

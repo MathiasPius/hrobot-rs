@@ -1,7 +1,7 @@
 mod models;
 mod serde;
 
-use crate::{error::Error, urlencode::UrlEncode, AsyncHttpClient, AsyncRobot};
+use crate::{error::Error, urlencode::UrlEncode, AsyncRobot};
 
 use self::serde::*;
 use ::serde::Serialize;
@@ -95,7 +95,7 @@ pub(crate) fn update_firewall_template(
     .with_serialized_body(Into::<InternalFirewallTemplateConfig>::into(template).encode())
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// Retrieve a [`Server`](crate::api::server::Server)'s [`Firewall`].
     ///
     /// # Example

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{error::Error, AsyncHttpClient, AsyncRobot};
+use crate::{error::Error, AsyncRobot};
 
 use super::{
     server::ServerId,
@@ -31,7 +31,7 @@ fn trigger_reset(
     .with_body(ExecutedReset { reset })
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// List reset options for all servers.
     ///
     /// # Example

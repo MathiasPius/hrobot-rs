@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 use crate::{
     error::{ApiError, Error},
-    AsyncHttpClient, AsyncRobot,
+    AsyncRobot,
 };
 
 use super::{server::ServerId, wrapper::Single, UnauthenticatedRequest};
@@ -20,7 +20,7 @@ fn post_wake_on_lan(server_number: ServerId) -> UnauthenticatedRequest<Single<Wo
     .with_method("POST")
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// Check if Wake-on-LAN is available for the server.
     ///
     /// # Example

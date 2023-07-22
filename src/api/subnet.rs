@@ -7,7 +7,7 @@ use ipnet::IpNet;
 use serde::Deserialize;
 use time::Date;
 
-use crate::{error::Error, AsyncHttpClient, AsyncRobot};
+use crate::{error::Error, AsyncRobot};
 
 use super::{
     ip::{ExecutedMacRemoval, InternalMac, InternalTrafficWarnings, TrafficWarnings},
@@ -80,7 +80,7 @@ fn revoke_subnet_cancellation(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<Can
     .with_method("DELETE")
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// List all subnets, grouped by server they are assigned to.
     ///
     /// # Example

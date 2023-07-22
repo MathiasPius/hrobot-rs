@@ -1,5 +1,5 @@
 use crate::api::server::ServerId;
-use crate::client::{AsyncHttpClient, AsyncRobot};
+use crate::client::AsyncRobot;
 use crate::{
     api::{keys::KeyReference, wrapper::Single, UnauthenticatedRequest},
     error::Error,
@@ -40,7 +40,7 @@ fn get_last_linux_config(
     ))
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// Retrieve a [`Server`](crate::api::server::Server)'s [`ActiveLinuxConfig`]
     /// configuration, or a list of available operating systems, if the linux
     /// installation system is not currently active.

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     api::{server::ServerId, wrapper::Single, UnauthenticatedRequest},
     error::Error,
-    AsyncHttpClient, AsyncRobot,
+    AsyncRobot,
 };
 
 fn get_cpanel_config(server_number: ServerId) -> UnauthenticatedRequest<Single<Cpanel>> {
@@ -40,7 +40,7 @@ fn get_last_cpanel_config(
     ))
 }
 
-impl<Client: AsyncHttpClient> AsyncRobot<Client> {
+impl AsyncRobot {
     /// Retrieve a [`Server`](crate::api::server::Server)'s [`ActiveCpanelConfig`]
     /// configuration, or a list of available distributions and languages,
     /// if the Cpanel installation system is not currently active.
