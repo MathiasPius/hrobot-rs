@@ -37,6 +37,12 @@ This document aims to list some of the discrepancies, oddities, unexpected behav
 
 * Delete endpoint does not return the cancellation date, and querying for cancellation date information is not available.
 
+### Reverse DNS
+ * Reverse DNS entry listing *may* sporadically return `null` for the `PTR` record field in entries, even if the reverse dns entry has been set.
+   
+   Setting a Reverse DNS entry to an empty string resets the value back to the original `static.<IP>.clients.your-server.de` which suggests that
+   a `null` value should not even be possible.
+
 ## Undocumented Features
 
 ### Boot Configuration
