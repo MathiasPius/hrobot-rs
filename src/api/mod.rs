@@ -16,6 +16,7 @@ pub mod keys;
 pub mod rdns;
 pub mod reset;
 pub mod server;
+pub mod storagebox;
 pub mod subnet;
 pub mod vswitch;
 pub mod wol;

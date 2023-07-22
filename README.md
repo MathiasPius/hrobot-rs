@@ -162,8 +162,8 @@ bar: Server Auction in FSN1-DC5
         - [ ] Order addon for server.
         - [ ] Get specific addon transaction information.
 - [ ] **Storage Box.**
-    - [ ] List storageboxes.
-    - [ ] Get specific storage box.
+    - [x] List storageboxes.
+    - [x] Get specific storage box.
     - [ ] Update storage box configuration.
     - [ ] Change storage box password.
     - [ ] **Snapshots.** 
