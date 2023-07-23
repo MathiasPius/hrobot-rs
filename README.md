@@ -164,8 +164,13 @@ bar: Server Auction in FSN1-DC5
 - [ ] **Storage Box.**
     - [x] List storageboxes.
     - [x] Get specific storage box.
-    - [ ] Update storage box configuration.
-    - [ ] Change storage box password.
+    - [x] Change storage box password.
+    - [x] Toggle storage box services.
+        - [x] Enable/disable Samba
+        - [x] Enable/disable WebDAV
+        - [x] Enable/disable SSH
+        - [x] Enable/disable External reachability
+        - [x] Enable/disable snapshot directory visibility.
     - [ ] **Snapshots.** 
         - [ ] List storagebox snapshots.
         - [ ] Create storagebox snapshot.

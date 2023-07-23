@@ -104,9 +104,6 @@ pub struct StorageBox {
     /// Date until which this storagebox has been paid for.
     pub paid_until: Date,
 
-    /// Whether the storagebox is ZFS-based.
-    pub zfs: bool,
-
     /// Servername through which the storagebox can be accessed.
     pub server: String,
 
@@ -119,7 +116,7 @@ pub struct StorageBox {
 
     /// Accessibility.
     #[serde(flatten)]
-    pub accessibility: Accessibility,
+    pub services: Services,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -141,9 +138,9 @@ pub struct Disk {
     pub snapshots: ByteSize,
 }
 
-#[derive(Debug, Clone, Deserialize)]
-pub struct Accessibility {
-    /// Indicates whether the storagebox is accessible via WebDav.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Services {
+    /// Indicates whether the storagebox is accessible via WebDAV.
     pub webdav: bool,
 
     /// Indicates whether the storagebox is available over Samba.
@@ -151,6 +148,13 @@ pub struct Accessibility {
 
     /// Indicates whether the storagebox is accessible via SSH.
     pub ssh: bool,
+
+    /// If enabled, a snapshots directory is mounted at from which
+    /// data can be copied.
+    ///
+    /// See more at: <https://docs.hetzner.com/robot/storage-box/snapshots/>
+    #[serde(rename = "zfs")]
+    pub snapshot_directory: bool,
 
     /// Indicates whether the server is externally reachable.
     pub external_reachability: bool,
