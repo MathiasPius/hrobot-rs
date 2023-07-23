@@ -55,3 +55,6 @@ This document aims to list some of the discrepancies, oddities, unexpected behav
 ## Typos & minor mistakes
 * [IP Cancellation examples](https://robot.hetzner.com/doc/webservice/en.html#get-ip-ip-cancellation) indicate that the returned structure contains a field
   named `cancellation-date` (not the hyphen), but the documentation and every other field uses underscores.
+
+* [Update Snapshot Plan example](https://robot.hetzner.com/doc/webservice/en.html#post-storagebox-storagebox-id-snapshotplan) points to `snapshot/{snapshot}/comment`
+  as the target URL, when it should be `snapshot/{snapshot}/snapshotplan`
