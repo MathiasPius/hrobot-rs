@@ -1,7 +1,7 @@
 use crate::{error::Error, AsyncRobot};
 
 use super::{
-    wrapper::{List, Single},
+    wrapper::{Empty, List, Single},
     UnauthenticatedRequest,
 };
 
@@ -64,6 +64,34 @@ fn configure_services(
     ))
     .with_method("POST")
     .with_body(services)
+}
+
+fn list_snapshots(storagebox: StorageBoxId) -> UnauthenticatedRequest<List<Snapshot>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/snapshot"
+    ))
+}
+
+fn create_snapshot(storagebox: StorageBoxId) -> UnauthenticatedRequest<Single<CreatedSnapshot>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/snapshot"
+    ))
+    .with_method("POST")
+}
+
+fn delete_snapshot(storagebox: StorageBoxId, name: &str) -> UnauthenticatedRequest<Empty> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/snapshot/{name}"
+    ))
+    .with_method("DELETE")
+}
+
+fn revert_to_snapshot(storagebox: StorageBoxId, name: &str) -> UnauthenticatedRequest<Empty> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/snapshot/{name}"
+    ))
+    .with_method("POST")
+    .with_serialized_body("revert=true".to_string())
 }
 
 impl AsyncRobot {
@@ -360,10 +388,85 @@ impl AsyncRobot {
     pub async fn reset_storagebox_password(&self, id: StorageBoxId) -> Result<String, Error> {
         Ok(self.go(reset_password(id)).await?.0)
     }
+
+    /// List snapshots for storagebox.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::StorageBoxId;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.list_snapshots(StorageBoxId(1234)).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn list_snapshots(&self, id: StorageBoxId) -> Result<Vec<Snapshot>, Error> {
+        Ok(self.go(list_snapshots(id)).await?.0)
+    }
+
+    /// Create a new snapshot of the storagebox.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::StorageBoxId;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.create_snapshot(StorageBoxId(1234)).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn create_snapshot(&self, id: StorageBoxId) -> Result<CreatedSnapshot, Error> {
+        Ok(self.go(create_snapshot(id)).await?.0)
+    }
+
+    /// Delete a snapshot of the storagebox.
+    ///
+    /// Snapshots are named after the timestamp at which they are created
+    /// with an implicit timezone of UTC. The safest way to target a snapshot
+    /// for deletion, is to first retrieve it, and use its name from there.
+    ///
+    /// If you otherwise know the timestamp, but not the name of the snapshot,
+    /// you can format it as "YYYY-MM-DDThh-mm-ss", with an assumed UTC timezone.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::StorageBoxId;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.delete_snapshot(StorageBoxId(1234), "2015-12-21T13-13-03").await.unwrap();
+    /// # }
+    /// ```
+    pub async fn delete_snapshot(&self, id: StorageBoxId, name: &str) -> Result<(), Error> {
+        self.go(delete_snapshot(id, name)).await?;
+        Ok(())
+    }
+
+    /// Revert storagebox to a snapshot.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::StorageBoxId;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.revert_to_snapshot(StorageBoxId(1234), "2015-12-21T13-13-03").await.unwrap();
+    /// # }
+    /// ```
+    pub async fn revert_to_snapshot(&self, id: StorageBoxId, name: &str) -> Result<(), Error> {
+        self.go(revert_to_snapshot(id, name)).await?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
     use bytesize::ByteSize;
     use serial_test::serial;
     use tracing::info;
@@ -523,6 +626,56 @@ mod tests {
             assert_eq!(storagebox.services, original_settings);
 
             return;
+        }
+    }
+
+    #[tokio::test]
+    #[traced_test]
+    #[serial("storagebox")]
+    async fn test_list_snapshots() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let storageboxes = robot.list_storageboxes().await.unwrap();
+        info!("{storageboxes:#?}");
+
+        if let Some(storagebox) = storageboxes.last() {
+            let snapshots = robot.list_snapshots(storagebox.id).await.unwrap();
+            info!("{snapshots:#?}");
+        }
+    }
+
+    #[tokio::test]
+    #[traced_test]
+    #[serial("storagebox")]
+    #[ignore = "creating, reverting and deleting snapshots could lead to data loss"]
+    async fn test_create_revert_delete_snapshot() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let storageboxes = robot.list_storageboxes().await.unwrap();
+        info!("{storageboxes:#?}");
+
+        if let Some(storagebox) = storageboxes.last() {
+            let snapshot = robot.create_snapshot(storagebox.id).await.unwrap();
+
+            tokio::time::sleep(Duration::from_secs(10)).await;
+
+            robot
+                .revert_to_snapshot(storagebox.id, &snapshot.name)
+                .await
+                .unwrap();
+
+            tokio::time::sleep(Duration::from_secs(10)).await;
+
+            robot
+                .delete_snapshot(storagebox.id, &snapshot.name)
+                .await
+                .unwrap();
+
+            tokio::time::sleep(Duration::from_secs(10)).await;
         }
     }
 }

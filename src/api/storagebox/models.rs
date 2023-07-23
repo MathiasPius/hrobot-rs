@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use bytesize::ByteSize;
 use serde::{Deserialize, Serialize};
-use time::Date;
+use time::{Date, OffsetDateTime};
 
 use crate::api::server::ServerId;
 
@@ -158,4 +158,43 @@ pub struct Services {
 
     /// Indicates whether the server is externally reachable.
     pub external_reachability: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Snapshot {
+    /// Name of the snapshot.
+    pub name: String,
+
+    /// Point in time at which the snapshot was taken.
+    #[serde(with = "time::serde::rfc3339")]
+    pub timestamp: OffsetDateTime,
+
+    /// Size of the snapshot.
+    #[serde(with = "crate::bytes::mib")]
+    pub size: ByteSize,
+
+    /// Size of the filesystem.
+    #[serde(with = "crate::bytes::mib")]
+    pub filesystem_size: ByteSize,
+
+    /// Indicates whether the snapshot was produced by an
+    /// automatic or manual process.
+    pub automatic: bool,
+
+    /// Optional comment associated with the snapshot.
+    pub comment: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreatedSnapshot {
+    /// Name of the snapshot.
+    pub name: String,
+
+    /// Point in time at which the snapshot was taken.
+    #[serde(with = "time::serde::rfc3339")]
+    pub timestamp: OffsetDateTime,
+
+    /// Size of the snapshot.
+    #[serde(with = "crate::bytes::mib")]
+    pub size: ByteSize,
 }
