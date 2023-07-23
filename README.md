@@ -171,14 +171,14 @@ bar: Server Auction in FSN1-DC5
         - [x] Enable/disable SSH
         - [x] Enable/disable External reachability
         - [x] Enable/disable snapshot directory visibility.
-    - [ ] **Snapshots.**
+    - [x] **Snapshots.**
         - [x] List storagebox snapshots.
         - [x] Create storagebox snapshot.
         - [x] Delete storagebox snapshot.
         - [x] Revert storagebox to snapshot.
         - [x] Change comment for snapshot.
-        - [ ] Get storagebox snapshot plan.
-        - [ ] Edit storagebox snapshot plan.
+        - [x] Get storagebox snapshot plan.
+        - [x] Edit storagebox snapshot plan.
     - [ ] **Subaccounts.**
         - [ ] List subaccounts.
         - [ ] Create subaccount.
