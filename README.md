@@ -176,7 +176,7 @@ bar: Server Auction in FSN1-DC5
         - [x] Create storagebox snapshot.
         - [x] Delete storagebox snapshot.
         - [x] Revert storagebox to snapshot.
-        - [ ] Change comment for snapshot.
+        - [x] Change comment for snapshot.
         - [ ] Get storagebox snapshot plan.
         - [ ] Edit storagebox snapshot plan.
     - [ ] **Subaccounts.**

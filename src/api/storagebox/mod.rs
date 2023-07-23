@@ -94,6 +94,22 @@ fn revert_to_snapshot(storagebox: StorageBoxId, name: &str) -> UnauthenticatedRe
     .with_serialized_body("revert=true".to_string())
 }
 
+fn change_snapshot_comment(
+    storagebox: StorageBoxId,
+    name: &str,
+    comment: &str,
+) -> Result<UnauthenticatedRequest<Empty>, serde_html_form::ser::Error> {
+    #[derive(Serialize)]
+    struct ChangeComment<'a> {
+        comment: &'a str,
+    }
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/snapshot/{name}/comment"
+    ))
+    .with_method("POST")
+    .with_body(ChangeComment { comment })
+}
+
 impl AsyncRobot {
     /// List all storageboxes associated with this account.
     ///
@@ -437,11 +453,18 @@ impl AsyncRobot {
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.delete_snapshot(StorageBoxId(1234), "2015-12-21T13-13-03").await.unwrap();
+    /// robot.delete_snapshot(
+    ///     StorageBoxId(1234),
+    ///     "2015-12-21T13-13-03"
+    /// ).await.unwrap();
     /// # }
     /// ```
-    pub async fn delete_snapshot(&self, id: StorageBoxId, name: &str) -> Result<(), Error> {
-        self.go(delete_snapshot(id, name)).await?;
+    pub async fn delete_snapshot(
+        &self,
+        id: StorageBoxId,
+        snapshot_name: &str,
+    ) -> Result<(), Error> {
+        self.go(delete_snapshot(id, snapshot_name)).await?;
         Ok(())
     }
 
@@ -454,11 +477,45 @@ impl AsyncRobot {
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.revert_to_snapshot(StorageBoxId(1234), "2015-12-21T13-13-03").await.unwrap();
+    /// robot.revert_to_snapshot(
+    ///     StorageBoxId(1234),
+    ///     "2015-12-21T13-13-03"
+    /// ).await.unwrap();
     /// # }
     /// ```
-    pub async fn revert_to_snapshot(&self, id: StorageBoxId, name: &str) -> Result<(), Error> {
-        self.go(revert_to_snapshot(id, name)).await?;
+    pub async fn revert_to_snapshot(
+        &self,
+        id: StorageBoxId,
+        snapshot_name: &str,
+    ) -> Result<(), Error> {
+        self.go(revert_to_snapshot(id, snapshot_name)).await?;
+        Ok(())
+    }
+
+    /// Change snapshot comment.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::StorageBoxId;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.change_snapshot_comment(
+    ///     StorageBoxId(1234),
+    ///     "2015-12-21T13-13-03",
+    ///     "Last backup before upgrade to 2.0"
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn change_snapshot_comment(
+        &self,
+        id: StorageBoxId,
+        snapshot_name: &str,
+        comment: &str,
+    ) -> Result<(), Error> {
+        self.go(change_snapshot_comment(id, snapshot_name, comment)?)
+            .await?;
         Ok(())
     }
 }
@@ -665,6 +722,43 @@ mod tests {
 
             robot
                 .revert_to_snapshot(storagebox.id, &snapshot.name)
+                .await
+                .unwrap();
+
+            tokio::time::sleep(Duration::from_secs(10)).await;
+
+            robot
+                .delete_snapshot(storagebox.id, &snapshot.name)
+                .await
+                .unwrap();
+
+            tokio::time::sleep(Duration::from_secs(10)).await;
+        }
+    }
+
+    #[tokio::test]
+    #[traced_test]
+    #[serial("storagebox")]
+    #[ignore = "creating and deleting snapshots could lead to data loss"]
+    async fn test_create_comment_delete_snapshot() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let storageboxes = robot.list_storageboxes().await.unwrap();
+        info!("{storageboxes:#?}");
+
+        if let Some(storagebox) = storageboxes.last() {
+            let snapshot = robot.create_snapshot(storagebox.id).await.unwrap();
+
+            tokio::time::sleep(Duration::from_secs(10)).await;
+
+            robot
+                .change_snapshot_comment(
+                    storagebox.id,
+                    &snapshot.name,
+                    "this is the updated comment",
+                )
                 .await
                 .unwrap();
 
