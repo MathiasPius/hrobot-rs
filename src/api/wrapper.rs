@@ -81,6 +81,10 @@ impl<'de> Deserialize<'de> for Empty {
     where
         D: Deserializer<'de>,
     {
+        // It's safe to always return true, because even when the
+        // response body actually contains an error, this deserialization
+        // will ultimately fail with a "trailing characters" error,
+        // meaning we only *actually* succeed on truly empty input.
         Ok(Empty)
     }
 }
@@ -212,7 +216,15 @@ mod tests {
     #[test]
     fn deserialize_empty_response() {
         let response = "";
-
         let _empty: Empty = serde_json::from_str(response).unwrap();
+    }
+
+    #[test]
+    fn deserialize_nonempty_response() {
+        let response = r#"{
+            "error": "hello"
+        }"#;
+
+        serde_json::from_str::<Empty>(response).unwrap_err();
     }
 }
