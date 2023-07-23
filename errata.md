@@ -42,6 +42,25 @@ This document aims to list some of the discrepancies, oddities, unexpected behav
    
    Setting a Reverse DNS entry to an empty string resets the value back to the original `static.<IP>.clients.your-server.de` which suggests that
    a `null` value should not even be possible.
+   
+### Storage Box
+ * According to the API documentation, the Storage Box "snapshot plans" support a yearly schedule, and the API accepts this, but this format is 
+   not representable by the Robot UI, which displays this, if set, as a monthly schedule.
+   
+ * According to the API documentation, when simply *disabling* snapshot plans for a storage box, you are not required to input the required
+   hour and minute fields, yet when I tried this, by setting only the body `status=disabled`, I got back the following error message:
+   
+  ```json
+  {
+    "error":{
+      "status":400,
+      "code":"INVALID_INPUT",
+      "message":"invalid input",
+      "missing":["minute","hour"],
+      "invalid":null
+    }
+  }
+  ```
 
 ## Undocumented Features
 
