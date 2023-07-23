@@ -6,7 +6,7 @@ mod r#async {
 
     use crate::{
         api::{Credentials, UnauthenticatedRequest},
-        error::{ApiResult, Error},
+        error::{Error, MaybeTypedResponse},
     };
 
     /// Handles authentication and exposes the Hetzner Robot API functionality
@@ -147,7 +147,19 @@ mod r#async {
             let stringified = String::from_utf8_lossy(&body);
             trace!("response body: {stringified}");
 
-            serde_json::from_str::<ApiResult<Response>>(&stringified)?.into()
+            // We do explicit deserialization here, since some endpoints can return empty responses.
+            //
+            // I initialize used a #[derive(Deserialize)] enum which encapsulated both success and
+            // error states, but deserializing an untagged enum, even when the encapsulated "Ok"
+            // result is just a unit type (), deserialization will fail on empty input.
+            if let Ok(result) = serde_json::from_str::<Response>(&stringified) {
+                Ok(result)
+            } else {
+                match serde_json::from_str::<MaybeTypedResponse>(&stringified) {
+                    Ok(api_error) => Err(Error::Api(api_error.error.into())),
+                    Err(serde) => Err(Error::Deserialization(serde)),
+                }
+            }
         }
     }
 }

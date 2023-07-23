@@ -368,22 +368,6 @@ impl From<MaybeTyped> for ApiError {
     }
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-pub(crate) enum ApiResult<T> {
-    Ok(T),
-    Error(MaybeTypedResponse),
-}
-
-impl<T> From<ApiResult<T>> for Result<T, Error> {
-    fn from(result: ApiResult<T>) -> Self {
-        match result {
-            ApiResult::Ok(inner) => Ok(inner),
-            ApiResult::Error(e) => Err(Error::Api(e.error.into())),
-        }
-    }
-}
-
 /// Error which can originate at any stage of the API request.
 #[derive(Debug, Error)]
 pub enum Error {

@@ -69,11 +69,35 @@ pub struct List<T: DeserializeOwned>(
 #[derive(Debug, Deserialize)]
 pub struct Single<T: DeserializeOwned>(#[serde(deserialize_with = "deserialize_inner")] pub T);
 
+/// Some endpoints don't return anything.
+///
+/// This type always deserializes correctly and unlike () succeeds
+/// even if the input is empty.
+#[derive(Debug)]
+pub struct Empty;
+
+impl<'de> Deserialize<'de> for Empty {
+    fn deserialize<D>(_: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Empty)
+    }
+}
+
+impl From<Empty> for () {
+    fn from(_: Empty) -> Self {
+        ()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use serde::Deserialize;
 
     use crate::api::server::Server;
+
+    use super::Empty;
 
     #[test]
     fn deserialize_wrapped() {
@@ -183,5 +207,12 @@ mod tests {
 
         let UnwrappingManyServers(servers) = serde_json::from_str(json).unwrap();
         println!("{servers:#?}");
+    }
+
+    #[test]
+    fn deserialize_empty_response() {
+        let response = "";
+
+        let _empty: Empty = serde_json::from_str(response).unwrap();
     }
 }
