@@ -9,7 +9,7 @@ pub use models::*;
 
 use super::{
     server::ServerId,
-    wrapper::{List, Single},
+    wrapper::{Empty, List, Single},
     UnauthenticatedRequest,
 };
 
@@ -77,7 +77,9 @@ pub(crate) fn create_firewall_template(
         .with_serialized_body(Into::<InternalFirewallTemplateConfig>::into(template).encode())
 }
 
-pub(crate) fn delete_firewall_template(template_number: TemplateId) -> UnauthenticatedRequest<()> {
+pub(crate) fn delete_firewall_template(
+    template_number: TemplateId,
+) -> UnauthenticatedRequest<Empty> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/firewall/template/{template_number}"
     ))
@@ -305,16 +307,8 @@ impl AsyncRobot {
     /// # }
     /// ```
     pub async fn delete_firewall_template(&self, template_number: TemplateId) -> Result<(), Error> {
-        self.go(delete_firewall_template(template_number))
-            .await
-            .or_else(|err| {
-                // Recover from error caused by attempting to deserialize ().
-                if matches!(err, Error::Deserialization(_)) {
-                    Ok(())
-                } else {
-                    Err(err)
-                }
-            })
+        self.go(delete_firewall_template(template_number)).await?;
+        Ok(())
     }
 
     /// Modify a [`FirewallTemplate`].

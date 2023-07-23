@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::{error::Error, AsyncRobot};
 
 use super::{
-    wrapper::{List, Single},
+    wrapper::{Empty, List, Single},
     UnauthenticatedRequest,
 };
 
@@ -40,7 +40,7 @@ fn update_rdns_entry(
         .with_body(SetPtr { ptr })
 }
 
-fn delete_rdns_entry(ip: IpAddr) -> UnauthenticatedRequest<()> {
+fn delete_rdns_entry(ip: IpAddr) -> UnauthenticatedRequest<Empty> {
     UnauthenticatedRequest::from(&format!("https://robot-ws.your-server.de/rdns/{ip}"))
         .with_method("DELETE")
 }
@@ -116,14 +116,8 @@ impl AsyncRobot {
     /// # }
     /// ```
     pub async fn delete_rdns_entry(&self, ip: IpAddr) -> Result<(), Error> {
-        self.go(delete_rdns_entry(ip)).await.or_else(|err| {
-            // Recover from error caused by attempting to deserialize ().
-            if matches!(err, Error::Deserialization(_)) {
-                Ok(())
-            } else {
-                Err(err)
-            }
-        })
+        self.go(delete_rdns_entry(ip)).await?;
+        Ok(())
     }
 }
 

@@ -6,7 +6,7 @@ use time::Date;
 
 use crate::{error::Error, urlencode::UrlEncode, AsyncRobot};
 
-use super::{server::ServerId, UnauthenticatedRequest};
+use super::{server::ServerId, wrapper::Empty, UnauthenticatedRequest};
 
 fn list_vswitches() -> UnauthenticatedRequest<Vec<VSwitchReference>> {
     UnauthenticatedRequest::from("https://robot-ws.your-server.de/vswitch")
@@ -40,7 +40,7 @@ fn update_vswitch(
     vswitch_id: VSwitchId,
     name: &str,
     vlan_id: VlanId,
-) -> Result<UnauthenticatedRequest<()>, serde_html_form::ser::Error> {
+) -> Result<UnauthenticatedRequest<Empty>, serde_html_form::ser::Error> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/vswitch/{vswitch_id}"
     ))
@@ -51,7 +51,7 @@ fn update_vswitch(
     })
 }
 
-fn delete_vswitch(vswitch_id: VSwitchId, date: Date) -> UnauthenticatedRequest<()> {
+fn delete_vswitch(vswitch_id: VSwitchId, date: Date) -> UnauthenticatedRequest<Empty> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/vswitch/{vswitch_id}"
     ))
@@ -72,7 +72,7 @@ impl<'a> UrlEncode for ServerList<'a> {
     }
 }
 
-fn add_servers(vswitch_id: VSwitchId, servers: &[ServerId]) -> UnauthenticatedRequest<()> {
+fn add_servers(vswitch_id: VSwitchId, servers: &[ServerId]) -> UnauthenticatedRequest<Empty> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/vswitch/{vswitch_id}/server"
     ))
@@ -80,7 +80,7 @@ fn add_servers(vswitch_id: VSwitchId, servers: &[ServerId]) -> UnauthenticatedRe
     .with_serialized_body(ServerList { server: servers }.encode())
 }
 
-fn remove_servers(vswitch_id: VSwitchId, servers: &[ServerId]) -> UnauthenticatedRequest<()> {
+fn remove_servers(vswitch_id: VSwitchId, servers: &[ServerId]) -> UnauthenticatedRequest<Empty> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/vswitch/{vswitch_id}/server"
     ))
@@ -158,16 +158,8 @@ impl AsyncRobot {
         name: &str,
         vlan_id: VlanId,
     ) -> Result<(), Error> {
-        self.go(update_vswitch(vswitch_id, name, vlan_id)?)
-            .await
-            .or_else(|err| {
-                // Recover from error caused by attempting to deserialize ().
-                if matches!(err, Error::Deserialization(_)) {
-                    Ok(())
-                } else {
-                    Err(err)
-                }
-            })
+        self.go(update_vswitch(vswitch_id, name, vlan_id)?).await?;
+        Ok(())
     }
 
     /// Cancel vSwitch.
@@ -191,15 +183,8 @@ impl AsyncRobot {
         cancellation_date: Date,
     ) -> Result<(), Error> {
         self.go(delete_vswitch(vswitch_id, cancellation_date))
-            .await
-            .or_else(|err| {
-                // Recover from error caused by attempting to deserialize ().
-                if matches!(err, Error::Deserialization(_)) {
-                    Ok(())
-                } else {
-                    Err(err)
-                }
-            })
+            .await?;
+        Ok(())
     }
 
     /// Connect dedicated servers to vSwitch.
@@ -222,16 +207,8 @@ impl AsyncRobot {
         vswitch_id: VSwitchId,
         server_ids: &[ServerId],
     ) -> Result<(), Error> {
-        self.go(add_servers(vswitch_id, server_ids))
-            .await
-            .or_else(|err| {
-                // Recover from error caused by attempting to deserialize ().
-                if matches!(err, Error::Deserialization(_)) {
-                    Ok(())
-                } else {
-                    Err(err)
-                }
-            })
+        self.go(add_servers(vswitch_id, server_ids)).await?;
+        Ok(())
     }
 
     /// Disconnect dedicated servers from vSwitch.
@@ -254,16 +231,8 @@ impl AsyncRobot {
         vswitch_id: VSwitchId,
         server_ids: &[ServerId],
     ) -> Result<(), Error> {
-        self.go(remove_servers(vswitch_id, server_ids))
-            .await
-            .or_else(|err| {
-                // Recover from error caused by attempting to deserialize ().
-                if matches!(err, Error::Deserialization(_)) {
-                    Ok(())
-                } else {
-                    Err(err)
-                }
-            })
+        self.go(remove_servers(vswitch_id, server_ids)).await?;
+        Ok(())
     }
 }
 

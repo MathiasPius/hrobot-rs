@@ -4,7 +4,7 @@ use time::OffsetDateTime;
 use crate::{error::Error, AsyncRobot};
 
 use super::{
-    wrapper::{List, Single},
+    wrapper::{Empty, List, Single},
     UnauthenticatedRequest,
 };
 
@@ -82,7 +82,7 @@ fn get_ssh_key(fingerprint: &str) -> UnauthenticatedRequest<Single<Key>> {
     ))
 }
 
-fn remove_ssh_key(fingerprint: &str) -> UnauthenticatedRequest<()> {
+fn remove_ssh_key(fingerprint: &str) -> UnauthenticatedRequest<Empty> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/key/{fingerprint}"
     ))
@@ -174,14 +174,8 @@ impl AsyncRobot {
     /// # }
     /// ```
     pub async fn remove_ssh_key(&self, fingerprint: &str) -> Result<(), Error> {
-        self.go(remove_ssh_key(fingerprint)).await.or_else(|err| {
-            // Recover from error caused by attempting to deserialize ().
-            if matches!(err, Error::Deserialization(_)) {
-                Ok(())
-            } else {
-                Err(err)
-            }
-        })
+        self.go(remove_ssh_key(fingerprint)).await?;
+        Ok(())
     }
 
     /// Rename an SSH [`Key`].

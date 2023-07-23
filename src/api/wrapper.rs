@@ -89,12 +89,6 @@ impl<'de> Deserialize<'de> for Empty {
     }
 }
 
-impl From<Empty> for () {
-    fn from(_: Empty) -> Self {
-        ()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use serde::Deserialize;
