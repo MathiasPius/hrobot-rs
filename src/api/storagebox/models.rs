@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use bytesize::ByteSize;
 use serde::{Deserialize, Serialize};
-use time::{Date, Month, OffsetDateTime, Weekday};
+use time::{Date, OffsetDateTime, Weekday};
 
 use crate::api::server::ServerId;
 
@@ -206,31 +206,36 @@ pub struct CreatedSnapshot {
 }
 
 /// Snapshot plans periodically take snapshots of the underlying storagebox.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Default, Debug, Clone, Deserialize, Serialize)]
 pub struct SnapshotPlan {
     /// Indicates whether the snapshot plan is enabled or not.
     pub status: PlanStatus,
 
     /// Minute at which to take the snapshot.
-    pub minute: Option<u8>,
+    #[serde(default)]
+    pub minute: u8,
 
     /// Hour at which to take the snapshot.
-    pub hour: Option<u8>,
+    #[serde(default)]
+    pub hour: u8,
 
     /// Day of week on which to take snapshot.
-    #[serde(default, with = "crate::timezones::weekday_plus_one")]
+    #[serde(
+        default,
+        with = "crate::timezones::weekday_plus_one",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub day_of_week: Option<Weekday>,
 
     /// 1-indexed day of month on which to take a snapshot.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub day_of_month: Option<u8>,
-
-    /// Month in which to take the snapshot.
-    pub month: Option<Month>,
 
     /// Maximum number of snapshots to keep around for this plan.
     ///
     /// Stand-alone storageboxes are limited to 10 snapshots, while linked
     /// storageboxes are limited to only 2.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_snapshots: Option<u8>,
 }
 
@@ -239,11 +244,10 @@ impl SnapshotPlan {
     pub fn daily(hour: u8, minute: u8) -> SnapshotPlan {
         SnapshotPlan {
             status: PlanStatus::Enabled,
-            minute: Some(minute),
-            hour: Some(hour),
+            minute,
+            hour,
             day_of_week: None,
             day_of_month: None,
-            month: None,
             max_snapshots: None,
         }
     }
@@ -252,11 +256,10 @@ impl SnapshotPlan {
     pub fn weekly(day: Weekday, hour: u8, minute: u8) -> SnapshotPlan {
         SnapshotPlan {
             status: PlanStatus::Enabled,
-            minute: Some(minute),
-            hour: Some(hour),
+            minute,
+            hour,
             day_of_week: Some(day),
             day_of_month: None,
-            month: None,
             max_snapshots: None,
         }
     }
@@ -265,24 +268,10 @@ impl SnapshotPlan {
     pub fn monthly(day: u8, hour: u8, minute: u8) -> SnapshotPlan {
         SnapshotPlan {
             status: PlanStatus::Enabled,
-            minute: Some(minute),
-            hour: Some(hour),
+            minute,
+            hour,
             day_of_week: None,
             day_of_month: Some(day),
-            month: None,
-            max_snapshots: None,
-        }
-    }
-
-    /// Yearly snapshots, taken on the given day of the month and time.
-    pub fn yearly(month: Month, day: u8, hour: u8, minute: u8) -> SnapshotPlan {
-        SnapshotPlan {
-            status: PlanStatus::Enabled,
-            minute: Some(minute),
-            hour: Some(hour),
-            day_of_week: None,
-            day_of_month: Some(day),
-            month: Some(month),
             max_snapshots: None,
         }
     }
@@ -297,9 +286,10 @@ impl SnapshotPlan {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Default, Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum PlanStatus {
     Enabled,
+    #[default]
     Disabled,
 }

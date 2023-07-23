@@ -586,8 +586,11 @@ mod tests {
 
     use bytesize::ByteSize;
     use serial_test::serial;
+    use time::{Month, Weekday};
     use tracing::info;
     use tracing_test::traced_test;
+
+    use crate::api::storagebox::{PlanStatus, SnapshotPlan};
 
     #[tokio::test]
     #[traced_test]
@@ -846,6 +849,57 @@ mod tests {
         for storagebox in storageboxes {
             let plan = robot.get_snapshot_plan(storagebox.id).await.unwrap();
             info!("{plan:#?}");
+        }
+    }
+
+    #[tokio::test]
+    #[traced_test]
+    async fn test_set_snapshot_plans() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let storageboxes = robot.list_storageboxes().await.unwrap();
+        info!("{storageboxes:#?}");
+
+        for storagebox in storageboxes {
+            let plan = robot.get_snapshot_plan(storagebox.id).await.unwrap();
+
+            if plan.status == PlanStatus::Disabled {
+                // Daily
+                robot
+                    .update_snapshot_plan(storagebox.id, SnapshotPlan::daily(10, 10))
+                    .await
+                    .unwrap();
+
+                tokio::time::sleep(Duration::from_secs(10)).await;
+
+                robot
+                    .update_snapshot_plan(
+                        storagebox.id,
+                        SnapshotPlan::weekly(Weekday::Monday, 10, 10),
+                    )
+                    .await
+                    .unwrap();
+
+                tokio::time::sleep(Duration::from_secs(10)).await;
+
+                robot
+                    .update_snapshot_plan(storagebox.id, SnapshotPlan::monthly(5, 10, 10))
+                    .await
+                    .unwrap();
+
+                tokio::time::sleep(Duration::from_secs(10)).await;
+
+                robot
+                    .update_snapshot_plan(storagebox.id, SnapshotPlan::default())
+                    .await
+                    .unwrap();
+
+                tokio::time::sleep(Duration::from_secs(10)).await;
+
+                return;
+            }
         }
     }
 }
