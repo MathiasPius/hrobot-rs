@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use bytesize::ByteSize;
 use serde::{Deserialize, Serialize};
-use time::{Date, OffsetDateTime};
+use time::{Date, Month, OffsetDateTime, Weekday};
 
 use crate::api::server::ServerId;
 
@@ -119,6 +119,7 @@ pub struct StorageBox {
     pub services: Services,
 }
 
+/// Disk usage and quota information for a storagebox.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Disk {
     /// Storage quota.
@@ -138,6 +139,8 @@ pub struct Disk {
     pub snapshots: ByteSize,
 }
 
+/// Services is an umbrella term covering the different features which might be
+/// enabled on a storagebox.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Services {
     /// Indicates whether the storagebox is accessible via WebDAV.
@@ -160,6 +163,8 @@ pub struct Services {
     pub external_reachability: bool,
 }
 
+/// A snapshot is a point-in-time backup of the storagebox, which can be
+/// used to restore the storagebox to the captured state..
 #[derive(Debug, Clone, Deserialize)]
 pub struct Snapshot {
     /// Name of the snapshot.
@@ -185,6 +190,7 @@ pub struct Snapshot {
     pub comment: String,
 }
 
+/// Short summary of the newly created snapshot.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreatedSnapshot {
     /// Name of the snapshot.
@@ -197,4 +203,103 @@ pub struct CreatedSnapshot {
     /// Size of the snapshot.
     #[serde(with = "crate::bytes::mib")]
     pub size: ByteSize,
+}
+
+/// Snapshot plans periodically take snapshots of the underlying storagebox.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SnapshotPlan {
+    /// Indicates whether the snapshot plan is enabled or not.
+    pub status: PlanStatus,
+
+    /// Minute at which to take the snapshot.
+    pub minute: Option<u8>,
+
+    /// Hour at which to take the snapshot.
+    pub hour: Option<u8>,
+
+    /// Day of week on which to take snapshot.
+    #[serde(default, with = "crate::timezones::weekday_plus_one")]
+    pub day_of_week: Option<Weekday>,
+
+    /// 1-indexed day of month on which to take a snapshot.
+    pub day_of_month: Option<u8>,
+
+    /// Month in which to take the snapshot.
+    pub month: Option<Month>,
+
+    /// Maximum number of snapshots to keep around for this plan.
+    ///
+    /// Stand-alone storageboxes are limited to 10 snapshots, while linked
+    /// storageboxes are limited to only 2.
+    pub max_snapshots: Option<u8>,
+}
+
+impl SnapshotPlan {
+    /// Daily snapshots taken at the given time.
+    pub fn daily(hour: u8, minute: u8) -> SnapshotPlan {
+        SnapshotPlan {
+            status: PlanStatus::Enabled,
+            minute: Some(minute),
+            hour: Some(hour),
+            day_of_week: None,
+            day_of_month: None,
+            month: None,
+            max_snapshots: None,
+        }
+    }
+
+    /// Weekly snapshots taken on the given day of the week and time.
+    pub fn weekly(day: Weekday, hour: u8, minute: u8) -> SnapshotPlan {
+        SnapshotPlan {
+            status: PlanStatus::Enabled,
+            minute: Some(minute),
+            hour: Some(hour),
+            day_of_week: Some(day),
+            day_of_month: None,
+            month: None,
+            max_snapshots: None,
+        }
+    }
+
+    /// Monthly snapshots taken at the given day of the month and time.
+    pub fn monthly(day: u8, hour: u8, minute: u8) -> SnapshotPlan {
+        SnapshotPlan {
+            status: PlanStatus::Enabled,
+            minute: Some(minute),
+            hour: Some(hour),
+            day_of_week: None,
+            day_of_month: Some(day),
+            month: None,
+            max_snapshots: None,
+        }
+    }
+
+    /// Yearly snapshots, taken on the given day of the month and time.
+    pub fn yearly(month: Month, day: u8, hour: u8, minute: u8) -> SnapshotPlan {
+        SnapshotPlan {
+            status: PlanStatus::Enabled,
+            minute: Some(minute),
+            hour: Some(hour),
+            day_of_week: None,
+            day_of_month: Some(day),
+            month: Some(month),
+            max_snapshots: None,
+        }
+    }
+
+    /// Limit the maximum number of snapshots to keep.
+    ///
+    /// Stand-alone storageboxes are limited to 10 snapshots, while linked
+    /// storageboxes are limited to only 2.
+    pub fn with_limit(mut self, max_snapshots: u8) -> SnapshotPlan {
+        self.max_snapshots = Some(max_snapshots);
+        self
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum PlanStatus {
+    Enabled,
+    Disabled,
 }

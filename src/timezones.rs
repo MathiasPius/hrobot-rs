@@ -27,10 +27,37 @@ pub(crate) fn assume_berlin_timezone<'de, D: Deserializer<'de>>(
     .unwrap())
 }
 
+pub(crate) mod weekday_plus_one {
+    use serde::{Deserialize, Deserializer, Serializer};
+    use time::Weekday;
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Weekday>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        if let Some(day) = Option::<u8>::deserialize(deserializer)? {
+            Ok(Some(Weekday::Sunday.nth_next(day)))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn serialize<S>(weekday: &Option<Weekday>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        if let Some(weekday) = weekday {
+            serializer.serialize_some(&((weekday.number_days_from_monday() % 7) + 1))
+        } else {
+            serializer.serialize_none()
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use serde::Deserialize;
-    use time::{macros::datetime, Date, Month, OffsetDateTime};
+    use serde::{Deserialize, Serialize};
+    use time::{macros::datetime, Date, Month, OffsetDateTime, Weekday};
 
     #[test]
     fn deserialize_berlin_timestamp() {
@@ -71,5 +98,67 @@ mod tests {
             },
             serde_json::from_str(container).unwrap()
         )
+    }
+
+    #[test]
+    fn serde_weekday_offset() {
+        #[derive(Serialize, Deserialize, PartialEq, Eq)]
+        struct Container(#[serde(with = "crate::timezones::weekday_plus_one")] pub Option<Weekday>);
+
+        assert_eq!(None, serde_json::from_str::<Container>("null").unwrap().0);
+
+        assert_eq!(
+            Some(Weekday::Monday),
+            serde_json::from_str::<Container>("1").unwrap().0
+        );
+
+        assert_eq!(
+            Some(Weekday::Wednesday),
+            serde_json::from_str::<Container>("3").unwrap().0
+        );
+
+        assert_eq!(
+            Some(Weekday::Sunday),
+            serde_json::from_str::<Container>("7").unwrap().0
+        );
+
+        assert_eq!(
+            &serde_json::to_string(&Container(Some(Weekday::Monday))).unwrap(),
+            "1"
+        );
+
+        assert_eq!(
+            &serde_json::to_string(&Container(Some(Weekday::Wednesday))).unwrap(),
+            "3"
+        );
+
+        assert_eq!(
+            &serde_json::to_string(&Container(Some(Weekday::Sunday))).unwrap(),
+            "7"
+        );
+
+        assert_eq!(
+            Weekday::Monday,
+            serde_json::from_str(
+                &serde_json::to_string(&Container(Some(Weekday::Monday))).unwrap()
+            )
+            .unwrap()
+        );
+
+        assert_eq!(
+            Weekday::Wednesday,
+            serde_json::from_str(
+                &serde_json::to_string(&Container(Some(Weekday::Wednesday))).unwrap()
+            )
+            .unwrap()
+        );
+
+        assert_eq!(
+            Weekday::Sunday,
+            serde_json::from_str(
+                &serde_json::to_string(&Container(Some(Weekday::Sunday))).unwrap()
+            )
+            .unwrap()
+        );
     }
 }

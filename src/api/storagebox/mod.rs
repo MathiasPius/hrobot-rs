@@ -79,16 +79,19 @@ fn create_snapshot(storagebox: StorageBoxId) -> UnauthenticatedRequest<Single<Cr
     .with_method("POST")
 }
 
-fn delete_snapshot(storagebox: StorageBoxId, name: &str) -> UnauthenticatedRequest<Empty> {
+fn delete_snapshot(storagebox: StorageBoxId, snapshot_name: &str) -> UnauthenticatedRequest<Empty> {
     UnauthenticatedRequest::from(&format!(
-        "https://robot-ws.your-server.de/storagebox/{storagebox}/snapshot/{name}"
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/snapshot/{snapshot_name}"
     ))
     .with_method("DELETE")
 }
 
-fn revert_to_snapshot(storagebox: StorageBoxId, name: &str) -> UnauthenticatedRequest<Empty> {
+fn revert_to_snapshot(
+    storagebox: StorageBoxId,
+    snapshot_name: &str,
+) -> UnauthenticatedRequest<Empty> {
     UnauthenticatedRequest::from(&format!(
-        "https://robot-ws.your-server.de/storagebox/{storagebox}/snapshot/{name}"
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/snapshot/{snapshot_name}"
     ))
     .with_method("POST")
     .with_serialized_body("revert=true".to_string())
@@ -96,7 +99,7 @@ fn revert_to_snapshot(storagebox: StorageBoxId, name: &str) -> UnauthenticatedRe
 
 fn change_snapshot_comment(
     storagebox: StorageBoxId,
-    name: &str,
+    snapshot_name: &str,
     comment: &str,
 ) -> Result<UnauthenticatedRequest<Empty>, serde_html_form::ser::Error> {
     #[derive(Serialize)]
@@ -104,10 +107,27 @@ fn change_snapshot_comment(
         comment: &'a str,
     }
     UnauthenticatedRequest::from(&format!(
-        "https://robot-ws.your-server.de/storagebox/{storagebox}/snapshot/{name}/comment"
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/snapshot/{snapshot_name}/comment"
     ))
     .with_method("POST")
     .with_body(ChangeComment { comment })
+}
+
+fn get_snapshot_plan(storagebox: StorageBoxId) -> UnauthenticatedRequest<Single<SnapshotPlan>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/snapshotplan"
+    ))
+}
+
+fn update_snapshot_plan(
+    storagebox: StorageBoxId,
+    plan: SnapshotPlan,
+) -> Result<UnauthenticatedRequest<Single<SnapshotPlan>>, serde_html_form::ser::Error> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/snapshotplan"
+    ))
+    .with_method("POST")
+    .with_body(plan)
 }
 
 impl AsyncRobot {
@@ -518,6 +538,46 @@ impl AsyncRobot {
             .await?;
         Ok(())
     }
+
+    /// Update snapshot plan for storagebox
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::StorageBoxId;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.get_snapshot_plan(StorageBoxId(1234)).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn get_snapshot_plan(&self, id: StorageBoxId) -> Result<SnapshotPlan, Error> {
+        Ok(self.go(get_snapshot_plan(id)).await?.0)
+    }
+
+    /// Rename storagebox.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::StorageBoxId;
+    /// # use hrobot::time::Weekday;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.update_snapshot_plan(
+    ///     StorageBoxId(1234),
+    ///     SnapshotPlan::weekly(Weekday::Monday, 10, 0)
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn update_snapshot_plan(
+        &self,
+        id: StorageBoxId,
+        plan: SnapshotPlan,
+    ) -> Result<SnapshotPlan, Error> {
+        Ok(self.go(update_snapshot_plan(id, plan)?).await?.0)
+    }
 }
 
 #[cfg(test)]
@@ -770,6 +830,22 @@ mod tests {
                 .unwrap();
 
             tokio::time::sleep(Duration::from_secs(10)).await;
+        }
+    }
+
+    #[tokio::test]
+    #[traced_test]
+    async fn test_get_snapshotplans() {
+        dotenvy::dotenv().ok();
+
+        let robot = crate::AsyncRobot::default();
+
+        let storageboxes = robot.list_storageboxes().await.unwrap();
+        info!("{storageboxes:#?}");
+
+        for storagebox in storageboxes {
+            let plan = robot.get_snapshot_plan(storagebox.id).await.unwrap();
+            info!("{plan:#?}");
         }
     }
 }
