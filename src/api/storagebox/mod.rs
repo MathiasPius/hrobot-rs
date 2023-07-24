@@ -180,7 +180,7 @@ fn create_subaccount(
 
 fn update_subaccount(
     storagebox: StorageBoxId,
-    subaccount: SubaccountId,
+    subaccount: &SubaccountId,
     home_directory: Option<&str>,
     accessibility: Option<&Accessibility>,
     read_only: Option<Permission>,
@@ -212,7 +212,7 @@ fn delete_subaccount(
 
 fn reset_subaccount_password(
     storagebox: StorageBoxId,
-    subaccount: SubaccountId,
+    subaccount: &SubaccountId,
 ) -> UnauthenticatedRequest<Single<String>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/storagebox/{storagebox}/subaccount/{subaccount}/password"
@@ -687,18 +687,21 @@ impl AsyncRobot {
         Ok(self.go(list_subaccounts(id)).await?.0)
     }
 
-    /// Delete sub-account.
+    /// Create sub-account.
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId};
+    /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId, Permission, Accessibility};
     /// # #[tokio::main]
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.delete_subaccount(
+    /// robot.create_subaccount(
     ///     StorageBoxId(1234),
-    ///     SubaccountId("u1234-sub1".to_string()),
+    ///     "/home/test-user",
+    ///     Accessibility::default(), // default disables all access.
+    ///     Permission::ReadOnly,
+    ///     None
     /// ).await.unwrap();
     /// # }
     /// ```
@@ -722,45 +725,6 @@ impl AsyncRobot {
             .0)
     }
 
-    /// Configure storagebox sub-account accessibility.
-    ///
-    /// # Example
-    /// ```rust,no_run
-    /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId, Accessibility};
-    /// # #[tokio::main]
-    /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
-    /// let robot = hrobot::AsyncRobot::default();
-    /// robot.configure_subaccount_accessibility(
-    ///     StorageBoxId(1234),
-    ///     SubaccountId("u1234-sub1".to_string()),
-    ///     Accessibility {
-    ///         webdav: false,
-    ///         samba: false,
-    ///         ssh: false,
-    ///         external_reachability: false,
-    ///     }
-    /// ).await.unwrap();
-    /// # }
-    /// ```
-    pub async fn configure_subaccount_accessibility(
-        &self,
-        storagebox: StorageBoxId,
-        subaccount: SubaccountId,
-        accessibility: Accessibility,
-    ) -> Result<(), Error> {
-        self.go(update_subaccount(
-            storagebox,
-            subaccount,
-            None,
-            Some(&accessibility),
-            None,
-            None,
-        )?)
-        .await?;
-        Ok(())
-    }
-
     /// Change home directory of storagebox sub-account
     ///
     /// # Example
@@ -772,7 +736,7 @@ impl AsyncRobot {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.set_subaccount_home_directory(
     ///     StorageBoxId(1234),
-    ///     SubaccountId("u1234-sub1".to_string()),
+    ///     &SubaccountId("u1234-sub1".to_string()),
     ///     "/homedirs/sub1"
     /// ).await.unwrap();
     /// # }
@@ -780,7 +744,7 @@ impl AsyncRobot {
     pub async fn set_subaccount_home_directory(
         &self,
         storagebox: StorageBoxId,
-        subaccount: SubaccountId,
+        subaccount: &SubaccountId,
         home_directory: &str,
     ) -> Result<(), Error> {
         self.go(update_subaccount(
@@ -795,69 +759,41 @@ impl AsyncRobot {
         Ok(())
     }
 
-    /// Change write permission of sub-account.
-    ///
-    /// # Example
-    /// ```rust,no_run
-    /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId, Accessibility, Permission};
-    /// # #[tokio::main]
-    /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
-    /// let robot = hrobot::AsyncRobot::default();
-    /// robot.set_subaccount_permissions(
-    ///     StorageBoxId(1234),
-    ///     SubaccountId("u1234-sub1".to_string()),
-    ///     Permission::ReadOnly,
-    /// ).await.unwrap();
-    /// # }
-    /// ```
-    pub async fn set_subaccount_permissions(
-        &self,
-        storagebox: StorageBoxId,
-        subaccount: SubaccountId,
-        permissions: Permission,
-    ) -> Result<(), Error> {
-        self.go(update_subaccount(
-            storagebox,
-            subaccount,
-            None,
-            None,
-            Some(permissions),
-            None,
-        )?)
-        .await?;
-        Ok(())
-    }
-
     /// Change sub-account comment/description.
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId};
+    /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId, Permission};
     /// # #[tokio::main]
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.set_subaccount_comment(
+    /// robot.update_subaccount(
     ///     StorageBoxId(1234),
-    ///     SubaccountId("u1234-sub1".to_string()),
-    ///     "Sub-account used for accessing backups"
+    ///     &SubaccountId("u1234-sub1".to_string()),
+    ///     "/new/home/dir",
+    ///     None, // Keep old accessibility options
+    ///     Some(Permission::ReadWrite),
+    ///     Some("Sub-account used for accessing backups")
     /// ).await.unwrap();
     /// # }
     /// ```
-    pub async fn set_subaccount_comment(
+    pub async fn update_subaccount(
         &self,
         storagebox: StorageBoxId,
-        subaccount: SubaccountId,
-        comment: &str,
+        subaccount: &SubaccountId,
+        home_directory: &str,
+        accessibility: Option<&Accessibility>,
+        permissions: Option<Permission>,
+        comment: Option<&str>,
     ) -> Result<(), Error> {
         self.go(update_subaccount(
             storagebox,
             subaccount,
-            None,
-            None,
-            None,
-            Some(comment),
+            Some(home_directory),
+            accessibility,
+            permissions,
+            comment,
         )?)
         .await?;
         Ok(())
@@ -874,7 +810,7 @@ impl AsyncRobot {
     /// let robot = hrobot::AsyncRobot::default();
     /// let password = robot.reset_subaccount_password(
     ///     StorageBoxId(1234),
-    ///     SubaccountId("u1234-sub1".to_string()),
+    ///     &SubaccountId("u1234-sub1".to_string()),
     /// ).await.unwrap();
     ///
     /// println!("new password: {password}");
@@ -883,7 +819,7 @@ impl AsyncRobot {
     pub async fn reset_subaccount_password(
         &self,
         storagebox: StorageBoxId,
-        subaccount: SubaccountId,
+        subaccount: &SubaccountId,
     ) -> Result<String, Error> {
         Ok(self
             .go(reset_subaccount_password(storagebox, subaccount))
@@ -1012,7 +948,7 @@ mod tests {
         use tracing::info;
         use tracing_test::traced_test;
 
-        use crate::api::storagebox::{PlanStatus, SnapshotPlan};
+        use crate::api::storagebox::{Accessibility, Permission, PlanStatus, SnapshotPlan};
 
         #[tokio::test]
         #[traced_test]
@@ -1244,6 +1180,62 @@ mod tests {
 
                     return;
                 }
+            }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        #[serial("storagebox")]
+        #[ignore = "creates new subaccounts with read/write permissions"]
+        async fn test_create_update_delete_subaccount() {
+            dotenvy::dotenv().ok();
+
+            let robot = crate::AsyncRobot::default();
+
+            let storageboxes = robot.list_storageboxes().await.unwrap();
+            info!("{storageboxes:#?}");
+
+            if let Some(storagebox) = storageboxes.last() {
+                let created_subaccount = robot
+                    .create_subaccount(
+                        storagebox.id,
+                        "/home/test-user",
+                        Accessibility::default(),
+                        Permission::ReadOnly,
+                        None,
+                    )
+                    .await
+                    .unwrap();
+
+                tokio::time::sleep(Duration::from_secs(10)).await;
+
+                let new_password = robot
+                    .reset_subaccount_password(storagebox.id, &created_subaccount.username)
+                    .await
+                    .unwrap();
+
+                assert_ne!(new_password, created_subaccount.password);
+
+                tokio::time::sleep(Duration::from_secs(10)).await;
+
+                robot
+                    .update_subaccount(
+                        storagebox.id,
+                        &created_subaccount.username,
+                        "/home/dir",
+                        None,
+                        None,
+                        Some("test comment"),
+                    )
+                    .await
+                    .unwrap();
+
+                tokio::time::sleep(Duration::from_secs(10)).await;
+
+                robot
+                    .delete_subaccount(storagebox.id, created_subaccount.username)
+                    .await
+                    .unwrap();
             }
         }
     }

@@ -161,7 +161,7 @@ bar: Server Auction in FSN1-DC5
         - [ ] List recent addon transactions.
         - [ ] Order addon for server.
         - [ ] Get specific addon transaction information.
-- [ ] **Storage Box.**
+- [x] **Storage Box.**
     - [x] List storageboxes.
     - [x] Get specific storage box.
     - [x] Change storage box password.
@@ -179,12 +179,12 @@ bar: Server Auction in FSN1-DC5
         - [x] Change comment for snapshot.
         - [x] Get storagebox snapshot plan.
         - [x] Edit storagebox snapshot plan.
-    - [ ] **Subaccounts.**
-        - [ ] List subaccounts.
-        - [ ] Create subaccount.
-        - [ ] Update subaccount configuration.
-        - [ ] Delete subaccount.
-        - [ ] Change subaccount password.
+    - [x] **Subaccounts.**
+        - [x] List subaccounts.
+        - [x] Create subaccount.
+        - [x] Update subaccount configuration.
+        - [x] Delete subaccount.
+        - [x] Change subaccount password.
 - [x] **Firewall.**
     - [x] Get firewall configuration for server.
     - [x] Apply firewall configuration to server.
