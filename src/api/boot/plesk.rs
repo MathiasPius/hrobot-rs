@@ -219,7 +219,8 @@ mod tests {
             if let Some(server) = servers.first() {
                 // Fetch the complete server object, so we can get check
                 // if the Windows system is available for this server.
-                let Some(availability) = robot.get_server(server.id).await.unwrap().availability else {
+                let Some(availability) = robot.get_server(server.id).await.unwrap().availability
+                else {
                     return;
                 };
 
@@ -242,7 +243,8 @@ mod tests {
             info!("{servers:#?}");
 
             if let Some(server) = servers.first() {
-                let Some(availability) = robot.get_server(server.id).await.unwrap().availability else {
+                let Some(availability) = robot.get_server(server.id).await.unwrap().availability
+                else {
                     return;
                 };
 

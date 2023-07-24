@@ -114,9 +114,16 @@ pub struct StorageBox {
     #[serde(flatten)]
     pub disk: Disk,
 
+    /// If enabled, a snapshots directory is mounted at from which
+    /// data can be copied.
+    ///
+    /// See more at: <https://docs.hetzner.com/robot/storage-box/snapshots/>
+    #[serde(rename = "zfs")]
+    pub snapshot_directory: bool,
+
     /// Accessibility.
     #[serde(flatten)]
-    pub services: Services,
+    pub accessibility: Accessibility,
 }
 
 /// Disk usage and quota information for a storagebox.
@@ -139,10 +146,10 @@ pub struct Disk {
     pub snapshots: ByteSize,
 }
 
-/// Services is an umbrella term covering the different features which might be
-/// enabled on a storagebox.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Services {
+/// Accessibility covers the availability of different services one might
+/// use to access the storagebox.
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Accessibility {
     /// Indicates whether the storagebox is accessible via WebDAV.
     pub webdav: bool,
 
@@ -151,13 +158,6 @@ pub struct Services {
 
     /// Indicates whether the storagebox is accessible via SSH.
     pub ssh: bool,
-
-    /// If enabled, a snapshots directory is mounted at from which
-    /// data can be copied.
-    ///
-    /// See more at: <https://docs.hetzner.com/robot/storage-box/snapshots/>
-    #[serde(rename = "zfs")]
-    pub snapshot_directory: bool,
 
     /// Indicates whether the server is externally reachable.
     pub external_reachability: bool,
@@ -292,4 +292,118 @@ pub enum PlanStatus {
     Enabled,
     #[default]
     Disabled,
+}
+
+/// Describes a sub-account for the storabox.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Subaccount {
+    /// Username for the sub-account.
+    pub username: SubaccountId,
+
+    /// Account ID for the storagebox itself.
+    pub accountid: String,
+
+    /// Hostname for the storagebox server.
+    pub server: String,
+
+    /// Home directory of the sub-account.
+    pub homedirectory: String,
+
+    /// Accessibility options for the sub-account.
+    #[serde(flatten)]
+    pub accessibility: Accessibility,
+
+    /// Indicates whether the sub-account is limited to read-only access.
+    pub readonly: Permission,
+
+    /// Timestamp at which the sub-account was created.
+    #[serde(deserialize_with = "crate::timezones::assume_berlin_timezone")]
+    pub createtime: OffsetDateTime,
+
+    /// Comment or description associated with the sub-account
+    pub comment: String,
+}
+
+/// Describes a sub-account for the storabox.
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreatedSubaccount {
+    /// Username for the sub-account.
+    pub username: SubaccountId,
+
+    /// Password for the created sub-account
+    pub password: String,
+
+    /// Account ID for the storagebox itself.
+    pub accountid: String,
+
+    /// Hostname for the storagebox server.
+    pub server: String,
+
+    /// Home directory of the sub-account.
+    pub homedirectory: String,
+}
+
+/// Unique Storagebox sub-account ID.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct SubaccountId(pub String);
+
+impl From<String> for SubaccountId {
+    fn from(value: String) -> Self {
+        SubaccountId(value)
+    }
+}
+
+impl From<&str> for SubaccountId {
+    fn from(value: &str) -> Self {
+        SubaccountId(value.to_string())
+    }
+}
+
+impl From<SubaccountId> for String {
+    fn from(value: SubaccountId) -> Self {
+        value.0
+    }
+}
+
+impl Display for SubaccountId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl PartialEq<str> for SubaccountId {
+    fn eq(&self, other: &str) -> bool {
+        self.0.eq(other)
+    }
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Permission {
+    #[default]
+    ReadOnly,
+    ReadWrite,
+}
+
+impl Serialize for Permission {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bool(match self {
+            Permission::ReadOnly => true,
+            Permission::ReadWrite => false,
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for Permission {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        Ok(match bool::deserialize(deserializer)? {
+            true => Permission::ReadOnly,
+            false => Permission::ReadWrite,
+        })
+    }
 }

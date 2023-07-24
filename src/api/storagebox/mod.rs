@@ -55,15 +55,15 @@ fn toggle_service(
     .with_serialized_body(format!("{service}={enabled}"))
 }
 
-fn configure_services(
+fn configure_accessibility(
     storagebox: StorageBoxId,
-    services: Services,
+    accessibility: Accessibility,
 ) -> Result<UnauthenticatedRequest<Single<StorageBox>>, serde_html_form::ser::Error> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/storagebox/{storagebox}"
     ))
     .with_method("POST")
-    .with_body(services)
+    .with_body(accessibility)
 }
 
 fn list_snapshots(storagebox: StorageBoxId) -> UnauthenticatedRequest<List<Snapshot>> {
@@ -130,6 +130,96 @@ fn update_snapshot_plan(
     .with_body(plan)
 }
 
+fn list_subaccounts(storagebox: StorageBoxId) -> UnauthenticatedRequest<List<Subaccount>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/subaccount"
+    ))
+}
+
+#[derive(Serialize)]
+struct SubaccountConfig<'a> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    homedirectory: Option<&'a str>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    samba: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    ssh: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    webdav: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    readonly: Option<Permission>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    comment: Option<&'a str>,
+}
+
+fn create_subaccount(
+    storagebox: StorageBoxId,
+    home_directory: &str,
+    accessibility: Accessibility,
+    read_only: Permission,
+    comment: Option<&str>,
+) -> Result<UnauthenticatedRequest<Single<CreatedSubaccount>>, serde_html_form::ser::Error> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/subaccount"
+    ))
+    .with_method("POST")
+    .with_body(SubaccountConfig {
+        homedirectory: Some(home_directory),
+        samba: Some(accessibility.samba),
+        ssh: Some(accessibility.ssh),
+        webdav: Some(accessibility.webdav),
+        readonly: Some(read_only),
+        comment,
+    })
+}
+
+fn update_subaccount(
+    storagebox: StorageBoxId,
+    subaccount: SubaccountId,
+    home_directory: Option<&str>,
+    accessibility: Option<&Accessibility>,
+    read_only: Option<Permission>,
+    comment: Option<&str>,
+) -> Result<UnauthenticatedRequest<Empty>, serde_html_form::ser::Error> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/subaccount/{subaccount}"
+    ))
+    .with_method("PUT")
+    .with_body(SubaccountConfig {
+        homedirectory: home_directory,
+        samba: accessibility.map(|a| a.samba),
+        ssh: accessibility.map(|a| a.ssh),
+        webdav: accessibility.map(|a| a.webdav),
+        readonly: read_only,
+        comment,
+    })
+}
+
+fn delete_subaccount(
+    storagebox: StorageBoxId,
+    subaccount: SubaccountId,
+) -> UnauthenticatedRequest<Empty> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/subaccount/{subaccount}"
+    ))
+    .with_method("DELETE")
+}
+
+fn reset_subaccount_password(
+    storagebox: StorageBoxId,
+    subaccount: SubaccountId,
+) -> UnauthenticatedRequest<Single<String>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/storagebox/{storagebox}/subaccount/{subaccount}/password"
+    ))
+    .with_method("POST")
+}
+
 impl AsyncRobot {
     /// List all storageboxes associated with this account.
     ///
@@ -189,26 +279,28 @@ impl AsyncRobot {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::storagebox::{StorageBoxId, Services};
+    /// # use hrobot::api::storagebox::{StorageBoxId, Accessibility};
     /// # #[tokio::main]
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.configure_storagebox_services(StorageBoxId(1234), Services {
+    /// robot.configure_storagebox_accessibility(StorageBoxId(1234), Accessibility {
     ///     webdav: false,
     ///     samba: false,
     ///     ssh: false,
-    ///     snapshot_directory: false,
     ///     external_reachability: false,
     /// }).await.unwrap();
     /// # }
     /// ```
-    pub async fn configure_storagebox_services(
+    pub async fn configure_storagebox_accessibility(
         &self,
         id: StorageBoxId,
-        services: Services,
+        accessibility: Accessibility,
     ) -> Result<StorageBox, Error> {
-        Ok(self.go(configure_services(id, services)?).await?.0)
+        Ok(self
+            .go(configure_accessibility(id, accessibility)?)
+            .await?
+            .0)
     }
 
     /// Enable Samba (SMB) access to the storagebox.
@@ -555,7 +647,7 @@ impl AsyncRobot {
         Ok(self.go(get_snapshot_plan(id)).await?.0)
     }
 
-    /// Rename storagebox.
+    /// Update snapshot plan.
     ///
     /// # Example
     /// ```rust,no_run
@@ -577,6 +669,250 @@ impl AsyncRobot {
         plan: SnapshotPlan,
     ) -> Result<SnapshotPlan, Error> {
         Ok(self.go(update_snapshot_plan(id, plan)?).await?.0)
+    }
+
+    /// List sub-accounts for storagebox.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::StorageBoxId;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.list_subaccounts(StorageBoxId(1234)).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn list_subaccounts(&self, id: StorageBoxId) -> Result<Vec<Subaccount>, Error> {
+        Ok(self.go(list_subaccounts(id)).await?.0)
+    }
+
+    /// Delete sub-account.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId};
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.delete_subaccount(
+    ///     StorageBoxId(1234),
+    ///     SubaccountId("u1234-sub1".to_string()),
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn create_subaccount(
+        &self,
+        storagebox: StorageBoxId,
+        home_directory: &str,
+        accessibility: Accessibility,
+        permissions: Permission,
+        comment: Option<&str>,
+    ) -> Result<CreatedSubaccount, Error> {
+        Ok(self
+            .go(create_subaccount(
+                storagebox,
+                home_directory,
+                accessibility,
+                permissions,
+                comment,
+            )?)
+            .await?
+            .0)
+    }
+
+    /// Configure storagebox sub-account accessibility.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId, Accessibility};
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.configure_subaccount_accessibility(
+    ///     StorageBoxId(1234),
+    ///     SubaccountId("u1234-sub1".to_string()),
+    ///     Accessibility {
+    ///         webdav: false,
+    ///         samba: false,
+    ///         ssh: false,
+    ///         external_reachability: false,
+    ///     }
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn configure_subaccount_accessibility(
+        &self,
+        storagebox: StorageBoxId,
+        subaccount: SubaccountId,
+        accessibility: Accessibility,
+    ) -> Result<(), Error> {
+        self.go(update_subaccount(
+            storagebox,
+            subaccount,
+            None,
+            Some(&accessibility),
+            None,
+            None,
+        )?)
+        .await?;
+        Ok(())
+    }
+
+    /// Change home directory of storagebox sub-account
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId, Accessibility};
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.set_subaccount_home_directory(
+    ///     StorageBoxId(1234),
+    ///     SubaccountId("u1234-sub1".to_string()),
+    ///     "/homedirs/sub1"
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn set_subaccount_home_directory(
+        &self,
+        storagebox: StorageBoxId,
+        subaccount: SubaccountId,
+        home_directory: &str,
+    ) -> Result<(), Error> {
+        self.go(update_subaccount(
+            storagebox,
+            subaccount,
+            Some(home_directory),
+            None,
+            None,
+            None,
+        )?)
+        .await?;
+        Ok(())
+    }
+
+    /// Change write permission of sub-account.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId, Accessibility, Permission};
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.set_subaccount_permissions(
+    ///     StorageBoxId(1234),
+    ///     SubaccountId("u1234-sub1".to_string()),
+    ///     Permission::ReadOnly,
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn set_subaccount_permissions(
+        &self,
+        storagebox: StorageBoxId,
+        subaccount: SubaccountId,
+        permissions: Permission,
+    ) -> Result<(), Error> {
+        self.go(update_subaccount(
+            storagebox,
+            subaccount,
+            None,
+            None,
+            Some(permissions),
+            None,
+        )?)
+        .await?;
+        Ok(())
+    }
+
+    /// Change sub-account comment/description.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId};
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.set_subaccount_comment(
+    ///     StorageBoxId(1234),
+    ///     SubaccountId("u1234-sub1".to_string()),
+    ///     "Sub-account used for accessing backups"
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn set_subaccount_comment(
+        &self,
+        storagebox: StorageBoxId,
+        subaccount: SubaccountId,
+        comment: &str,
+    ) -> Result<(), Error> {
+        self.go(update_subaccount(
+            storagebox,
+            subaccount,
+            None,
+            None,
+            None,
+            Some(comment),
+        )?)
+        .await?;
+        Ok(())
+    }
+
+    /// Reset sub-account password.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId};
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// let password = robot.reset_subaccount_password(
+    ///     StorageBoxId(1234),
+    ///     SubaccountId("u1234-sub1".to_string()),
+    /// ).await.unwrap();
+    ///
+    /// println!("new password: {password}");
+    /// # }
+    /// ```
+    pub async fn reset_subaccount_password(
+        &self,
+        storagebox: StorageBoxId,
+        subaccount: SubaccountId,
+    ) -> Result<String, Error> {
+        Ok(self
+            .go(reset_subaccount_password(storagebox, subaccount))
+            .await?
+            .0)
+    }
+
+    /// Delete sub-account.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId};
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.delete_subaccount(
+    ///     StorageBoxId(1234),
+    ///     SubaccountId("u1234-sub1".to_string()),
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn delete_subaccount(
+        &self,
+        storagebox: StorageBoxId,
+        subaccount: SubaccountId,
+    ) -> Result<(), Error> {
+        self.go(delete_subaccount(storagebox, subaccount)).await?;
+        Ok(())
     }
 }
 
@@ -648,6 +984,22 @@ mod tests {
                 info!("{plan:#?}");
             }
         }
+
+        #[tokio::test]
+        #[traced_test]
+        async fn test_list_subaccounts() {
+            dotenvy::dotenv().ok();
+
+            let robot = crate::AsyncRobot::default();
+
+            let storageboxes = robot.list_storageboxes().await.unwrap();
+            info!("{storageboxes:#?}");
+
+            if let Some(storagebox) = storageboxes.first() {
+                let accounts = robot.list_subaccounts(storagebox.id).await.unwrap();
+                info!("{accounts:#?}");
+            }
+        }
     }
 
     #[cfg(feature = "disruptive-tests")]
@@ -703,7 +1055,7 @@ mod tests {
                     continue;
                 }
 
-                let original_settings = storagebox.services;
+                let original_settings = storagebox.accessibility;
 
                 // Test WebDAV
                 if original_settings.webdav {
@@ -716,7 +1068,7 @@ mod tests {
                 }
                 tokio::time::sleep(std::time::Duration::from_secs(10)).await;
                 let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-                assert_ne!(storagebox.services.webdav, original_settings.webdav);
+                assert_ne!(storagebox.accessibility.webdav, original_settings.webdav);
 
                 // Test Samba
                 if original_settings.samba {
@@ -726,7 +1078,7 @@ mod tests {
                 }
                 tokio::time::sleep(std::time::Duration::from_secs(10)).await;
                 let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-                assert_ne!(storagebox.services.samba, original_settings.samba);
+                assert_ne!(storagebox.accessibility.samba, original_settings.samba);
 
                 // Test SSH
                 if original_settings.ssh {
@@ -736,7 +1088,7 @@ mod tests {
                 }
                 tokio::time::sleep(std::time::Duration::from_secs(10)).await;
                 let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-                assert_ne!(storagebox.services.ssh, original_settings.ssh);
+                assert_ne!(storagebox.accessibility.ssh, original_settings.ssh);
 
                 // Test reachability
                 if original_settings.external_reachability {
@@ -753,39 +1105,20 @@ mod tests {
                 tokio::time::sleep(std::time::Duration::from_secs(10)).await;
                 let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
                 assert_ne!(
-                    storagebox.services.external_reachability,
+                    storagebox.accessibility.external_reachability,
                     original_settings.external_reachability
-                );
-
-                // Test snapshot directory
-                if original_settings.snapshot_directory {
-                    robot
-                        .disable_storagebox_snapshot_directory(storagebox.id)
-                        .await
-                        .unwrap();
-                } else {
-                    robot
-                        .enable_storagebox_snapshot_directory(storagebox.id)
-                        .await
-                        .unwrap();
-                }
-                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-                let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-                assert_ne!(
-                    storagebox.services.snapshot_directory,
-                    original_settings.snapshot_directory
                 );
 
                 // Reset all configurations.
                 robot
-                    .configure_storagebox_services(storagebox.id, original_settings.clone())
+                    .configure_storagebox_accessibility(storagebox.id, original_settings.clone())
                     .await
                     .unwrap();
 
                 tokio::time::sleep(std::time::Duration::from_secs(10)).await;
 
                 let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-                assert_eq!(storagebox.services, original_settings);
+                assert_eq!(storagebox.accessibility, original_settings);
 
                 return;
             }
