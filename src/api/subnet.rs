@@ -337,63 +337,66 @@ pub enum Cancellation {
 
 #[cfg(test)]
 mod tests {
-    use std::net::IpAddr;
+    #[cfg(feature = "non-disruptive-tests")]
+    mod non_disruptive_tests {
+        use std::net::IpAddr;
 
-    use tracing::info;
-    use tracing_test::traced_test;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-    #[tokio::test]
-    #[traced_test]
-    async fn test_list_subnets() {
-        dotenvy::dotenv().ok();
+        #[tokio::test]
+        #[traced_test]
+        async fn test_list_subnets() {
+            dotenvy::dotenv().ok();
 
-        let robot = crate::AsyncRobot::default();
-        let subnets = robot.list_subnets().await.unwrap();
+            let robot = crate::AsyncRobot::default();
+            let subnets = robot.list_subnets().await.unwrap();
 
-        info!("{subnets:#?}");
-    }
-
-    #[tokio::test]
-    #[traced_test]
-    async fn test_get_subnets() {
-        dotenvy::dotenv().ok();
-
-        let robot = crate::AsyncRobot::default();
-        let subnets = robot.list_subnets().await.unwrap();
-        info!("{subnets:#?}");
-
-        let subnet = subnets
-            .values()
-            .into_iter()
-            .find_map(|subnet| subnet.first());
-
-        if let Some(subnet) = subnet {
-            let subnet = robot.get_subnet(subnet.ip.addr()).await.unwrap();
-            info!("{subnet:#?}");
+            info!("{subnets:#?}");
         }
-    }
 
-    #[tokio::test]
-    #[traced_test]
-    async fn test_get_subnet_cancellation() {
-        dotenvy::dotenv().ok();
+        #[tokio::test]
+        #[traced_test]
+        async fn test_get_subnets() {
+            dotenvy::dotenv().ok();
 
-        let robot = crate::AsyncRobot::default();
-        let subnets = robot.list_subnets().await.unwrap();
-        info!("{subnets:#?}");
+            let robot = crate::AsyncRobot::default();
+            let subnets = robot.list_subnets().await.unwrap();
+            info!("{subnets:#?}");
 
-        let subnet = subnets
-            .values()
-            .into_iter()
-            .filter_map(|subnet| subnet.first())
-            .find_map(|subnet| match subnet.ip.addr() {
-                IpAddr::V4(addr) => Some(addr),
-                _ => None,
-            });
+            let subnet = subnets
+                .values()
+                .into_iter()
+                .find_map(|subnet| subnet.first());
 
-        if let Some(subnet) = subnet {
-            let cancellation = robot.get_subnet_cancellation(subnet).await.unwrap();
-            info!("{cancellation:#?}");
+            if let Some(subnet) = subnet {
+                let subnet = robot.get_subnet(subnet.ip.addr()).await.unwrap();
+                info!("{subnet:#?}");
+            }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        async fn test_get_subnet_cancellation() {
+            dotenvy::dotenv().ok();
+
+            let robot = crate::AsyncRobot::default();
+            let subnets = robot.list_subnets().await.unwrap();
+            info!("{subnets:#?}");
+
+            let subnet = subnets
+                .values()
+                .into_iter()
+                .filter_map(|subnet| subnet.first())
+                .find_map(|subnet| match subnet.ip.addr() {
+                    IpAddr::V4(addr) => Some(addr),
+                    _ => None,
+                });
+
+            if let Some(subnet) = subnet {
+                let cancellation = robot.get_subnet_cancellation(subnet).await.unwrap();
+                info!("{cancellation:#?}");
+            }
         }
     }
 }

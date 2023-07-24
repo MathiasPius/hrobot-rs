@@ -68,24 +68,27 @@ struct Wol {
 
 #[cfg(test)]
 mod tests {
-    use tracing::info;
-    use tracing_test::traced_test;
+    #[cfg(feature = "non-disruptive-tests")]
+    mod non_disruptive_tests {
+        use tracing::info;
+        use tracing_test::traced_test;
 
-    #[tokio::test]
-    #[traced_test]
-    async fn test_wake_on_lan_available() {
-        dotenvy::dotenv().ok();
+        #[tokio::test]
+        #[traced_test]
+        async fn test_wake_on_lan_available() {
+            dotenvy::dotenv().ok();
 
-        let robot = crate::AsyncRobot::default();
+            let robot = crate::AsyncRobot::default();
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-        if let Some(server) = servers.first() {
-            if robot.is_wake_on_lan_available(server.id).await.unwrap() {
-                info!("{}: wake on lan is available", server.name);
-            } else {
-                info!("{}: wake on lan is NOT available", server.name);
+            if let Some(server) = servers.first() {
+                if robot.is_wake_on_lan_available(server.id).await.unwrap() {
+                    info!("{}: wake on lan is available", server.name);
+                } else {
+                    info!("{}: wake on lan is NOT available", server.name);
+                }
             }
         }
     }

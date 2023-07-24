@@ -113,24 +113,27 @@ impl AsyncRobot {
 
 #[cfg(test)]
 mod tests {
-    use serial_test::serial;
-    use tracing::info;
-    use tracing_test::traced_test;
+    #[cfg(feature = "non-disruptive-tests")]
+    mod non_disruptive_tests {
+        use serial_test::serial;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-    #[tokio::test]
-    #[traced_test]
-    #[serial("boot-configuration")]
-    async fn test_get_boot_configuration() {
-        dotenvy::dotenv().ok();
+        #[tokio::test]
+        #[traced_test]
+        #[serial("boot-configuration")]
+        async fn test_get_boot_configuration() {
+            dotenvy::dotenv().ok();
 
-        let robot = crate::AsyncRobot::default();
+            let robot = crate::AsyncRobot::default();
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-        if let Some(server) = servers.first() {
-            let config = robot.get_boot_config(server.id).await.unwrap();
-            info!("{config:#?}");
+            if let Some(server) = servers.first() {
+                let config = robot.get_boot_config(server.id).await.unwrap();
+                info!("{config:#?}");
+            }
         }
     }
 }

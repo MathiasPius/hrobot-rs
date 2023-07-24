@@ -220,14 +220,8 @@ pub enum Rescue {
 }
 
 #[cfg(test)]
-mod tests {
-    use serial_test::serial;
-    use tracing::info;
-    use tracing_test::traced_test;
-
-    use crate::api::boot::{Rescue, RescueConfig};
-
-    use super::Keyboard;
+mod isolated_tests {
+    use crate::api::boot::Keyboard;
 
     #[test]
     fn serialize_keyboard() {
@@ -238,67 +232,83 @@ mod tests {
         assert_eq!(serde_json::to_string(&danish).unwrap(), r#""da""#);
     }
 
-    #[tokio::test]
-    #[traced_test]
-    #[serial("boot-configuration")]
-    async fn test_get_rescue_configuration() {
-        dotenvy::dotenv().ok();
+    #[cfg(feature = "non-disruptive-tests")]
+    mod non_disruptive_tests {
+        use serial_test::serial;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-        let robot = crate::AsyncRobot::default();
+        #[tokio::test]
+        #[traced_test]
+        #[serial("boot-configuration")]
+        async fn test_get_rescue_configuration() {
+            dotenvy::dotenv().ok();
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+            let robot = crate::AsyncRobot::default();
 
-        if let Some(server) = servers.first() {
-            let config = robot.get_rescue_config(server.id).await.unwrap();
-            info!("{config:#?}");
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
+
+            if let Some(server) = servers.first() {
+                let config = robot.get_rescue_config(server.id).await.unwrap();
+                info!("{config:#?}");
+            }
         }
     }
 
-    #[tokio::test]
-    #[ignore = "unexpected failure might leave the rescue system enabled."]
-    #[traced_test]
-    #[serial("boot-configuration")]
-    async fn test_enable_disable_vkvm() {
-        dotenvy::dotenv().ok();
+    #[cfg(feature = "disruptive-tests")]
+    mod disruptive_tests {
+        use serial_test::serial;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-        let robot = crate::AsyncRobot::default();
+        use crate::api::boot::{Rescue, RescueConfig};
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+        #[tokio::test]
+        #[ignore = "unexpected failure might leave the rescue system enabled."]
+        #[traced_test]
+        #[serial("boot-configuration")]
+        async fn test_enable_disable_vkvm() {
+            dotenvy::dotenv().ok();
 
-        if let Some(server) = servers.first() {
-            let mut activated_config = robot
-                .enable_rescue_config(
-                    server.id,
-                    RescueConfig {
-                        operating_system: "vkvm".to_string(),
-                        ..Default::default()
-                    },
-                )
-                .await
-                .unwrap();
+            let robot = crate::AsyncRobot::default();
 
-            let config = robot.get_rescue_config(server.id).await.unwrap();
-            info!("{config:#?}");
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-            assert_eq!(Rescue::Active(activated_config.clone()), config);
+            if let Some(server) = servers.first() {
+                let mut activated_config = robot
+                    .enable_rescue_config(
+                        server.id,
+                        RescueConfig {
+                            operating_system: "vkvm".to_string(),
+                            ..Default::default()
+                        },
+                    )
+                    .await
+                    .unwrap();
 
-            robot.disable_rescue_config(server.id).await.unwrap();
+                let config = robot.get_rescue_config(server.id).await.unwrap();
+                info!("{config:#?}");
 
-            assert!(matches!(
-                robot.get_rescue_config(server.id).await.unwrap(),
-                Rescue::Available(_)
-            ));
+                assert_eq!(Rescue::Active(activated_config.clone()), config);
 
-            // We null out the password so we can compare to the latest
-            // config, since the latest does not include passwords.
-            activated_config.password = None;
+                robot.disable_rescue_config(server.id).await.unwrap();
 
-            assert_eq!(
-                robot.get_last_rescue_config(server.id).await.unwrap(),
-                activated_config
-            );
+                assert!(matches!(
+                    robot.get_rescue_config(server.id).await.unwrap(),
+                    Rescue::Available(_)
+                ));
+
+                // We null out the password so we can compare to the latest
+                // config, since the latest does not include passwords.
+                activated_config.password = None;
+
+                assert_eq!(
+                    robot.get_last_rescue_config(server.id).await.unwrap(),
+                    activated_config
+                );
+            }
         }
     }
 }

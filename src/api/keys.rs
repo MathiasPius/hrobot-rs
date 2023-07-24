@@ -109,7 +109,7 @@ impl AsyncRobot {
     /// List all SSH [`Key`]s.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
@@ -199,10 +199,7 @@ impl AsyncRobot {
 
 #[cfg(test)]
 mod tests {
-    use serial_test::serial;
     use time::macros::datetime;
-    use tracing::info;
-    use tracing_test::traced_test;
 
     use crate::api::keys::KeyReference;
 
@@ -230,20 +227,26 @@ mod tests {
         )
     }
 
-    #[tokio::test]
-    #[traced_test]
-    #[ignore = "unexpected failure might leave test key behind."]
-    #[serial("ssh-keys")]
-    async fn test_create_delete_key() {
-        dotenvy::dotenv().ok();
+    #[cfg(feature = "disruptive-tests")]
+    mod disruptive_tests {
+        use serial_test::serial;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-        let robot = crate::AsyncRobot::default();
+        #[tokio::test]
+        #[traced_test]
+        #[serial("ssh-keys")]
+        #[ignore = "unexpected failure might leave test key behind."]
+        async fn test_create_delete_key() {
+            dotenvy::dotenv().ok();
 
-        let old_keys = robot.list_ssh_keys().await.unwrap();
-        info!("{old_keys:#?}");
+            let robot = crate::AsyncRobot::default();
 
-        // Create the new key
-        let added_key = robot
+            let old_keys = robot.list_ssh_keys().await.unwrap();
+            info!("{old_keys:#?}");
+
+            // Create the new key
+            let added_key = robot
             .create_ssh_key(
                 "hrobot-rs-test-key",
                 "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEaQde8iCKizUOiXlowY1iEL1yCufgjb3aiatGQNPcHb",
@@ -251,28 +254,29 @@ mod tests {
             .await
             .unwrap();
 
-        // Fetch the (hopefully) updated key list
-        let new_keys = robot.list_ssh_keys().await.unwrap();
+            // Fetch the (hopefully) updated key list
+            let new_keys = robot.list_ssh_keys().await.unwrap();
 
-        assert_eq!(new_keys.len(), old_keys.len() + 1);
-        assert!(new_keys
-            .into_iter()
-            .find(|new_key| new_key.fingerprint == added_key.fingerprint)
-            .is_some());
+            assert_eq!(new_keys.len(), old_keys.len() + 1);
+            assert!(new_keys
+                .into_iter()
+                .find(|new_key| new_key.fingerprint == added_key.fingerprint)
+                .is_some());
 
-        // Rename the key
-        robot
-            .rename_ssh_key(&added_key.fingerprint, "new-key-name")
-            .await
-            .unwrap();
+            // Rename the key
+            robot
+                .rename_ssh_key(&added_key.fingerprint, "new-key-name")
+                .await
+                .unwrap();
 
-        // Get the key again, to check the name
-        let fetched_key = robot.get_ssh_key(&added_key.fingerprint).await.unwrap();
-        assert_eq!(fetched_key.fingerprint, added_key.fingerprint);
+            // Get the key again, to check the name
+            let fetched_key = robot.get_ssh_key(&added_key.fingerprint).await.unwrap();
+            assert_eq!(fetched_key.fingerprint, added_key.fingerprint);
 
-        assert_eq!(fetched_key.name, "new-key-name");
+            assert_eq!(fetched_key.name, "new-key-name");
 
-        // Clean up.
-        robot.remove_ssh_key(&added_key.fingerprint).await.unwrap();
+            // Clean up.
+            robot.remove_ssh_key(&added_key.fingerprint).await.unwrap();
+        }
     }
 }

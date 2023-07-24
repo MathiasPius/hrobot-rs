@@ -90,7 +90,7 @@ impl AsyncRobot {
     ///
     /// # Example
     /// Print the ids and names of all servers accessible by our credentials.
-    /// ```rust
+    /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
@@ -242,97 +242,107 @@ impl AsyncRobot {
     }
 }
 
-#[cfg(all(test, feature = "hyper-client"))]
+#[cfg(test)]
 mod tests {
-    use tracing::info;
-    use tracing_test::traced_test;
 
-    use crate::{
-        api::server::{Cancellation, ServerId},
-        error::{ApiError, Error},
-    };
+    #[cfg(feature = "non-disruptive-tests")]
+    mod non_disruptive_tests {
+        use tracing::info;
+        use tracing_test::traced_test;
 
-    #[tokio::test]
-    #[traced_test]
-    async fn test_list_servers() {
-        dotenvy::dotenv().ok();
+        use crate::{
+            api::server::{Cancellation, ServerId},
+            error::{ApiError, Error},
+        };
 
-        let robot = crate::AsyncRobot::default();
+        #[tokio::test]
+        #[traced_test]
+        async fn test_list_servers() {
+            dotenvy::dotenv().ok();
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
-    }
+            let robot = crate::AsyncRobot::default();
 
-    #[tokio::test]
-    #[traced_test]
-    async fn test_get_server() {
-        dotenvy::dotenv().ok();
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
+        }
 
-        let robot = crate::AsyncRobot::default();
+        #[tokio::test]
+        #[traced_test]
+        async fn test_get_server() {
+            dotenvy::dotenv().ok();
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+            let robot = crate::AsyncRobot::default();
 
-        if let Some(server) = servers.first() {
-            let retrieved_server = robot.get_server(server.id).await.unwrap();
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-            assert_eq!(retrieved_server.name, server.name);
+            if let Some(server) = servers.first() {
+                let retrieved_server = robot.get_server(server.id).await.unwrap();
+
+                assert_eq!(retrieved_server.name, server.name);
+            }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        async fn test_get_nonexistent_server() {
+            dotenvy::dotenv().ok();
+
+            let robot = crate::AsyncRobot::default();
+
+            let result = robot.get_server(ServerId(1)).await;
+            info!("{result:#?}");
+
+            assert!(matches!(
+                result,
+                Err(Error::Api(ApiError::ServerNotFound { .. }))
+            ));
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        async fn test_get_server_cancellation() {
+            dotenvy::dotenv().ok();
+
+            let robot = crate::AsyncRobot::default();
+
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
+
+            if let Some(server) = servers.first() {
+                let status = robot.get_server_cancellation(server.id).await.unwrap();
+                info!("{status:#?}");
+                assert!(matches!(status, Cancellation::Cancellable(_)));
+            }
         }
     }
 
-    #[tokio::test]
-    #[traced_test]
-    async fn test_get_nonexistent_server() {
-        dotenvy::dotenv().ok();
+    #[cfg(feature = "disruptive-tests")]
+    mod disruptive_tests {
+        use tracing::info;
+        use tracing_test::traced_test;
 
-        let robot = crate::AsyncRobot::default();
+        #[tokio::test]
+        #[traced_test]
+        #[ignore = "unexpected failure might leave server in renamed state."]
+        async fn test_rename_server() {
+            dotenvy::dotenv().ok();
 
-        let result = robot.get_server(ServerId(1)).await;
-        info!("{result:#?}");
+            let robot = crate::AsyncRobot::default();
 
-        assert!(matches!(
-            result,
-            Err(Error::Api(ApiError::ServerNotFound { .. }))
-        ));
-    }
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-    #[tokio::test]
-    #[traced_test]
-    #[ignore = "unexpected failure might leave server in renamed state."]
-    async fn test_rename_server() {
-        dotenvy::dotenv().ok();
+            if let Some(server) = servers.first() {
+                let old_name = &server.name;
+                let new_name = "test-rename";
 
-        let robot = crate::AsyncRobot::default();
+                let renamed_server = robot.rename_server(server.id, new_name).await.unwrap();
+                assert_eq!(renamed_server.name, new_name);
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
-
-        if let Some(server) = servers.first() {
-            let old_name = &server.name;
-            let new_name = "test-rename";
-
-            let renamed_server = robot.rename_server(server.id, new_name).await.unwrap();
-            assert_eq!(renamed_server.name, new_name);
-
-            let rolled_back_server = robot.rename_server(server.id, old_name).await.unwrap();
-            assert_eq!(&rolled_back_server.name, old_name);
-        }
-    }
-
-    #[tokio::test]
-    #[traced_test]
-    async fn test_get_server_cancellation() {
-        dotenvy::dotenv().ok();
-
-        let robot = crate::AsyncRobot::default();
-
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
-
-        if let Some(server) = servers.first() {
-            let status = robot.get_server_cancellation(server.id).await.unwrap();
-            info!("{status:#?}");
-            assert!(matches!(status, Cancellation::Cancellable(_)));
+                let rolled_back_server = robot.rename_server(server.id, old_name).await.unwrap();
+                assert_eq!(&rolled_back_server.name, old_name);
+            }
         }
     }
 }

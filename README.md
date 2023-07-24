@@ -210,6 +210,36 @@ bar: Server Auction in FSN1-DC5
 [^2]: Not officially documented by Hetzner, use at own risk.
 
 # Testing
-Testing relies on `$HROBOT_USERNAME` and `$HROBOT_PASSWORD` being defined in the environment, corresponding to a Hetzner WebService/app login.
+Tests are divided into three categories:
+* **Isolated tests.**
 
-Some of the tests which interact with the Hetzner API can be disruptive, and therefore any test which interacts with Hetzner is marked as `#[ignore]` just in case `cargo test` is accidentally run while the `HROBOT_USERNAME` and `HROBOT_PASSWORD` environment variables are available. To explicitly run these potentially disruptive tests, either use `cargo test -- --ignored` to run all of them, or run the test explicitly using `cargo test server::tests::list_servers -- --ignored`
+  These do not touch the Hetzner API at all and generally test assumptions made in some of the constructs of the library
+  such as serialization/deserialization from known API output. These are always safe to run and do not require Hetzner credentials.
+
+* **Non-disruptive tests.**
+
+  These interact with the **live** Hetzner API using credentials provided via the environment variables
+  `HROBOT_USERNAME` and `HROBOT_PASSWORD`.
+  
+  The tests fail if these credentials are not available. These tests only perform actions that have no side-effects (such as get/list),
+  and are therefore *somewhat* safe to execute, but can trigger the rate limiting of the Hetzner API.
+  
+  These tests are only enabled if the feature `non-disruptive-tests` is enabled.
+  
+* **Disruptive tests.**
+
+  These interact with the **live** Hetzner API using credentials provided via the environment variables
+  `HROBOT_USERNAME` and `HROBOT_PASSWORD`.
+  
+  Unlike non-disruptive tests, these tests **will interact with and modify existing resources** within the provided account, including but not limited to:
+  * Modifying and deleting the firewall of servers.
+  * Changing the backup schedule of storageboxes.
+  * Adding and deleting SSH Keys.
+  * Ordering and cancelling vSwitches, etc.
+  
+  Most of these tests are designed to return the resource to its initial state upon completion, but that assumes the test succeeds!
+  
+  Suffice to say, these tests are *incredibly dangerous* and should *never* be run in a production Hetzner account without explicit supervision.
+  
+  To make sure these are not run accidentally, you have to enable the `disruptive-tests` feature *AND* and pass the `--ignored` flag when
+  running `cargo test` as the tests have been explicitly marked as ignored along with reasoning as to why.

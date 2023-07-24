@@ -187,91 +187,101 @@ pub enum Vnc {
 
 #[cfg(test)]
 mod tests {
-    use serial_test::serial;
-    use tracing::info;
-    use tracing_test::traced_test;
+    #[cfg(feature = "non-disruptive-tests")]
+    mod non_disruptive_tests {
+        use serial_test::serial;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-    use super::{Vnc, VncConfig};
+        #[tokio::test]
+        #[traced_test]
+        #[serial("boot-configuration")]
+        async fn test_get_vnc_configuration() {
+            dotenvy::dotenv().ok();
 
-    #[tokio::test]
-    #[traced_test]
-    #[serial("boot-configuration")]
-    async fn test_get_vnc_configuration() {
-        dotenvy::dotenv().ok();
+            let robot = crate::AsyncRobot::default();
 
-        let robot = crate::AsyncRobot::default();
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+            if let Some(server) = servers.first() {
+                let config = robot.get_vnc_config(server.id).await.unwrap();
+                info!("{config:#?}");
+            }
+        }
 
-        if let Some(server) = servers.first() {
-            let config = robot.get_vnc_config(server.id).await.unwrap();
-            info!("{config:#?}");
+        #[tokio::test]
+        #[traced_test]
+        #[serial("boot-configuration")]
+        async fn test_last_vnc_config() {
+            dotenvy::dotenv().ok();
+
+            let robot = crate::AsyncRobot::default();
+
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
+
+            if let Some(server) = servers.first() {
+                let last_config = robot.get_last_vnc_config(server.id).await.unwrap();
+
+                println!("{last_config:#?}");
+            }
         }
     }
 
-    #[tokio::test]
-    #[ignore = "unexpected failure might leave the vnc installation system enabled."]
-    #[traced_test]
-    #[serial("boot-configuration")]
-    async fn test_enable_disable_vnc() {
-        dotenvy::dotenv().ok();
+    #[cfg(feature = "disruptive-tests")]
+    mod disruptive_tests {
+        use serial_test::serial;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-        let robot = crate::AsyncRobot::default();
+        use crate::api::boot::{Vnc, VncConfig};
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+        #[tokio::test]
+        #[ignore = "unexpected failure might leave the vnc installation system enabled."]
+        #[traced_test]
+        #[serial("boot-configuration")]
+        async fn test_enable_disable_vnc() {
+            dotenvy::dotenv().ok();
 
-        if let Some(server) = servers.first() {
-            let mut activated_config = robot
-                .enable_vnc_config(
-                    server.id,
-                    VncConfig {
-                        distribution: "Fedora-37".to_string(),
-                        language: "en_US".to_string(),
-                    },
-                )
-                .await
-                .unwrap();
+            let robot = crate::AsyncRobot::default();
 
-            let config = robot.get_vnc_config(server.id).await.unwrap();
-            info!("{config:#?}");
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-            assert_eq!(Vnc::Active(activated_config.clone()), config);
+            if let Some(server) = servers.first() {
+                let mut activated_config = robot
+                    .enable_vnc_config(
+                        server.id,
+                        VncConfig {
+                            distribution: "Fedora-37".to_string(),
+                            language: "en_US".to_string(),
+                        },
+                    )
+                    .await
+                    .unwrap();
 
-            robot.disable_vnc_config(server.id).await.unwrap();
+                let config = robot.get_vnc_config(server.id).await.unwrap();
+                info!("{config:#?}");
 
-            assert!(matches!(
-                robot.get_vnc_config(server.id).await.unwrap(),
-                Vnc::Available(_)
-            ));
+                assert_eq!(Vnc::Active(activated_config.clone()), config);
 
-            // We null out the password so we can compare to the latest
-            // config, since the latest does not include passwords.
-            activated_config.password = None;
+                robot.disable_vnc_config(server.id).await.unwrap();
 
-            assert_eq!(
-                robot.get_last_vnc_config(server.id).await.unwrap(),
-                activated_config
-            );
-        }
-    }
+                assert!(matches!(
+                    robot.get_vnc_config(server.id).await.unwrap(),
+                    Vnc::Available(_)
+                ));
 
-    #[tokio::test]
-    #[traced_test]
-    #[serial("boot-configuration")]
-    async fn test_last_vnc_config() {
-        dotenvy::dotenv().ok();
+                // We null out the password so we can compare to the latest
+                // config, since the latest does not include passwords.
+                activated_config.password = None;
 
-        let robot = crate::AsyncRobot::default();
-
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
-
-        if let Some(server) = servers.first() {
-            let last_config = robot.get_last_vnc_config(server.id).await.unwrap();
-
-            println!("{last_config:#?}");
+                assert_eq!(
+                    robot.get_last_vnc_config(server.id).await.unwrap(),
+                    activated_config
+                );
+            }
         }
     }
 }

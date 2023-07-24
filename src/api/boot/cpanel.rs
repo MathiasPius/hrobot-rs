@@ -199,104 +199,114 @@ pub enum Cpanel {
 
 #[cfg(test)]
 mod tests {
-    use serial_test::serial;
-    use tracing::info;
-    use tracing_test::traced_test;
+    #[cfg(feature = "non-disruptive-tests")]
+    mod non_disruptive_tests {
+        use serial_test::serial;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-    use super::{Cpanel, CpanelConfig};
+        #[tokio::test]
+        #[traced_test]
+        #[serial("boot-configuration")]
+        async fn test_get_cpanel_configuration() {
+            dotenvy::dotenv().ok();
 
-    #[tokio::test]
-    #[traced_test]
-    #[serial("boot-configuration")]
-    async fn test_get_cpanel_configuration() {
-        dotenvy::dotenv().ok();
+            let robot = crate::AsyncRobot::default();
 
-        let robot = crate::AsyncRobot::default();
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
-
-        if let Some(server) = servers.first() {
-            // Fetch the complete server object, so we can get check
-            // if the Windows system is available for this server.
-            let Some(availability) = robot.get_server(server.id).await.unwrap().availability else {
+            if let Some(server) = servers.first() {
+                // Fetch the complete server object, so we can get check
+                // if the Windows system is available for this server.
+                let Some(availability) = robot.get_server(server.id).await.unwrap().availability else {
                 return;
             };
 
-            if availability.cpanel {
-                let config = robot.get_cpanel_config(server.id).await.unwrap();
-                info!("{config:#?}");
+                if availability.cpanel {
+                    let config = robot.get_cpanel_config(server.id).await.unwrap();
+                    info!("{config:#?}");
+                }
+            }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        #[serial("boot-configuration")]
+        async fn test_last_cpanel_config() {
+            dotenvy::dotenv().ok();
+
+            let robot = crate::AsyncRobot::default();
+
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
+
+            if let Some(server) = servers.first() {
+                let Some(availability) = robot.get_server(server.id).await.unwrap().availability else {
+                return;
+            };
+
+                if availability.cpanel {
+                    let last_config = robot.get_last_cpanel_config(server.id).await.unwrap();
+                    info!("{last_config:#?}");
+                }
             }
         }
     }
 
-    #[tokio::test]
-    #[ignore = "enabling the Cpanel installation system is expensive, even if the system is never activated."]
-    #[traced_test]
-    #[serial("boot-configuration")]
-    async fn test_enable_disable_cpanel() {
-        dotenvy::dotenv().ok();
+    #[cfg(feature = "disruptive-tests")]
+    mod disruptive_tests {
+        use serial_test::serial;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-        let robot = crate::AsyncRobot::default();
+        use crate::api::boot::{Cpanel, CpanelConfig};
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+        #[tokio::test]
+        #[ignore = "enabling the Cpanel installation system is expensive, even if the system is never activated."]
+        #[traced_test]
+        #[serial("boot-configuration")]
+        async fn test_enable_disable_cpanel() {
+            dotenvy::dotenv().ok();
 
-        if let Some(server) = servers.first() {
-            let mut activated_config = robot
-                .enable_cpanel_config(
-                    server.id,
-                    CpanelConfig {
-                        distribution: "CentOS Stream".to_string(),
-                        language: "en_US".to_string(),
-                        hostname: "cpanel.example.com".to_string(),
-                    },
-                )
-                .await
-                .unwrap();
+            let robot = crate::AsyncRobot::default();
 
-            let config = robot.get_cpanel_config(server.id).await.unwrap();
-            info!("{config:#?}");
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-            assert_eq!(Cpanel::Active(activated_config.clone()), config);
+            if let Some(server) = servers.first() {
+                let mut activated_config = robot
+                    .enable_cpanel_config(
+                        server.id,
+                        CpanelConfig {
+                            distribution: "CentOS Stream".to_string(),
+                            language: "en_US".to_string(),
+                            hostname: "cpanel.example.com".to_string(),
+                        },
+                    )
+                    .await
+                    .unwrap();
 
-            robot.disable_cpanel_config(server.id).await.unwrap();
+                let config = robot.get_cpanel_config(server.id).await.unwrap();
+                info!("{config:#?}");
 
-            assert!(matches!(
-                robot.get_cpanel_config(server.id).await.unwrap(),
-                Cpanel::Available(_)
-            ));
+                assert_eq!(Cpanel::Active(activated_config.clone()), config);
 
-            // We null out the password so we can compare to the latest
-            // config, since the latest does not include passwords.
-            activated_config.password = None;
+                robot.disable_cpanel_config(server.id).await.unwrap();
 
-            assert_eq!(
-                robot.get_last_cpanel_config(server.id).await.unwrap(),
-                activated_config
-            );
-        }
-    }
+                assert!(matches!(
+                    robot.get_cpanel_config(server.id).await.unwrap(),
+                    Cpanel::Available(_)
+                ));
 
-    #[tokio::test]
-    #[traced_test]
-    #[serial("boot-configuration")]
-    async fn test_last_cpanel_config() {
-        dotenvy::dotenv().ok();
+                // We null out the password so we can compare to the latest
+                // config, since the latest does not include passwords.
+                activated_config.password = None;
 
-        let robot = crate::AsyncRobot::default();
-
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
-
-        if let Some(server) = servers.first() {
-            let Some(availability) = robot.get_server(server.id).await.unwrap().availability else {
-                return;
-            };
-
-            if availability.cpanel {
-                let last_config = robot.get_last_cpanel_config(server.id).await.unwrap();
-                info!("{last_config:#?}");
+                assert_eq!(
+                    robot.get_last_cpanel_config(server.id).await.unwrap(),
+                    activated_config
+                );
             }
         }
     }

@@ -199,104 +199,114 @@ pub enum Plesk {
 
 #[cfg(test)]
 mod tests {
-    use serial_test::serial;
-    use tracing::info;
-    use tracing_test::traced_test;
+    #[cfg(feature = "non-disruptive-tests")]
+    mod non_disruptive_tests {
+        use serial_test::serial;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-    use super::{Plesk, PleskConfig};
+        #[tokio::test]
+        #[traced_test]
+        #[serial("boot-configuration")]
+        async fn test_get_plesk_configuration() {
+            dotenvy::dotenv().ok();
 
-    #[tokio::test]
-    #[traced_test]
-    #[serial("boot-configuration")]
-    async fn test_get_plesk_configuration() {
-        dotenvy::dotenv().ok();
+            let robot = crate::AsyncRobot::default();
 
-        let robot = crate::AsyncRobot::default();
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+            if let Some(server) = servers.first() {
+                // Fetch the complete server object, so we can get check
+                // if the Windows system is available for this server.
+                let Some(availability) = robot.get_server(server.id).await.unwrap().availability else {
+                    return;
+                };
 
-        if let Some(server) = servers.first() {
-            // Fetch the complete server object, so we can get check
-            // if the Windows system is available for this server.
-            let Some(availability) = robot.get_server(server.id).await.unwrap().availability else {
-                return;
-            };
-
-            if availability.plesk {
-                let config = robot.get_plesk_config(server.id).await.unwrap();
-                info!("{config:#?}");
+                if availability.plesk {
+                    let config = robot.get_plesk_config(server.id).await.unwrap();
+                    info!("{config:#?}");
+                }
             }
         }
-    }
 
-    #[tokio::test]
-    #[ignore = "enabling the Plesk installation system is expensive, even if the system is never activated."]
-    #[traced_test]
-    #[serial("boot-configuration")]
-    async fn test_enable_disable_plesk() {
-        dotenvy::dotenv().ok();
+        #[tokio::test]
+        #[traced_test]
+        #[serial("boot-configuration")]
+        async fn test_last_plesk_config() {
+            dotenvy::dotenv().ok();
 
-        let robot = crate::AsyncRobot::default();
+            let robot = crate::AsyncRobot::default();
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-        if let Some(server) = servers.first() {
-            let mut activated_config = robot
-                .enable_plesk_config(
-                    server.id,
-                    PleskConfig {
-                        distribution: "CentOS Stream".to_string(),
-                        language: "en_US".to_string(),
-                        hostname: "plesk.example.com".to_string(),
-                    },
-                )
-                .await
-                .unwrap();
+            if let Some(server) = servers.first() {
+                let Some(availability) = robot.get_server(server.id).await.unwrap().availability else {
+                    return;
+                };
 
-            let config = robot.get_plesk_config(server.id).await.unwrap();
-            info!("{config:#?}");
-
-            assert_eq!(Plesk::Active(activated_config.clone()), config);
-
-            robot.disable_plesk_config(server.id).await.unwrap();
-
-            assert!(matches!(
-                robot.get_plesk_config(server.id).await.unwrap(),
-                Plesk::Available(_)
-            ));
-
-            // We null out the password so we can compare to the latest
-            // config, since the latest does not include passwords.
-            activated_config.password = None;
-
-            assert_eq!(
-                robot.get_last_plesk_config(server.id).await.unwrap(),
-                activated_config
-            );
+                if availability.plesk {
+                    let last_config = robot.get_last_plesk_config(server.id).await.unwrap();
+                    info!("{last_config:#?}");
+                }
+            }
         }
-    }
 
-    #[tokio::test]
-    #[traced_test]
-    #[serial("boot-configuration")]
-    async fn test_last_plesk_config() {
-        dotenvy::dotenv().ok();
+        #[cfg(feature = "disruptive-tests")]
+        mod disruptive_tests {
+            use serial_test::serial;
+            use tracing::info;
+            use tracing_test::traced_test;
 
-        let robot = crate::AsyncRobot::default();
+            use crate::api::boot::{Plesk, PleskConfig};
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+            #[tokio::test]
+            #[traced_test]
+            #[ignore = "enabling the Plesk installation system is expensive, even if the system is never activated."]
+            #[serial("boot-configuration")]
+            async fn test_enable_disable_plesk() {
+                dotenvy::dotenv().ok();
 
-        if let Some(server) = servers.first() {
-            let Some(availability) = robot.get_server(server.id).await.unwrap().availability else {
-                return;
-            };
+                let robot = crate::AsyncRobot::default();
 
-            if availability.plesk {
-                let last_config = robot.get_last_plesk_config(server.id).await.unwrap();
-                info!("{last_config:#?}");
+                let servers = robot.list_servers().await.unwrap();
+                info!("{servers:#?}");
+
+                if let Some(server) = servers.first() {
+                    let mut activated_config = robot
+                        .enable_plesk_config(
+                            server.id,
+                            PleskConfig {
+                                distribution: "CentOS Stream".to_string(),
+                                language: "en_US".to_string(),
+                                hostname: "plesk.example.com".to_string(),
+                            },
+                        )
+                        .await
+                        .unwrap();
+
+                    let config = robot.get_plesk_config(server.id).await.unwrap();
+                    info!("{config:#?}");
+
+                    assert_eq!(Plesk::Active(activated_config.clone()), config);
+
+                    robot.disable_plesk_config(server.id).await.unwrap();
+
+                    assert!(matches!(
+                        robot.get_plesk_config(server.id).await.unwrap(),
+                        Plesk::Available(_)
+                    ));
+
+                    // We null out the password so we can compare to the latest
+                    // config, since the latest does not include passwords.
+                    activated_config.password = None;
+
+                    assert_eq!(
+                        robot.get_last_plesk_config(server.id).await.unwrap(),
+                        activated_config
+                    );
+                }
             }
         }
     }

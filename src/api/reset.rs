@@ -170,34 +170,37 @@ pub enum Reset {
 
 #[cfg(test)]
 mod tests {
-    use tracing::info;
-    use tracing_test::traced_test;
+    #[cfg(feature = "non-disruptive-tests")]
+    mod non_disruptive_tests {
+        use tracing::info;
+        use tracing_test::traced_test;
 
-    #[tokio::test]
-    #[traced_test]
-    async fn test_list_reset_options() {
-        dotenvy::dotenv().ok();
+        #[tokio::test]
+        #[traced_test]
+        async fn test_list_reset_options() {
+            dotenvy::dotenv().ok();
 
-        let robot = crate::AsyncRobot::default();
-        let options = robot.list_reset_options().await.unwrap();
+            let robot = crate::AsyncRobot::default();
+            let options = robot.list_reset_options().await.unwrap();
 
-        info!("{options:#?}");
-    }
+            info!("{options:#?}");
+        }
 
-    #[tokio::test]
-    #[traced_test]
-    async fn test_get_reset_options() {
-        dotenvy::dotenv().ok();
+        #[tokio::test]
+        #[traced_test]
+        async fn test_get_reset_options() {
+            dotenvy::dotenv().ok();
 
-        let robot = crate::AsyncRobot::default();
+            let robot = crate::AsyncRobot::default();
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-        if let Some(server) = servers.first() {
-            let reset_options = robot.get_reset_options(server.id).await.unwrap();
+            if let Some(server) = servers.first() {
+                let reset_options = robot.get_reset_options(server.id).await.unwrap();
 
-            info!("{reset_options:#?}");
+                info!("{reset_options:#?}");
+            }
         }
     }
 }

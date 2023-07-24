@@ -216,74 +216,84 @@ pub enum Linux {
 
 #[cfg(test)]
 mod tests {
-    use serial_test::serial;
-    use tracing::info;
-    use tracing_test::traced_test;
+    #[cfg(feature = "non-disruptive-tests")]
+    mod non_disruptive_tests {
+        use serial_test::serial;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-    use super::{Linux, LinuxConfig};
+        #[tokio::test]
+        #[traced_test]
+        #[serial("boot-configuration")]
+        async fn test_get_linux_configuration() {
+            dotenvy::dotenv().ok();
 
-    #[tokio::test]
-    #[traced_test]
-    #[serial("boot-configuration")]
-    async fn test_get_linux_configuration() {
-        dotenvy::dotenv().ok();
+            let robot = crate::AsyncRobot::default();
 
-        let robot = crate::AsyncRobot::default();
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
-
-        if let Some(server) = servers.first() {
-            let config = robot.get_linux_config(server.id).await.unwrap();
-            info!("{config:#?}");
+            if let Some(server) = servers.first() {
+                let config = robot.get_linux_config(server.id).await.unwrap();
+                info!("{config:#?}");
+            }
         }
     }
 
-    #[tokio::test]
-    #[ignore = "unexpected failure might leave the linux installation system enabled."]
-    #[traced_test]
-    #[serial("boot-configuration")]
-    async fn test_enable_disable_linux() {
-        dotenvy::dotenv().ok();
+    #[cfg(feature = "disruptive-tests")]
+    mod disruptive_tests {
+        use serial_test::serial;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-        let robot = crate::AsyncRobot::default();
+        use crate::api::boot::{Linux, LinuxConfig};
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+        #[tokio::test]
+        #[traced_test]
+        #[ignore = "unexpected failure might leave the linux installation system enabled."]
+        #[serial("boot-configuration")]
+        async fn test_enable_disable_linux() {
+            dotenvy::dotenv().ok();
 
-        if let Some(server) = servers.first() {
-            let mut activated_config = robot
-                .enable_linux_config(
-                    server.id,
-                    LinuxConfig {
-                        distribution: "Arch Linux latest minimal".to_string(),
-                        language: "en".to_string(),
-                        authorized_keys: vec![],
-                    },
-                )
-                .await
-                .unwrap();
+            let robot = crate::AsyncRobot::default();
 
-            let config = robot.get_linux_config(server.id).await.unwrap();
-            info!("{config:#?}");
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-            assert_eq!(Linux::Active(activated_config.clone()), config);
+            if let Some(server) = servers.first() {
+                let mut activated_config = robot
+                    .enable_linux_config(
+                        server.id,
+                        LinuxConfig {
+                            distribution: "Arch Linux latest minimal".to_string(),
+                            language: "en".to_string(),
+                            authorized_keys: vec![],
+                        },
+                    )
+                    .await
+                    .unwrap();
 
-            robot.disable_linux_config(server.id).await.unwrap();
+                let config = robot.get_linux_config(server.id).await.unwrap();
+                info!("{config:#?}");
 
-            assert!(matches!(
-                robot.get_linux_config(server.id).await.unwrap(),
-                Linux::Available(_)
-            ));
+                assert_eq!(Linux::Active(activated_config.clone()), config);
 
-            // We null out the password so we can compare to the latest
-            // config, since the latest does not include passwords.
-            activated_config.password = None;
+                robot.disable_linux_config(server.id).await.unwrap();
 
-            assert_eq!(
-                robot.get_last_linux_config(server.id).await.unwrap(),
-                activated_config
-            );
+                assert!(matches!(
+                    robot.get_linux_config(server.id).await.unwrap(),
+                    Linux::Available(_)
+                ));
+
+                // We null out the password so we can compare to the latest
+                // config, since the latest does not include passwords.
+                activated_config.password = None;
+
+                assert_eq!(
+                    robot.get_last_linux_config(server.id).await.unwrap(),
+                    activated_config
+                );
+            }
         }
     }
 }

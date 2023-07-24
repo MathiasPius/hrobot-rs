@@ -483,145 +483,154 @@ impl PartialEq<u32> for CloudNetworkId {
 
 #[cfg(test)]
 mod tests {
-    use serial_test::serial;
-    use time::OffsetDateTime;
-    use tracing::info;
-    use tracing_test::traced_test;
+    #[cfg(feature = "non-disruptive-tests")]
+    mod non_disruptive_tests {
+        use serial_test::serial;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-    use crate::api::{server::ServerId, vswitch::VlanId};
+        #[tokio::test]
+        #[traced_test]
+        #[serial("vswitch")]
+        async fn test_list_vswitches() {
+            dotenvy::dotenv().ok();
 
-    #[tokio::test]
-    #[traced_test]
-    #[serial("vswitch")]
-    async fn test_list_vswitches() {
-        dotenvy::dotenv().ok();
+            let robot = crate::AsyncRobot::default();
 
-        let robot = crate::AsyncRobot::default();
+            let vswitches = robot.list_vswitches().await.unwrap();
+            info!("{vswitches:#?}");
+        }
 
-        let vswitches = robot.list_vswitches().await.unwrap();
-        info!("{vswitches:#?}");
+        #[tokio::test]
+        #[traced_test]
+        #[serial("vswitch")]
+        async fn test_get_vswitch() {
+            dotenvy::dotenv().ok();
+
+            let robot = crate::AsyncRobot::default();
+
+            let vswitches = robot.list_vswitches().await.unwrap();
+            info!("{vswitches:#?}");
+
+            if let Some(vswitch) = vswitches.first() {
+                let vswitch = robot.get_vswitch(vswitch.id).await.unwrap();
+                info!("{vswitch:#?}");
+            }
+        }
     }
 
-    #[tokio::test]
-    #[traced_test]
-    #[serial("vswitch")]
-    async fn test_get_vswitch() {
-        dotenvy::dotenv().ok();
+    #[cfg(feature = "disruptive-tests")]
+    mod disruptive_tests {
+        use serial_test::serial;
+        use time::OffsetDateTime;
+        use tracing_test::traced_test;
 
-        let robot = crate::AsyncRobot::default();
+        use crate::api::{server::ServerId, vswitch::VlanId};
 
-        let vswitches = robot.list_vswitches().await.unwrap();
-        info!("{vswitches:#?}");
+        #[tokio::test]
+        #[traced_test]
+        #[ignore = "modifies vswitch connectivity of servers"]
+        #[serial("vswitch")]
+        async fn test_vswitch_end_to_end() {
+            dotenvy::dotenv().ok();
 
-        if let Some(vswitch) = vswitches.first() {
+            let robot = crate::AsyncRobot::default();
+
+            let vswitch = robot
+                .create_vswitch("hrobot-test-vswitch-1", VlanId(4076))
+                .await
+                .unwrap();
+
+            // Rename and change the VLAN ID.
+            robot
+                .update_vswitch(vswitch.id, "hrobot-test-vswitch-2", VlanId(4077))
+                .await
+                .unwrap();
+
+            tokio::time::sleep(std::time::Duration::from_secs(120)).await;
             let vswitch = robot.get_vswitch(vswitch.id).await.unwrap();
-            info!("{vswitch:#?}");
-        }
-    }
 
-    #[tokio::test]
-    #[traced_test]
-    #[ignore = "modifies vswitch connectivity of servers"]
-    #[serial("vswitch")]
-    async fn test_vswitch_end_to_end() {
-        dotenvy::dotenv().ok();
+            assert_eq!(vswitch.name, "hrobot-test-vswitch-2");
+            assert_eq!(vswitch.vlan, VlanId(4077));
 
-        let robot = crate::AsyncRobot::default();
+            assert!(vswitch.subnets.is_empty());
+            assert!(vswitch.servers.is_empty());
+            assert!(vswitch.cloud_networks.is_empty());
 
-        let vswitch = robot
-            .create_vswitch("hrobot-test-vswitch-1", VlanId(4076))
-            .await
-            .unwrap();
+            if let Some(server) = robot.list_servers().await.unwrap().first() {
+                // Attempt to connect the server to the vswitch.
+                robot
+                    .connect_vswitch_servers(vswitch.id, &[server.id])
+                    .await
+                    .unwrap();
+                tokio::time::sleep(std::time::Duration::from_secs(120)).await;
 
-        // Rename and change the VLAN ID.
-        robot
-            .update_vswitch(vswitch.id, "hrobot-test-vswitch-2", VlanId(4077))
-            .await
-            .unwrap();
+                // Verify that the server is connected.
+                let connected_vswitch = robot.get_vswitch(vswitch.id).await.unwrap();
 
-        tokio::time::sleep(std::time::Duration::from_secs(120)).await;
-        let vswitch = robot.get_vswitch(vswitch.id).await.unwrap();
+                assert_eq!(connected_vswitch.servers.len(), 1);
+                assert_eq!(connected_vswitch.servers[0].id, server.id);
 
-        assert_eq!(vswitch.name, "hrobot-test-vswitch-2");
-        assert_eq!(vswitch.vlan, VlanId(4077));
+                // Disconnect the server again.
+                robot
+                    .disconnect_vswitch_servers(vswitch.id, &[server.id])
+                    .await
+                    .unwrap();
 
-        assert!(vswitch.subnets.is_empty());
-        assert!(vswitch.servers.is_empty());
-        assert!(vswitch.cloud_networks.is_empty());
+                tokio::time::sleep(std::time::Duration::from_secs(120)).await;
 
-        if let Some(server) = robot.list_servers().await.unwrap().first() {
-            // Attempt to connect the server to the vswitch.
+                let disconnected_vswitch = robot.get_vswitch(vswitch.id).await.unwrap();
+
+                assert!(disconnected_vswitch.servers.is_empty());
+            }
+
             robot
-                .connect_vswitch_servers(vswitch.id, &[server.id])
+                .cancel_vswitch(vswitch.id, OffsetDateTime::now_utc().date())
                 .await
                 .unwrap();
             tokio::time::sleep(std::time::Duration::from_secs(120)).await;
+        }
 
-            // Verify that the server is connected.
-            let connected_vswitch = robot.get_vswitch(vswitch.id).await.unwrap();
+        #[tokio::test]
+        #[traced_test]
+        #[ignore = "modifies vswitch connectivity of servers"]
+        #[serial("vswitch")]
+        async fn test_connect_disconnect_multiple() {
+            dotenvy::dotenv().ok();
 
-            assert_eq!(connected_vswitch.servers.len(), 1);
-            assert_eq!(connected_vswitch.servers[0].id, server.id);
+            let robot = crate::AsyncRobot::default();
 
-            // Disconnect the server again.
+            let vswitch = robot
+                .create_vswitch("hrobot-test-vswitch-10", VlanId(4073))
+                .await
+                .unwrap();
+
+            // Connect all servers
+            let servers: Vec<ServerId> = robot
+                .list_servers()
+                .await
+                .unwrap()
+                .into_iter()
+                .map(|server| server.id)
+                .collect();
+
             robot
-                .disconnect_vswitch_servers(vswitch.id, &[server.id])
+                .connect_vswitch_servers(vswitch.id, &servers)
                 .await
                 .unwrap();
 
             tokio::time::sleep(std::time::Duration::from_secs(120)).await;
+            robot
+                .disconnect_vswitch_servers(vswitch.id, &servers)
+                .await
+                .unwrap();
 
-            let disconnected_vswitch = robot.get_vswitch(vswitch.id).await.unwrap();
+            robot
+                .cancel_vswitch(vswitch.id, OffsetDateTime::now_utc().date())
+                .await
+                .unwrap();
 
-            assert!(disconnected_vswitch.servers.is_empty());
+            tokio::time::sleep(std::time::Duration::from_secs(120)).await;
         }
-
-        robot
-            .cancel_vswitch(vswitch.id, OffsetDateTime::now_utc().date())
-            .await
-            .unwrap();
-        tokio::time::sleep(std::time::Duration::from_secs(120)).await;
-    }
-
-    #[tokio::test]
-    #[traced_test]
-    #[ignore = "modifies vswitch connectivity of servers"]
-    #[serial("vswitch")]
-    async fn test_connect_disconnect_multiple() {
-        dotenvy::dotenv().ok();
-
-        let robot = crate::AsyncRobot::default();
-
-        let vswitch = robot
-            .create_vswitch("hrobot-test-vswitch-10", VlanId(4073))
-            .await
-            .unwrap();
-
-        // Connect all servers
-        let servers: Vec<ServerId> = robot
-            .list_servers()
-            .await
-            .unwrap()
-            .into_iter()
-            .map(|server| server.id)
-            .collect();
-
-        robot
-            .connect_vswitch_servers(vswitch.id, &servers)
-            .await
-            .unwrap();
-
-        tokio::time::sleep(std::time::Duration::from_secs(120)).await;
-        robot
-            .disconnect_vswitch_servers(vswitch.id, &servers)
-            .await
-            .unwrap();
-
-        robot
-            .cancel_vswitch(vswitch.id, OffsetDateTime::now_utc().date())
-            .await
-            .unwrap();
-
-        tokio::time::sleep(std::time::Duration::from_secs(120)).await;
     }
 }

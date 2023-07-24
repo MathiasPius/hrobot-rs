@@ -137,7 +137,7 @@ impl AsyncRobot {
     /// does not contain disk usage and service accessibility information.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
@@ -559,7 +559,7 @@ impl AsyncRobot {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::storagebox::StorageBoxId;
+    /// # use hrobot::api::storagebox::{StorageBoxId, SnapshotPlan};
     /// # use hrobot::time::Weekday;
     /// # #[tokio::main]
     /// # async fn main() {
@@ -582,302 +582,270 @@ impl AsyncRobot {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
+    #[cfg(feature = "non-disruptive-tests")]
+    mod non_disruptive_tests {
+        use serial_test::serial;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-    use bytesize::ByteSize;
-    use serial_test::serial;
-    use time::{Month, Weekday};
-    use tracing::info;
-    use tracing_test::traced_test;
+        #[tokio::test]
+        #[traced_test]
+        async fn test_get_storageboxes() {
+            dotenvy::dotenv().ok();
 
-    use crate::api::storagebox::{PlanStatus, SnapshotPlan};
+            let robot = crate::AsyncRobot::default();
 
-    #[tokio::test]
-    #[traced_test]
-    async fn test_get_storageboxes() {
-        dotenvy::dotenv().ok();
-
-        let robot = crate::AsyncRobot::default();
-
-        let storageboxes = robot.list_storageboxes().await.unwrap();
-        info!("{storageboxes:#?}");
-    }
-
-    #[tokio::test]
-    #[traced_test]
-    #[serial("storagebox")]
-    async fn test_get_storagebox() {
-        dotenvy::dotenv().ok();
-
-        let robot = crate::AsyncRobot::default();
-
-        let storageboxes = robot.list_storageboxes().await.unwrap();
-        info!("{storageboxes:#?}");
-
-        if let Some(storagebox) = storageboxes.last() {
-            let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-            info!("{storagebox:#?}");
+            let storageboxes = robot.list_storageboxes().await.unwrap();
+            info!("{storageboxes:#?}");
         }
-    }
 
-    #[tokio::test]
-    #[traced_test]
-    #[serial("storagebox")]
-    #[ignore = "resets password, potentially breaking existing pasword-based clients"]
-    async fn test_reset_password() {
-        dotenvy::dotenv().ok();
+        #[tokio::test]
+        #[traced_test]
+        #[serial("storagebox")]
+        async fn test_get_storagebox() {
+            dotenvy::dotenv().ok();
 
-        let robot = crate::AsyncRobot::default();
+            let robot = crate::AsyncRobot::default();
 
-        let storageboxes = robot.list_storageboxes().await.unwrap();
-        info!("{storageboxes:#?}");
+            let storageboxes = robot.list_storageboxes().await.unwrap();
+            info!("{storageboxes:#?}");
 
-        if let Some(storagebox) = storageboxes.last() {
-            let password = robot
-                .reset_storagebox_password(storagebox.id)
-                .await
-                .unwrap();
-            info!("{password:#?}");
-        }
-    }
-
-    #[tokio::test]
-    #[traced_test]
-    #[ignore = "messes up enabled/disabled services for the storagebox, potentially leaving it in an unsafe state"]
-    #[serial("storagebox")]
-    async fn test_toggle_all_settings() {
-        dotenvy::dotenv().ok();
-
-        let robot = crate::AsyncRobot::default();
-
-        let storageboxes = robot.list_storageboxes().await.unwrap();
-        info!("{storageboxes:#?}");
-
-        for storagebox in storageboxes {
-            let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-
-            // Don't act on storageboxes with data in them.
-            if storagebox.disk.total != ByteSize::b(0) {
-                continue;
+            if let Some(storagebox) = storageboxes.last() {
+                let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+                info!("{storagebox:#?}");
             }
+        }
 
-            let original_settings = storagebox.services;
+        #[tokio::test]
+        #[traced_test]
+        #[serial("storagebox")]
+        async fn test_list_snapshots() {
+            dotenvy::dotenv().ok();
 
-            // Test WebDAV
-            if original_settings.webdav {
-                robot
-                    .disable_storagebox_webdav(storagebox.id)
+            let robot = crate::AsyncRobot::default();
+
+            let storageboxes = robot.list_storageboxes().await.unwrap();
+            info!("{storageboxes:#?}");
+
+            if let Some(storagebox) = storageboxes.last() {
+                let snapshots = robot.list_snapshots(storagebox.id).await.unwrap();
+                info!("{snapshots:#?}");
+            }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        async fn test_get_snapshotplans() {
+            dotenvy::dotenv().ok();
+
+            let robot = crate::AsyncRobot::default();
+
+            let storageboxes = robot.list_storageboxes().await.unwrap();
+            info!("{storageboxes:#?}");
+
+            for storagebox in storageboxes {
+                let plan = robot.get_snapshot_plan(storagebox.id).await.unwrap();
+                info!("{plan:#?}");
+            }
+        }
+    }
+
+    #[cfg(feature = "disruptive-tests")]
+    mod disruptive_tests {
+        use std::time::Duration;
+
+        use bytesize::ByteSize;
+        use serial_test::serial;
+        use time::Weekday;
+        use tracing::info;
+        use tracing_test::traced_test;
+
+        use crate::api::storagebox::{PlanStatus, SnapshotPlan};
+
+        #[tokio::test]
+        #[traced_test]
+        #[serial("storagebox")]
+        #[ignore = "resets password, potentially breaking existing pasword-based clients"]
+        async fn test_reset_password() {
+            dotenvy::dotenv().ok();
+
+            let robot = crate::AsyncRobot::default();
+
+            let storageboxes = robot.list_storageboxes().await.unwrap();
+            info!("{storageboxes:#?}");
+
+            if let Some(storagebox) = storageboxes.last() {
+                let password = robot
+                    .reset_storagebox_password(storagebox.id)
                     .await
                     .unwrap();
-            } else {
-                robot.enable_storagebox_webdav(storagebox.id).await.unwrap();
+                info!("{password:#?}");
             }
-            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-            let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-            assert_ne!(storagebox.services.webdav, original_settings.webdav);
+        }
 
-            // Test Samba
-            if original_settings.samba {
-                robot.disable_storagebox_samba(storagebox.id).await.unwrap();
-            } else {
-                robot.enable_storagebox_samba(storagebox.id).await.unwrap();
-            }
-            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-            let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-            assert_ne!(storagebox.services.samba, original_settings.samba);
+        #[tokio::test]
+        #[traced_test]
+        #[serial("storagebox")]
+        #[ignore = "messes up enabled/disabled services for the storagebox, potentially leaving it in an unsafe state"]
+        async fn test_toggle_all_settings() {
+            dotenvy::dotenv().ok();
 
-            // Test SSH
-            if original_settings.ssh {
-                robot.disable_storagebox_ssh(storagebox.id).await.unwrap();
-            } else {
-                robot.enable_storagebox_ssh(storagebox.id).await.unwrap();
-            }
-            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-            let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-            assert_ne!(storagebox.services.ssh, original_settings.ssh);
+            let robot = crate::AsyncRobot::default();
 
-            // Test reachability
-            if original_settings.external_reachability {
+            let storageboxes = robot.list_storageboxes().await.unwrap();
+            info!("{storageboxes:#?}");
+
+            for storagebox in storageboxes {
+                let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+
+                // Don't act on storageboxes with data in them.
+                if storagebox.disk.total != ByteSize::b(0) {
+                    continue;
+                }
+
+                let original_settings = storagebox.services;
+
+                // Test WebDAV
+                if original_settings.webdav {
+                    robot
+                        .disable_storagebox_webdav(storagebox.id)
+                        .await
+                        .unwrap();
+                } else {
+                    robot.enable_storagebox_webdav(storagebox.id).await.unwrap();
+                }
+                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+                let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+                assert_ne!(storagebox.services.webdav, original_settings.webdav);
+
+                // Test Samba
+                if original_settings.samba {
+                    robot.disable_storagebox_samba(storagebox.id).await.unwrap();
+                } else {
+                    robot.enable_storagebox_samba(storagebox.id).await.unwrap();
+                }
+                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+                let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+                assert_ne!(storagebox.services.samba, original_settings.samba);
+
+                // Test SSH
+                if original_settings.ssh {
+                    robot.disable_storagebox_ssh(storagebox.id).await.unwrap();
+                } else {
+                    robot.enable_storagebox_ssh(storagebox.id).await.unwrap();
+                }
+                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+                let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+                assert_ne!(storagebox.services.ssh, original_settings.ssh);
+
+                // Test reachability
+                if original_settings.external_reachability {
+                    robot
+                        .disable_storagebox_external_reachability(storagebox.id)
+                        .await
+                        .unwrap();
+                } else {
+                    robot
+                        .enable_storagebox_external_reachability(storagebox.id)
+                        .await
+                        .unwrap();
+                }
+                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+                let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+                assert_ne!(
+                    storagebox.services.external_reachability,
+                    original_settings.external_reachability
+                );
+
+                // Test snapshot directory
+                if original_settings.snapshot_directory {
+                    robot
+                        .disable_storagebox_snapshot_directory(storagebox.id)
+                        .await
+                        .unwrap();
+                } else {
+                    robot
+                        .enable_storagebox_snapshot_directory(storagebox.id)
+                        .await
+                        .unwrap();
+                }
+                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+                let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+                assert_ne!(
+                    storagebox.services.snapshot_directory,
+                    original_settings.snapshot_directory
+                );
+
+                // Reset all configurations.
                 robot
-                    .disable_storagebox_external_reachability(storagebox.id)
+                    .configure_storagebox_services(storagebox.id, original_settings.clone())
                     .await
                     .unwrap();
-            } else {
-                robot
-                    .enable_storagebox_external_reachability(storagebox.id)
-                    .await
-                    .unwrap();
+
+                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+
+                let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+                assert_eq!(storagebox.services, original_settings);
+
+                return;
             }
-            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-            let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-            assert_ne!(
-                storagebox.services.external_reachability,
-                original_settings.external_reachability
-            );
+        }
 
-            // Test snapshot directory
-            if original_settings.snapshot_directory {
+        #[tokio::test]
+        #[traced_test]
+        #[serial("storagebox")]
+        #[ignore = "creating, reverting and deleting snapshots could lead to data loss"]
+        async fn test_create_revert_delete_snapshot() {
+            dotenvy::dotenv().ok();
+
+            let robot = crate::AsyncRobot::default();
+
+            let storageboxes = robot.list_storageboxes().await.unwrap();
+            info!("{storageboxes:#?}");
+
+            if let Some(storagebox) = storageboxes.last() {
+                let snapshot = robot.create_snapshot(storagebox.id).await.unwrap();
+
+                tokio::time::sleep(Duration::from_secs(10)).await;
+
                 robot
-                    .disable_storagebox_snapshot_directory(storagebox.id)
-                    .await
-                    .unwrap();
-            } else {
-                robot
-                    .enable_storagebox_snapshot_directory(storagebox.id)
-                    .await
-                    .unwrap();
-            }
-            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-            let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-            assert_ne!(
-                storagebox.services.snapshot_directory,
-                original_settings.snapshot_directory
-            );
-
-            // Reset all configurations.
-            robot
-                .configure_storagebox_services(storagebox.id, original_settings.clone())
-                .await
-                .unwrap();
-
-            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-
-            let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-            assert_eq!(storagebox.services, original_settings);
-
-            return;
-        }
-    }
-
-    #[tokio::test]
-    #[traced_test]
-    #[serial("storagebox")]
-    async fn test_list_snapshots() {
-        dotenvy::dotenv().ok();
-
-        let robot = crate::AsyncRobot::default();
-
-        let storageboxes = robot.list_storageboxes().await.unwrap();
-        info!("{storageboxes:#?}");
-
-        if let Some(storagebox) = storageboxes.last() {
-            let snapshots = robot.list_snapshots(storagebox.id).await.unwrap();
-            info!("{snapshots:#?}");
-        }
-    }
-
-    #[tokio::test]
-    #[traced_test]
-    #[serial("storagebox")]
-    #[ignore = "creating, reverting and deleting snapshots could lead to data loss"]
-    async fn test_create_revert_delete_snapshot() {
-        dotenvy::dotenv().ok();
-
-        let robot = crate::AsyncRobot::default();
-
-        let storageboxes = robot.list_storageboxes().await.unwrap();
-        info!("{storageboxes:#?}");
-
-        if let Some(storagebox) = storageboxes.last() {
-            let snapshot = robot.create_snapshot(storagebox.id).await.unwrap();
-
-            tokio::time::sleep(Duration::from_secs(10)).await;
-
-            robot
-                .revert_to_snapshot(storagebox.id, &snapshot.name)
-                .await
-                .unwrap();
-
-            tokio::time::sleep(Duration::from_secs(10)).await;
-
-            robot
-                .delete_snapshot(storagebox.id, &snapshot.name)
-                .await
-                .unwrap();
-
-            tokio::time::sleep(Duration::from_secs(10)).await;
-        }
-    }
-
-    #[tokio::test]
-    #[traced_test]
-    #[serial("storagebox")]
-    #[ignore = "creating and deleting snapshots could lead to data loss"]
-    async fn test_create_comment_delete_snapshot() {
-        dotenvy::dotenv().ok();
-
-        let robot = crate::AsyncRobot::default();
-
-        let storageboxes = robot.list_storageboxes().await.unwrap();
-        info!("{storageboxes:#?}");
-
-        if let Some(storagebox) = storageboxes.last() {
-            let snapshot = robot.create_snapshot(storagebox.id).await.unwrap();
-
-            tokio::time::sleep(Duration::from_secs(10)).await;
-
-            robot
-                .change_snapshot_comment(
-                    storagebox.id,
-                    &snapshot.name,
-                    "this is the updated comment",
-                )
-                .await
-                .unwrap();
-
-            tokio::time::sleep(Duration::from_secs(10)).await;
-
-            robot
-                .delete_snapshot(storagebox.id, &snapshot.name)
-                .await
-                .unwrap();
-
-            tokio::time::sleep(Duration::from_secs(10)).await;
-        }
-    }
-
-    #[tokio::test]
-    #[traced_test]
-    async fn test_get_snapshotplans() {
-        dotenvy::dotenv().ok();
-
-        let robot = crate::AsyncRobot::default();
-
-        let storageboxes = robot.list_storageboxes().await.unwrap();
-        info!("{storageboxes:#?}");
-
-        for storagebox in storageboxes {
-            let plan = robot.get_snapshot_plan(storagebox.id).await.unwrap();
-            info!("{plan:#?}");
-        }
-    }
-
-    #[tokio::test]
-    #[traced_test]
-    async fn test_set_snapshot_plans() {
-        dotenvy::dotenv().ok();
-
-        let robot = crate::AsyncRobot::default();
-
-        let storageboxes = robot.list_storageboxes().await.unwrap();
-        info!("{storageboxes:#?}");
-
-        for storagebox in storageboxes {
-            let plan = robot.get_snapshot_plan(storagebox.id).await.unwrap();
-
-            if plan.status == PlanStatus::Disabled {
-                // Daily
-                robot
-                    .update_snapshot_plan(storagebox.id, SnapshotPlan::daily(10, 10))
+                    .revert_to_snapshot(storagebox.id, &snapshot.name)
                     .await
                     .unwrap();
 
                 tokio::time::sleep(Duration::from_secs(10)).await;
 
                 robot
-                    .update_snapshot_plan(
+                    .delete_snapshot(storagebox.id, &snapshot.name)
+                    .await
+                    .unwrap();
+
+                tokio::time::sleep(Duration::from_secs(10)).await;
+            }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        #[serial("storagebox")]
+        #[ignore = "creating and deleting snapshots could lead to data loss"]
+        async fn test_create_comment_delete_snapshot() {
+            dotenvy::dotenv().ok();
+
+            let robot = crate::AsyncRobot::default();
+
+            let storageboxes = robot.list_storageboxes().await.unwrap();
+            info!("{storageboxes:#?}");
+
+            if let Some(storagebox) = storageboxes.last() {
+                let snapshot = robot.create_snapshot(storagebox.id).await.unwrap();
+
+                tokio::time::sleep(Duration::from_secs(10)).await;
+
+                robot
+                    .change_snapshot_comment(
                         storagebox.id,
-                        SnapshotPlan::weekly(Weekday::Monday, 10, 10),
+                        &snapshot.name,
+                        "this is the updated comment",
                     )
                     .await
                     .unwrap();
@@ -885,20 +853,64 @@ mod tests {
                 tokio::time::sleep(Duration::from_secs(10)).await;
 
                 robot
-                    .update_snapshot_plan(storagebox.id, SnapshotPlan::monthly(5, 10, 10))
+                    .delete_snapshot(storagebox.id, &snapshot.name)
                     .await
                     .unwrap();
 
                 tokio::time::sleep(Duration::from_secs(10)).await;
+            }
+        }
 
-                robot
-                    .update_snapshot_plan(storagebox.id, SnapshotPlan::default())
-                    .await
-                    .unwrap();
+        #[tokio::test]
+        #[traced_test]
+        #[serial("storagebox")]
+        #[ignore = "replaces the snapshot plan of the storage box."]
+        async fn test_update_snapshot_plans() {
+            dotenvy::dotenv().ok();
 
-                tokio::time::sleep(Duration::from_secs(10)).await;
+            let robot = crate::AsyncRobot::default();
 
-                return;
+            let storageboxes = robot.list_storageboxes().await.unwrap();
+            info!("{storageboxes:#?}");
+
+            for storagebox in storageboxes {
+                let plan = robot.get_snapshot_plan(storagebox.id).await.unwrap();
+
+                if plan.status == PlanStatus::Disabled {
+                    // Daily
+                    robot
+                        .update_snapshot_plan(storagebox.id, SnapshotPlan::daily(10, 10))
+                        .await
+                        .unwrap();
+
+                    tokio::time::sleep(Duration::from_secs(10)).await;
+
+                    robot
+                        .update_snapshot_plan(
+                            storagebox.id,
+                            SnapshotPlan::weekly(Weekday::Monday, 10, 10),
+                        )
+                        .await
+                        .unwrap();
+
+                    tokio::time::sleep(Duration::from_secs(10)).await;
+
+                    robot
+                        .update_snapshot_plan(storagebox.id, SnapshotPlan::monthly(5, 10, 10))
+                        .await
+                        .unwrap();
+
+                    tokio::time::sleep(Duration::from_secs(10)).await;
+
+                    robot
+                        .update_snapshot_plan(storagebox.id, SnapshotPlan::default())
+                        .await
+                        .unwrap();
+
+                    tokio::time::sleep(Duration::from_secs(10)).await;
+
+                    return;
+                }
             }
         }
     }

@@ -79,7 +79,7 @@ impl AsyncRobot {
     /// List all single IP addresses, grouped by server they are assigned to.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
@@ -407,114 +407,123 @@ pub enum Cancellation {
 
 #[cfg(test)]
 mod tests {
-    use serial_test::serial;
-    use tracing::info;
-    use tracing_test::traced_test;
 
-    use crate::{
-        api::ip::TrafficWarnings,
-        error::{ApiError, Error},
-    };
+    #[cfg(feature = "non-disruptive-tests")]
+    mod non_disruptive_tests {
+        use tracing::info;
+        use tracing_test::traced_test;
 
-    #[tokio::test]
-    #[traced_test]
-    async fn test_list_ips() {
-        dotenvy::dotenv().ok();
+        use crate::error::{ApiError, Error};
 
-        let robot = crate::AsyncRobot::default();
-        let ips = robot.list_ips().await.unwrap();
+        #[tokio::test]
+        #[traced_test]
+        async fn test_list_ips() {
+            dotenvy::dotenv().ok();
 
-        info!("{ips:#?}");
-    }
+            let robot = crate::AsyncRobot::default();
+            let ips = robot.list_ips().await.unwrap();
 
-    #[tokio::test]
-    #[traced_test]
-    async fn test_get_server_ip_information() {
-        dotenvy::dotenv().ok();
-
-        let robot = crate::AsyncRobot::default();
-
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
-
-        if let Some(ip) = servers.into_iter().find_map(|server| server.ipv4) {
-            let ip = robot.get_ip(ip).await.unwrap();
-            info!("{ip:#?}");
+            info!("{ips:#?}");
         }
-    }
 
-    #[tokio::test]
-    #[ignore = "unexpected failure can leave the traffic warning in undesired configuration"]
-    #[traced_test]
-    #[serial("ip")]
-    async fn test_enable_and_disable_traffic_warnings() {
-        dotenvy::dotenv().ok();
+        #[tokio::test]
+        #[traced_test]
+        async fn test_get_server_ip_information() {
+            dotenvy::dotenv().ok();
 
-        let robot = crate::AsyncRobot::default();
+            let robot = crate::AsyncRobot::default();
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-        if let Some(ip) = servers.into_iter().find_map(|server| server.ipv4) {
-            let ip = robot.get_ip(ip).await.unwrap();
-            info!("{ip:#?}");
+            if let Some(ip) = servers.into_iter().find_map(|server| server.ipv4) {
+                let ip = robot.get_ip(ip).await.unwrap();
+                info!("{ip:#?}");
+            }
+        }
 
-            let original_traffic_warning = ip.traffic_warnings;
+        #[tokio::test]
+        #[traced_test]
+        async fn test_get_separate_mac() {
+            dotenvy::dotenv().ok();
 
-            let new_warnings = robot
-                .enable_ip_traffic_warnings(ip.ip, Some(TrafficWarnings::default()))
-                .await
-                .unwrap();
+            let robot = crate::AsyncRobot::default();
 
-            assert_eq!(
-                new_warnings.traffic_warnings.unwrap(),
-                TrafficWarnings::default()
-            );
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-            robot.disable_ip_traffic_warnings(ip.ip).await.unwrap();
+            if let Some(ip) = servers.into_iter().find_map(|server| server.ipv4) {
+                // Server primary IPs do not have configurable MAC addresses
+                assert!(matches!(
+                    robot.get_ip_separate_mac(ip).await,
+                    Err(Error::Api(ApiError::MacNotAvailable { .. })),
+                ));
+            }
+        }
 
-            // Restore the original traffic warning settings.
-            if let Some(warnings) = original_traffic_warning {
-                robot
-                    .enable_ip_traffic_warnings(ip.ip, Some(warnings))
-                    .await
-                    .unwrap();
+        #[tokio::test]
+        #[traced_test]
+        async fn test_get_server_ip_cancellation() {
+            dotenvy::dotenv().ok();
+
+            let robot = crate::AsyncRobot::default();
+
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
+
+            if let Some(ip) = servers.into_iter().find_map(|server| server.ipv4) {
+                let cancellation = robot.get_ip_cancellation(ip).await.unwrap();
+                info!("{cancellation:#?}");
             }
         }
     }
 
-    #[tokio::test]
-    #[traced_test]
-    async fn test_get_separate_mac() {
-        dotenvy::dotenv().ok();
+    #[cfg(feature = "disruptive-tests")]
+    mod disruptive_tests {
+        use serial_test::serial;
+        use tracing::info;
+        use tracing_test::traced_test;
 
-        let robot = crate::AsyncRobot::default();
+        use crate::api::ip::TrafficWarnings;
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+        #[tokio::test]
+        #[traced_test]
+        #[serial("ip")]
+        #[ignore = "unexpected failure can leave the traffic warning in undesired configuration"]
+        async fn test_enable_and_disable_traffic_warnings() {
+            dotenvy::dotenv().ok();
 
-        if let Some(ip) = servers.into_iter().find_map(|server| server.ipv4) {
-            // Server primary IPs do not have configurable MAC addresses
-            assert!(matches!(
-                robot.get_ip_separate_mac(ip).await,
-                Err(Error::Api(ApiError::MacNotAvailable { .. })),
-            ));
-        }
-    }
+            let robot = crate::AsyncRobot::default();
 
-    #[tokio::test]
-    #[traced_test]
-    async fn test_get_server_ip_cancellation() {
-        dotenvy::dotenv().ok();
+            let servers = robot.list_servers().await.unwrap();
+            info!("{servers:#?}");
 
-        let robot = crate::AsyncRobot::default();
+            if let Some(ip) = servers.into_iter().find_map(|server| server.ipv4) {
+                let ip = robot.get_ip(ip).await.unwrap();
+                info!("{ip:#?}");
 
-        let servers = robot.list_servers().await.unwrap();
-        info!("{servers:#?}");
+                let original_traffic_warning = ip.traffic_warnings;
 
-        if let Some(ip) = servers.into_iter().find_map(|server| server.ipv4) {
-            let cancellation = robot.get_ip_cancellation(ip).await.unwrap();
-            info!("{cancellation:#?}");
+                let new_warnings = robot
+                    .enable_ip_traffic_warnings(ip.ip, Some(TrafficWarnings::default()))
+                    .await
+                    .unwrap();
+
+                assert_eq!(
+                    new_warnings.traffic_warnings.unwrap(),
+                    TrafficWarnings::default()
+                );
+
+                robot.disable_ip_traffic_warnings(ip.ip).await.unwrap();
+
+                // Restore the original traffic warning settings.
+                if let Some(warnings) = original_traffic_warning {
+                    robot
+                        .enable_ip_traffic_warnings(ip.ip, Some(warnings))
+                        .await
+                        .unwrap();
+                }
+            }
         }
     }
 }

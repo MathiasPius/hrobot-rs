@@ -35,3 +35,12 @@ tracing-test = { version = "0.2.4" }
 tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread"] }
 dotenvy = "0.15"
 serial_test = "2"
+
+[features]
+# Enabled non-disruptive tests and mus be provided as a selected feature,
+# if you want to test endpoints lik get/list, which do not have side-effects.
+non-disruptive-tests = []
+# Enables disruptive tests. These are tests which modify the current state
+# of RUNNING servers storageboxes, firewalls, etc., and MAY leave them in an
+# undesired state!
+disruptive-tests = []
