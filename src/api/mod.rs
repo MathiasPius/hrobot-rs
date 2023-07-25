@@ -29,7 +29,7 @@ pub mod wol;
 /// is transformed into a client-dependent request type and sent.
 #[derive(Clone)]
 pub struct Credentials {
-    pub header_value: String,
+    header_value: String,
 }
 
 impl std::fmt::Debug for Credentials {
