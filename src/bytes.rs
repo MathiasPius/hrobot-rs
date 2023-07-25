@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 pub use bytesize::ByteSize;
+use bytesize::GIB;
 use serde::{de::Error, Deserialize, Deserializer};
 
 pub(crate) fn traffic<'de, D: Deserializer<'de>>(
@@ -47,4 +48,8 @@ pub(crate) mod gib {
     {
         serializer.serialize_u64(bytesize.as_u64() / GIB)
     }
+}
+
+pub(crate) fn gib_float<'de, D: Deserializer<'de>>(deserializer: D) -> Result<ByteSize, D::Error> {
+    f64::deserialize(deserializer).map(|gb| ByteSize::b((gb * GIB as f64) as u64))
 }

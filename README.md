@@ -135,8 +135,8 @@ bar: Server Auction in FSN1-DC5
     - [x] Get reverse DNS entry
     - [x] Create reverse DNS entry.
     - [x] Update/create reverse DNS entry.
-- [ ] **Traffic.**
-    - [ ] Query traffic data.
+- [x] **Traffic.**
+    - [x] Query traffic data.
 - [x] **SSH Keys.**
     - [x] List SSH keys
     - [x] Upload new SSH key

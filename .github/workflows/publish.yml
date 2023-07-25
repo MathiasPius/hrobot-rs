@@ -51,8 +51,14 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+
+      - name: Ensure all tests compile
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --no-run --all-features
       
-      - name: Run cargo test
+      - name: Run safe tests
         uses: actions-rs/cargo@v1
         with:
           command: test

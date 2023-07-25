@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+#[derive(Debug)]
 pub(crate) struct UrlEncodingBuffer<'a> {
     buffer: &'a mut Vec<String>,
     prefix: String,
@@ -17,6 +18,13 @@ impl<'a> UrlEncodingBuffer<'a> {
         UrlEncodingBuffer {
             buffer: self.buffer,
             prefix: format!("{}{}", self.prefix, prefix),
+        }
+    }
+
+    pub fn clone(&mut self) -> UrlEncodingBuffer<'_> {
+        UrlEncodingBuffer {
+            buffer: self.buffer,
+            prefix: self.prefix.clone(),
         }
     }
 

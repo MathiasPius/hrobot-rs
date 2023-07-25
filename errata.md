@@ -62,6 +62,8 @@ This document aims to list some of the discrepancies, oddities, unexpected behav
   }
   ```
 
+ * It's not possible to GET a single sub-account, you can only list all accounts and then locate the one you're looking for by the username.
+
 ## Undocumented Features
 
 ### Boot Configuration
