@@ -126,7 +126,7 @@ pub struct Server {
     pub dc: String,
 
     /// Monthly traffic limitation if any, e.g. `5 TB`.
-    #[serde(deserialize_with = "crate::bytes::traffic")]
+    #[serde(deserialize_with = "crate::conversion::traffic")]
     pub traffic: Option<ByteSize>,
 
     /// Current status of the server.

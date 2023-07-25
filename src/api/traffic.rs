@@ -99,11 +99,11 @@ impl AsyncRobot {
 /// Traffic statistics for a single "unit". For hourly range, this is a single hour. For monthly it's a day, for yearly it's a month.
 #[derive(Debug, Clone, Deserialize)]
 pub struct TrafficStatistic {
-    #[serde(rename = "in", deserialize_with = "crate::bytes::gib_float")]
+    #[serde(rename = "in", deserialize_with = "crate::conversion::gib_float")]
     pub ingress: ByteSize,
-    #[serde(rename = "out", deserialize_with = "crate::bytes::gib_float")]
+    #[serde(rename = "out", deserialize_with = "crate::conversion::gib_float")]
     pub egress: ByteSize,
-    #[serde(rename = "sum", deserialize_with = "crate::bytes::gib_float")]
+    #[serde(rename = "sum", deserialize_with = "crate::conversion::gib_float")]
     pub total: ByteSize,
 }
 

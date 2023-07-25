@@ -257,17 +257,17 @@ impl AsyncRobot {
 pub struct TrafficWarnings {
     /// Produce a warning if the hourly traffic exceeds this limit.
     #[serde(rename = "traffic_hourly")]
-    #[serde(with = "crate::bytes::mib")]
+    #[serde(with = "crate::conversion::mib")]
     pub hourly: ByteSize,
 
     /// Produce a warning if the daily traffic exceeds this limit.
     #[serde(rename = "traffic_daily")]
-    #[serde(with = "crate::bytes::mib")]
+    #[serde(with = "crate::conversion::mib")]
     pub daily: ByteSize,
 
     /// Produce a warning if the monthly traffic exceeds this limit.
     #[serde(rename = "traffic_monthly")]
-    #[serde(with = "crate::bytes::gib")]
+    #[serde(with = "crate::conversion::gib")]
     pub monthly: ByteSize,
 }
 
@@ -288,11 +288,11 @@ impl Default for TrafficWarnings {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub(crate) struct InternalTrafficWarnings {
     traffic_warnings: bool,
-    #[serde(with = "crate::bytes::mib")]
+    #[serde(with = "crate::conversion::mib")]
     traffic_hourly: ByteSize,
-    #[serde(with = "crate::bytes::mib")]
+    #[serde(with = "crate::conversion::mib")]
     traffic_daily: ByteSize,
-    #[serde(with = "crate::bytes::gib")]
+    #[serde(with = "crate::conversion::gib")]
     traffic_monthly: ByteSize,
 }
 

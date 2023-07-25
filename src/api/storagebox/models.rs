@@ -130,19 +130,19 @@ pub struct StorageBox {
 #[derive(Debug, Clone, Deserialize)]
 pub struct Disk {
     /// Storage quota.
-    #[serde(rename = "disk_quota", with = "crate::bytes::mib")]
+    #[serde(rename = "disk_quota", with = "crate::conversion::mib")]
     pub quota: ByteSize,
 
     /// Storage usage in total (combined data & snapshots).
-    #[serde(rename = "disk_usage", with = "crate::bytes::mib")]
+    #[serde(rename = "disk_usage", with = "crate::conversion::mib")]
     pub total: ByteSize,
 
     /// Storage used by data.
-    #[serde(rename = "disk_usage_data", with = "crate::bytes::mib")]
+    #[serde(rename = "disk_usage_data", with = "crate::conversion::mib")]
     pub data: ByteSize,
 
     /// Storage used by snapshots.
-    #[serde(rename = "disk_usage_snapshots", with = "crate::bytes::mib")]
+    #[serde(rename = "disk_usage_snapshots", with = "crate::conversion::mib")]
     pub snapshots: ByteSize,
 }
 
@@ -175,11 +175,11 @@ pub struct Snapshot {
     pub timestamp: OffsetDateTime,
 
     /// Size of the snapshot.
-    #[serde(with = "crate::bytes::mib")]
+    #[serde(with = "crate::conversion::mib")]
     pub size: ByteSize,
 
     /// Size of the filesystem.
-    #[serde(with = "crate::bytes::mib")]
+    #[serde(with = "crate::conversion::mib")]
     pub filesystem_size: ByteSize,
 
     /// Indicates whether the snapshot was produced by an
@@ -201,7 +201,7 @@ pub struct CreatedSnapshot {
     pub timestamp: OffsetDateTime,
 
     /// Size of the snapshot.
-    #[serde(with = "crate::bytes::mib")]
+    #[serde(with = "crate::conversion::mib")]
     pub size: ByteSize,
 }
 
@@ -222,7 +222,7 @@ pub struct SnapshotPlan {
     /// Day of week on which to take snapshot.
     #[serde(
         default,
-        with = "crate::timezones::weekday_plus_one",
+        with = "crate::conversion::weekday_plus_one",
         skip_serializing_if = "Option::is_none"
     )]
     pub day_of_week: Option<Weekday>,
@@ -317,7 +317,7 @@ pub struct Subaccount {
     pub readonly: Permission,
 
     /// Timestamp at which the sub-account was created.
-    #[serde(deserialize_with = "crate::timezones::assume_berlin_timezone")]
+    #[serde(deserialize_with = "crate::conversion::assume_berlin_timezone")]
     pub createtime: OffsetDateTime,
 
     /// Comment or description associated with the sub-account

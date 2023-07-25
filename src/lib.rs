@@ -39,9 +39,8 @@
 pub mod api;
 pub mod error;
 
-mod bytes;
 mod client;
-mod timezones;
+mod conversion;
 mod urlencode;
 
 pub use ::bytesize::ByteSize;
