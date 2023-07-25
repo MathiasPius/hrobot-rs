@@ -61,7 +61,7 @@ impl AsyncRobot {
     ///         "123.123.123.123/32".parse().unwrap(),
     ///         "2a01:4f8:123:123::".parse().unwrap(),
     ///     ],
-    ///     TimeRange::month(2023, Month::July).await.unwrap()
+    ///     TimeRange::month(2023, Month::July)
     /// ).await.unwrap();
     /// # }
     /// ```
@@ -236,7 +236,7 @@ mod tests {
 
         assert_eq!(
             TimeRange::month(2022, Month::July).encode(),
-            "type=month&from=2022-07-01&to=2022-07-32"
+            "type=month&from=2022-07-01&to=2022-07-31"
         );
 
         assert_eq!(
