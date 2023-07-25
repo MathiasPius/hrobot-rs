@@ -157,7 +157,7 @@ impl<Response> UnauthenticatedRequest<Response> {
 /// [`AuthenticatedRequest`](AuthenticatedRequest) into a format usable
 /// by your client library.
 #[derive(Debug)]
-pub struct AuthenticatedRequest<Response> {
+pub(crate) struct AuthenticatedRequest<Response> {
     request: UnauthenticatedRequest<Response>,
     credentials: Credentials,
 }
