@@ -50,20 +50,23 @@ impl AsyncRobot {
 
 #[cfg(test)]
 mod tests {
-    use tracing::info;
-    use tracing_test::traced_test;
+    #[cfg(feature = "non-disruptive-tests")]
+    mod non_disruptive_tests {
+        use tracing::info;
+        use tracing_test::traced_test;
 
-    use crate::AsyncRobot;
+        use crate::AsyncRobot;
 
-    #[tokio::test]
-    #[traced_test]
-    async fn get_product_listing() {
-        dotenvy::dotenv().ok();
+        #[tokio::test]
+        #[traced_test]
+        async fn get_product_listing() {
+            dotenvy::dotenv().ok();
 
-        let robot = AsyncRobot::default();
+            let robot = AsyncRobot::default();
 
-        for product in robot.list_products(None, None, None).await.unwrap() {
-            info!("{product:#?}");
+            for product in robot.list_products(None, None, None).await.unwrap() {
+                info!("{product:#?}");
+            }
         }
     }
 }
