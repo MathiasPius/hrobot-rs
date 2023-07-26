@@ -10,7 +10,7 @@ use super::{
 
 /// SSH Public Key
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq)]
-pub struct Key {
+pub struct SshKey {
     /// Unique name for the key.
     pub name: String,
 
@@ -38,7 +38,7 @@ pub struct Key {
 ///
 /// To retrieve the key, see [`AsyncRobot::get_ssh_key`].
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq)]
-pub struct KeyReference {
+pub struct SshKeyReference {
     /// Unique name for the key.
     pub name: String,
 
@@ -57,14 +57,14 @@ pub struct KeyReference {
     pub created_at: OffsetDateTime,
 }
 
-fn list_ssh_keys() -> UnauthenticatedRequest<List<Key>> {
+fn list_ssh_keys() -> UnauthenticatedRequest<List<SshKey>> {
     UnauthenticatedRequest::from("https://robot-ws.your-server.de/key")
 }
 
 fn create_ssh_key(
     name: &str,
     key: &str,
-) -> Result<UnauthenticatedRequest<Single<Key>>, serde_html_form::ser::Error> {
+) -> Result<UnauthenticatedRequest<Single<SshKey>>, serde_html_form::ser::Error> {
     #[derive(Serialize)]
     struct CreateSshKey<'a> {
         name: &'a str,
@@ -76,7 +76,7 @@ fn create_ssh_key(
         .with_body(CreateSshKey { name, data: key })
 }
 
-fn get_ssh_key(fingerprint: &str) -> UnauthenticatedRequest<Single<Key>> {
+fn get_ssh_key(fingerprint: &str) -> UnauthenticatedRequest<Single<SshKey>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/key/{fingerprint}"
     ))
@@ -92,7 +92,7 @@ fn remove_ssh_key(fingerprint: &str) -> UnauthenticatedRequest<Empty> {
 fn rename_ssh_key(
     fingerprint: &str,
     new_name: &str,
-) -> Result<UnauthenticatedRequest<Single<Key>>, serde_html_form::ser::Error> {
+) -> Result<UnauthenticatedRequest<Single<SshKey>>, serde_html_form::ser::Error> {
     #[derive(Serialize)]
     struct RenameSshKey<'a> {
         name: &'a str,
@@ -106,7 +106,7 @@ fn rename_ssh_key(
 }
 
 impl AsyncRobot {
-    /// List all SSH [`Key`]s.
+    /// List all SSH [`SshKey`]s.
     ///
     /// # Example
     /// ```rust,no_run
@@ -119,11 +119,11 @@ impl AsyncRobot {
     /// }
     /// # }
     /// ```
-    pub async fn list_ssh_keys(&self) -> Result<Vec<Key>, Error> {
+    pub async fn list_ssh_keys(&self) -> Result<Vec<SshKey>, Error> {
         Ok(self.go(list_ssh_keys()).await?.0)
     }
 
-    /// Retrieve a single SSH [`Key`].
+    /// Retrieve a single SSH [`SshKey`].
     ///
     /// # Example
     /// ```rust,no_run
@@ -136,11 +136,11 @@ impl AsyncRobot {
     /// println!("{key:#?}");
     /// # }
     /// ```
-    pub async fn get_ssh_key(&self, fingerprint: &str) -> Result<Key, Error> {
+    pub async fn get_ssh_key(&self, fingerprint: &str) -> Result<SshKey, Error> {
         Ok(self.go(get_ssh_key(fingerprint)).await?.0)
     }
 
-    /// Upload a new SSH [`Key`].
+    /// Upload a new SSH [`SshKey`].
     ///
     /// # Example
     /// ```rust,no_run
@@ -156,11 +156,11 @@ impl AsyncRobot {
     /// println!("{key:#?}");
     /// # }
     /// ```
-    pub async fn create_ssh_key(&self, name: &str, key: &str) -> Result<Key, Error> {
+    pub async fn create_ssh_key(&self, name: &str, key: &str) -> Result<SshKey, Error> {
         Ok(self.go(create_ssh_key(name, key)?).await?.0)
     }
 
-    /// Remove an SSH [`Key`].
+    /// Remove an SSH [`SshKey`].
     ///
     /// # Example
     /// ```rust,no_run
@@ -178,7 +178,7 @@ impl AsyncRobot {
         Ok(())
     }
 
-    /// Rename an SSH [`Key`].
+    /// Rename an SSH [`SshKey`].
     ///
     /// # Example
     /// ```rust,no_run
@@ -192,7 +192,7 @@ impl AsyncRobot {
     /// ).await.unwrap();
     /// # }
     /// ```
-    pub async fn rename_ssh_key(&self, fingerprint: &str, new_name: &str) -> Result<Key, Error> {
+    pub async fn rename_ssh_key(&self, fingerprint: &str, new_name: &str) -> Result<SshKey, Error> {
         Ok(self.go(rename_ssh_key(fingerprint, new_name)?).await?.0)
     }
 }
@@ -201,7 +201,7 @@ impl AsyncRobot {
 mod tests {
     use time::macros::datetime;
 
-    use crate::api::keys::KeyReference;
+    use crate::api::keys::SshKeyReference;
 
     #[test]
     fn test_key_deserialization() {
@@ -216,7 +216,7 @@ mod tests {
         "#;
 
         assert_eq!(
-            KeyReference {
+            SshKeyReference {
                 name: "hrobot-rs-test-key".to_string(),
                 fingerprint: "d7:34:1c:8c:4e:20:e0:1f:07:66:45:d9:97:22:ec:07".to_string(),
                 algorithm: "ED25519".to_string(),

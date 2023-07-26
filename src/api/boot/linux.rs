@@ -1,7 +1,7 @@
 use crate::api::server::ServerId;
 use crate::client::AsyncRobot;
 use crate::{
-    api::{keys::KeyReference, wrapper::Single, UnauthenticatedRequest},
+    api::{keys::SshKeyReference, wrapper::Single, UnauthenticatedRequest},
     error::Error,
 };
 use serde::{Deserialize, Serialize};
@@ -179,7 +179,7 @@ pub struct ActiveLinuxConfig {
         rename = "authorized_key",
         deserialize_with = "crate::api::wrapper::deserialize_inner_vec"
     )]
-    pub authorized_keys: Vec<KeyReference>,
+    pub authorized_keys: Vec<SshKeyReference>,
 
     /// Host keys to be installed with the new distribution.
     #[serde(rename = "host_key")]

@@ -43,6 +43,10 @@ fn get_product(id: &ProductId) -> UnauthenticatedRequest<Single<Product>> {
     ))
 }
 
+fn list_product_tranactions() -> UnauthenticatedRequest<List<Transaction>> {
+    UnauthenticatedRequest::from("https://robot-ws.your-server.de/order/server/transaction")
+}
+
 impl AsyncRobot {
     /// List all available products.
     ///
@@ -85,6 +89,23 @@ impl AsyncRobot {
     pub async fn get_product(&self, id: &ProductId) -> Result<Product, Error> {
         Ok(self.go(get_product(id)).await?.0)
     }
+
+    /// List product transactions from the last 30 days.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// for product in robot.list_products().await.unwrap() {
+    ///     println!("{}: {}", product.id, product.name);
+    /// }
+    /// # }
+    /// ```
+    pub async fn list_recent_product_transactions(&self) -> Result<Vec<Transaction>, Error> {
+        Ok(self.go(list_product_tranactions()).await?.0)
+    }
 }
 
 #[cfg(test)]
@@ -118,6 +139,18 @@ mod tests {
             if let Some(product) = robot.list_products(None, None, None).await.unwrap().first() {
                 let product = robot.get_product(&product.id).await.unwrap();
                 info!("{product:#?}");
+            }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        async fn list_recent_product_transactions() {
+            dotenvy::dotenv().ok();
+
+            let robot = AsyncRobot::default();
+
+            for transaction in robot.list_recent_product_transactions().await.unwrap() {
+                info!("{transaction:#?}");
             }
         }
     }

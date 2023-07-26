@@ -134,7 +134,7 @@ impl AsyncRobot {
 
 use serde::{Deserialize, Serialize};
 
-use crate::api::keys::KeyReference;
+use crate::api::keys::SshKeyReference;
 
 /// Keyboard layout.
 ///
@@ -196,7 +196,7 @@ pub struct ActiveRescueConfig {
         rename = "authorized_key",
         deserialize_with = "crate::api::wrapper::deserialize_inner_vec"
     )]
-    pub authorized_keys: Vec<KeyReference>,
+    pub authorized_keys: Vec<SshKeyReference>,
 }
 
 /// Available rescue system configurations
