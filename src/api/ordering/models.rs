@@ -31,7 +31,7 @@ pub struct Product {
     pub languages: Vec<String>,
 
     /// Locations where this product is available.
-    #[serde(rename = "location")]
+    #[serde(default, rename = "location")]
     pub locations: Vec<Location>,
 
     /// Prices for this product in each location
@@ -40,6 +40,34 @@ pub struct Product {
 
     /// Addons which can be purchased for this product.
     pub orderable_addons: Vec<Addon>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct PurchasedProduct {
+    /// Unique identifier for this product type.
+    pub id: ProductId,
+
+    /// Human-readable name for this product.
+    pub name: String,
+
+    /// Human-readable list of features for this product.
+    pub description: Vec<String>,
+
+    /// Monthly traffic limitation if any, e.g. `5 TB`.
+    #[serde(rename = "traffic", deserialize_with = "crate::conversion::traffic")]
+    pub traffic_limit: Option<ByteSize>,
+
+    /// Distribution selected for the purchased product.
+    #[serde(rename = "dist")]
+    pub distribution: String,
+
+    /// Language selected for the product.
+    #[serde(rename = "lang")]
+    pub language: String,
+
+    /// Location of the purchased product.
+    #[serde(rename = "location")]
+    pub location: Option<Location>,
 }
 
 fn location_prices<'de, D: Deserializer<'de>>(
@@ -181,6 +209,22 @@ pub struct Transaction {
         deserialize_with = "crate::api::wrapper::deserialize_inner_vec"
     )]
     pub authorized_keys: Vec<InitialProductSshKey>,
+
+    /// Host keys associated with the product.
+    #[serde(
+        rename = "host_key",
+        deserialize_with = "crate::api::wrapper::deserialize_inner_vec"
+    )]
+    pub host_keys: Vec<HostKey>,
+
+    /// Optional comment associated with the purchase.
+    pub comment: Option<String>,
+
+    /// Summary of the purchased product configuration.
+    pub product: PurchasedProduct,
+
+    /// Addons purchased for this product.
+    pub addons: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -237,6 +281,21 @@ pub struct InitialProductSshKey {
     /// Unique name for the key.
     pub name: String,
 
+    /// Fingerprint of the public key.
+    pub fingerprint: String,
+
+    /// Key algorithm (ED25519, RSA)
+    #[serde(rename = "type")]
+    pub algorithm: String,
+
+    /// Key bit size.
+    #[serde(rename = "size")]
+    pub bits: u16,
+}
+
+/// SSH Host Key
+#[derive(Debug, Clone, Deserialize, Eq, PartialEq)]
+pub struct HostKey {
     /// Fingerprint of the public key.
     pub fingerprint: String,
 

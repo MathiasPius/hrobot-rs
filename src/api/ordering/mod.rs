@@ -47,6 +47,12 @@ fn list_product_tranactions() -> UnauthenticatedRequest<List<Transaction>> {
     UnauthenticatedRequest::from("https://robot-ws.your-server.de/order/server/transaction")
 }
 
+fn get_product_transaction(id: &TransactionId) -> UnauthenticatedRequest<Single<Transaction>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/order/server/transaction/{id}"
+    ))
+}
+
 impl AsyncRobot {
     /// List all available products.
     ///
@@ -98,13 +104,34 @@ impl AsyncRobot {
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
-    /// for product in robot.list_products().await.unwrap() {
-    ///     println!("{}: {}", product.id, product.name);
+    /// for transaction in robot.list_recent_product_transactions().await.unwrap() {
+    ///     println!("{}: {}", transaction.product.id, transaction.product.date);
     /// }
     /// # }
     /// ```
     pub async fn list_recent_product_transactions(&self) -> Result<Vec<Transaction>, Error> {
         Ok(self.go(list_product_tranactions()).await?.0)
+    }
+
+    /// Get specific product transactions by ID.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::TransactionId;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.get_product_transaction(
+    ///     TransactionId::from("B20150121-344958-251479")
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn get_product_transaction(
+        &self,
+        transaction: &TransactionId,
+    ) -> Result<Transaction, Error> {
+        Ok(self.go(get_product_transaction(transaction)).await?.0)
     }
 }
 
@@ -115,7 +142,10 @@ mod tests {
         use tracing::info;
         use tracing_test::traced_test;
 
-        use crate::AsyncRobot;
+        use crate::{
+            error::{ApiError, Error},
+            AsyncRobot,
+        };
 
         #[tokio::test]
         #[traced_test]
@@ -149,7 +179,46 @@ mod tests {
 
             let robot = AsyncRobot::default();
 
-            for transaction in robot.list_recent_product_transactions().await.unwrap() {
+            for transaction in robot
+                .list_recent_product_transactions()
+                .await
+                .or_else(|err| {
+                    if matches!(err, Error::Api(ApiError::NotFound { .. })) {
+                        Ok(vec![])
+                    } else {
+                        Err(err)
+                    }
+                })
+                .unwrap()
+            {
+                info!("{transaction:#?}");
+            }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        async fn get_recent_product_transactions() {
+            dotenvy::dotenv().ok();
+
+            let robot = AsyncRobot::default();
+
+            if let Some(transaction) = robot
+                .list_recent_product_transactions()
+                .await
+                .or_else(|err| {
+                    if matches!(err, Error::Api(ApiError::NotFound { .. })) {
+                        Ok(vec![])
+                    } else {
+                        Err(err)
+                    }
+                })
+                .unwrap()
+                .first()
+            {
+                let transaction = robot
+                    .get_product_transaction(&transaction.id)
+                    .await
+                    .unwrap();
                 info!("{transaction:#?}");
             }
         }

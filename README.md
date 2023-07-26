@@ -147,15 +147,15 @@ bar: Server Auction in FSN1-DC5
     - [ ] **Products.**
         - [x] List products.
         - [x] Get product information.
-        - [ ] List recent product transactions.
+        - [x] List recent product transactions.
+        - [x] Get specific transaction information.
         - [ ] Order new product.
-        - [ ] Get specific transaction information.
     - [ ] **Market (auction).**
         - [ ] List market products.
         - [ ] Get market product information.
         - [ ] List recent market transactions.
-        - [ ] Order new server from market.
         - [ ] Get specific market transaction information.
+        - [ ] Order new server from market.
     - [ ] **Addons.**
         - [ ] List available addons for server.
         - [ ] List recent addon transactions.
