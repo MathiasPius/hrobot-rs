@@ -109,6 +109,10 @@ pub(crate) fn gib_float<'de, D: Deserializer<'de>>(deserializer: D) -> Result<By
     f64::deserialize(deserializer).map(|gb| ByteSize::b((gb * GIB as f64) as u64))
 }
 
+pub(crate) fn gb<'de, D: Deserializer<'de>>(deserializer: D) -> Result<ByteSize, D::Error> {
+    u64::deserialize(deserializer).map(ByteSize::gb)
+}
+
 #[cfg(test)]
 mod tests {
     use serde::{Deserialize, Serialize};

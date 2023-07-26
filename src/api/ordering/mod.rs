@@ -1,8 +1,7 @@
 mod models;
-use std::ops::RangeInclusive;
+use std::ops::RangeBounds;
 
 pub use models::*;
-use rust_decimal::Decimal;
 use serde::Serialize;
 
 use crate::{error::Error, AsyncRobot};
@@ -13,25 +12,42 @@ use super::{
 };
 
 fn list_products(
-    monthly_price: Option<RangeInclusive<Decimal>>,
-    setup_price: Option<RangeInclusive<Decimal>>,
-    location: Option<&str>,
+    monthly_price: impl RangeBounds<u32>,
+    setup_price: impl RangeBounds<u32>,
+    location: Option<&Location>,
 ) -> Result<UnauthenticatedRequest<List<Product>>, serde_html_form::ser::Error> {
     #[derive(Debug, Serialize)]
     struct ProductSearch<'a> {
-        min_price: Option<Decimal>,
-        max_price: Option<Decimal>,
-        min_price_setup: Option<Decimal>,
-        max_price_setup: Option<Decimal>,
-        location: Option<&'a str>,
+        min_price: u32,
+        max_price: u32,
+        min_price_setup: u32,
+        max_price_setup: u32,
+        location: Option<&'a Location>,
+    }
+
+    // Transform a RangeBounds-implementing object into a
+    // reasonable integer approximation.
+    fn capped(range: &impl RangeBounds<u32>) -> (u32, u32) {
+        (
+            match range.start_bound() {
+                std::ops::Bound::Included(n) => *n,
+                std::ops::Bound::Excluded(n) => *n + 1,
+                std::ops::Bound::Unbounded => 0,
+            },
+            match range.end_bound() {
+                std::ops::Bound::Included(n) => *n,
+                std::ops::Bound::Excluded(n) => std::cmp::max(1, *n) - 1,
+                std::ops::Bound::Unbounded => 9999,
+            },
+        )
     }
 
     UnauthenticatedRequest::from("https://robot-ws.your-server.de/order/server/product").with_body(
         ProductSearch {
-            min_price: monthly_price.as_ref().map(|p| *p.start()),
-            max_price: monthly_price.as_ref().map(|p| *p.end()),
-            min_price_setup: setup_price.as_ref().map(|p| *p.start()),
-            max_price_setup: setup_price.as_ref().map(|p| *p.end()),
+            min_price: capped(&monthly_price).0,
+            max_price: capped(&monthly_price).1,
+            min_price_setup: capped(&setup_price).0,
+            max_price_setup: capped(&setup_price).1,
             location,
         },
     )
@@ -53,25 +69,35 @@ fn get_product_transaction(id: &TransactionId) -> UnauthenticatedRequest<Single<
     ))
 }
 
+fn list_market_products() -> UnauthenticatedRequest<List<MarketProduct>> {
+    UnauthenticatedRequest::from("https://robot-ws.your-server.de/order/server_market/product/")
+}
+
 impl AsyncRobot {
     /// List all available products.
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::ordering::Location;
+    /// # use hrobot::Decimal;
     /// # #[tokio::main]
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
-    /// for product in robot.list_products().await.unwrap() {
+    /// for product in robot.list_products(
+    ///     30..50,
+    ///     ..0,
+    ///     Some(&Location::from("FSN1")),
+    /// ).await.unwrap() {
     ///     println!("{}: {}", product.id, product.name);
     /// }
     /// # }
     /// ```
     pub async fn list_products(
         &self,
-        monthly_price: Option<RangeInclusive<Decimal>>,
-        setup_price: Option<RangeInclusive<Decimal>>,
-        location: Option<&str>,
+        monthly_price: impl RangeBounds<u32>,
+        setup_price: impl RangeBounds<u32>,
+        location: Option<&Location>,
     ) -> Result<Vec<Product>, Error> {
         Ok(self
             .go(list_products(monthly_price, setup_price, location)?)
@@ -83,12 +109,13 @@ impl AsyncRobot {
     ///
     /// # Example
     /// ```rust,no_run
+    /// # use hrobot::api::ordering::ProductId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// let product = robot.get_product(
-    ///     ProductId::from("EX44")
+    ///     &ProductId::from("EX44")
     /// ).await.unwrap();
     /// # }
     /// ```
@@ -105,7 +132,7 @@ impl AsyncRobot {
     /// # dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// for transaction in robot.list_recent_product_transactions().await.unwrap() {
-    ///     println!("{}: {}", transaction.product.id, transaction.product.date);
+    ///     println!("{}: {}", transaction.product.id, transaction.date);
     /// }
     /// # }
     /// ```
@@ -117,13 +144,13 @@ impl AsyncRobot {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::TransactionId;
+    /// # use hrobot::api::ordering::TransactionId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.get_product_transaction(
-    ///     TransactionId::from("B20150121-344958-251479")
+    ///     &TransactionId::from("B20150121-344958-251479")
     /// ).await.unwrap();
     /// # }
     /// ```
@@ -132,6 +159,23 @@ impl AsyncRobot {
         transaction: &TransactionId,
     ) -> Result<Transaction, Error> {
         Ok(self.go(get_product_transaction(transaction)).await?.0)
+    }
+
+    /// List market (auction) products.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// for market_product in robot.list_market_products().await.unwrap() {
+    ///     println!("{}: {}", market_product.id, market_product.name);
+    /// }
+    /// # }
+    /// ```
+    pub async fn list_market_products(&self) -> Result<Vec<MarketProduct>, Error> {
+        Ok(self.go(list_market_products()).await?.0)
     }
 }
 
@@ -149,24 +193,24 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        async fn get_product_listing() {
+        async fn test_get_product_listing() {
             dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 
-            for product in robot.list_products(None, None, None).await.unwrap() {
+            for product in robot.list_products(.., .., None).await.unwrap() {
                 info!("{product:#?}");
             }
         }
 
         #[tokio::test]
         #[traced_test]
-        async fn get_single_product() {
+        async fn test_get_single_product() {
             dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 
-            if let Some(product) = robot.list_products(None, None, None).await.unwrap().first() {
+            if let Some(product) = robot.list_products(.., .., None).await.unwrap().first() {
                 let product = robot.get_product(&product.id).await.unwrap();
                 info!("{product:#?}");
             }
@@ -174,7 +218,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        async fn list_recent_product_transactions() {
+        async fn test_list_recent_product_transactions() {
             dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
@@ -197,7 +241,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        async fn get_recent_product_transactions() {
+        async fn test_get_recent_product_transactions() {
             dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
@@ -220,6 +264,18 @@ mod tests {
                     .await
                     .unwrap();
                 info!("{transaction:#?}");
+            }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        async fn test_list_market_products() {
+            dotenvy::dotenv().ok();
+
+            let robot = AsyncRobot::default();
+
+            for product in robot.list_market_products().await.unwrap() {
+                info!("{product:#?}");
             }
         }
     }

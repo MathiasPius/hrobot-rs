@@ -44,5 +44,6 @@ mod conversion;
 mod urlencode;
 
 pub use ::bytesize::ByteSize;
+pub use ::rust_decimal::Decimal;
 pub use ::time;
 pub use client::*;

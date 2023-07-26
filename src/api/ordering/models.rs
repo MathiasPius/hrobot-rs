@@ -157,6 +157,46 @@ impl PartialEq<str> for Location {
     }
 }
 
+/// Datacenter within a Location, e.g. "FSN1-DC1".
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Datacenter(pub String);
+
+impl From<String> for Datacenter {
+    fn from(value: String) -> Self {
+        Datacenter(value)
+    }
+}
+
+impl From<&str> for Datacenter {
+    fn from(value: &str) -> Self {
+        Datacenter(value.to_string())
+    }
+}
+
+impl From<Datacenter> for String {
+    fn from(value: Datacenter) -> Self {
+        value.0
+    }
+}
+
+impl From<Datacenter> for Location {
+    fn from(value: Datacenter) -> Location {
+        Location(value.0.split_once('-').unwrap().0.to_string())
+    }
+}
+
+impl Display for Datacenter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl PartialEq<str> for Datacenter {
+    fn eq(&self, other: &str) -> bool {
+        self.0.eq(other)
+    }
+}
+
 /// Product ID, e.g. "EX44".
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ProductId(pub String);
@@ -306,6 +346,79 @@ pub struct HostKey {
     /// Key bit size.
     #[serde(rename = "size")]
     pub bits: u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct MarketProduct {
+    /// Unique identifier for this market product.
+    pub id: MarketProductId,
+
+    /// Human-readable name for this product.
+    pub name: String,
+
+    /// Human-readable list of features for this product.
+    pub description: Vec<String>,
+
+    /// Monthly traffic limitation if any, e.g. `5 TB`.
+    #[serde(rename = "traffic", deserialize_with = "crate::conversion::traffic")]
+    pub traffic_limit: Option<ByteSize>,
+
+    /// Distribution selected for the purchased product.
+    #[serde(rename = "dist")]
+    pub distributions: Vec<String>,
+
+    /// Language selected for the product.
+    #[serde(rename = "lang")]
+    pub languages: Vec<String>,
+
+    /// Datacenter of the purchased product.
+    pub datacenter: Option<String>,
+
+    /// Model name of the CPU
+    pub cpu: String,
+
+    /// CPU benchmark score.
+    pub cpu_benchmark: u32,
+
+    #[serde(deserialize_with = "crate::conversion::gb")]
+    pub memory_size: ByteSize,
+
+    #[serde(deserialize_with = "crate::conversion::gb")]
+    pub hdd_size: ByteSize,
+
+    pub hdd_text: String,
+
+    pub hdd_count: u8,
+}
+
+/// Unique Market Product ID.
+///
+/// Uniquely identifies a product on the Hetzner (auction) market.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct MarketProductId(pub u32);
+
+impl From<u32> for MarketProductId {
+    fn from(value: u32) -> Self {
+        MarketProductId(value)
+    }
+}
+
+impl From<MarketProductId> for u32 {
+    fn from(value: MarketProductId) -> Self {
+        value.0
+    }
+}
+
+impl Display for MarketProductId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl PartialEq<u32> for MarketProductId {
+    fn eq(&self, other: &u32) -> bool {
+        self.0.eq(other)
+    }
 }
 
 #[cfg(test)]
