@@ -147,8 +147,8 @@ bar: Server Auction in FSN1-DC5
     - [ ] **Products.**
         - [x] List products.
         - [x] Get product information.
-        - [x] List recent product transactions.
-        - [x] Get specific transaction information.
+        - [x] List recent product transactions.[^1]
+        - [x] Get specific transaction information.[^1]
         - [ ] Order new product.
     - [ ] **Market (auction).**
         - [ ] List market products.
