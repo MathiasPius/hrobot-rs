@@ -3,7 +3,8 @@ use std::{collections::HashMap, fmt::Display};
 use bytesize::ByteSize;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Deserializer, Serialize};
-use time::OffsetDateTime;
+use time::{OffsetDateTime, PrimitiveDateTime};
+use time_tz::PrimitiveDateTimeExt;
 
 use crate::api::server::ServerId;
 
@@ -349,6 +350,37 @@ pub struct HostKey {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct InternalMarketProduct {
+    pub id: MarketProductId,
+    pub name: String,
+    pub description: Vec<String>,
+    #[serde(rename = "traffic", deserialize_with = "crate::conversion::traffic")]
+    pub traffic_limit: Option<ByteSize>,
+    #[serde(rename = "dist")]
+    pub distributions: Vec<String>,
+    #[serde(rename = "lang")]
+    pub languages: Vec<String>,
+    pub datacenter: Option<String>,
+    pub cpu: String,
+    pub cpu_benchmark: u32,
+    #[serde(deserialize_with = "crate::conversion::gb")]
+    pub memory_size: ByteSize,
+    #[serde(deserialize_with = "crate::conversion::gb")]
+    pub hdd_size: ByteSize,
+    pub hdd_text: String,
+    pub hdd_count: u8,
+    pub price: Decimal,
+    pub price_vat: Decimal,
+    pub price_setup: Decimal,
+    pub price_setup_vat: Decimal,
+    pub fixed_price: bool,
+    pub next_reduce: i64,
+    pub next_reduce_date: String,
+    pub orderable_addons: Vec<Addon>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(from = "InternalMarketProduct")]
 pub struct MarketProduct {
     /// Unique identifier for this market product.
     pub id: MarketProductId,
@@ -360,15 +392,12 @@ pub struct MarketProduct {
     pub description: Vec<String>,
 
     /// Monthly traffic limitation if any, e.g. `5 TB`.
-    #[serde(rename = "traffic", deserialize_with = "crate::conversion::traffic")]
     pub traffic_limit: Option<ByteSize>,
 
     /// Distribution selected for the purchased product.
-    #[serde(rename = "dist")]
     pub distributions: Vec<String>,
 
     /// Language selected for the product.
-    #[serde(rename = "lang")]
     pub languages: Vec<String>,
 
     /// Datacenter of the purchased product.
@@ -380,15 +409,61 @@ pub struct MarketProduct {
     /// CPU benchmark score.
     pub cpu_benchmark: u32,
 
-    #[serde(deserialize_with = "crate::conversion::gb")]
     pub memory_size: ByteSize,
 
-    #[serde(deserialize_with = "crate::conversion::gb")]
     pub hdd_size: ByteSize,
 
     pub hdd_text: String,
 
     pub hdd_count: u8,
+
+    pub price: LocationPrice,
+
+    pub next_reduce_in: std::time::Duration,
+
+    pub next_reduce_at: Option<OffsetDateTime>,
+    pub orderable_addons: Vec<Addon>,
+}
+
+impl From<InternalMarketProduct> for MarketProduct {
+    fn from(value: InternalMarketProduct) -> Self {
+        MarketProduct {
+            id: value.id,
+            name: value.name,
+            description: value.description,
+            traffic_limit: value.traffic_limit,
+            distributions: value.distributions,
+            languages: value.languages,
+            datacenter: value.datacenter,
+            cpu: value.cpu,
+            cpu_benchmark: value.cpu_benchmark,
+            memory_size: value.memory_size,
+            hdd_size: value.hdd_size,
+            hdd_text: value.hdd_text,
+            hdd_count: value.hdd_count,
+            price: LocationPrice {
+                monthly: Price {
+                    net: value.price,
+                    gross: value.price_vat,
+                },
+                setup: Price {
+                    net: value.price_setup,
+                    gross: value.price_setup_vat,
+                },
+            },
+            next_reduce_in: std::time::Duration::from_secs(value.next_reduce.unsigned_abs()),
+            next_reduce_at: PrimitiveDateTime::parse(
+                &value.next_reduce_date,
+                &time::macros::format_description!("[year]-[month]-[day] [hour]:[minute]:[second]"),
+            )
+            .ok()
+            .and_then(|time| {
+                time.assume_timezone(time_tz::timezones::db::europe::BERLIN)
+                    .take()
+            }),
+            orderable_addons: value.orderable_addons,
+        }
+    }
 }
 
 /// Unique Market Product ID.
