@@ -7,7 +7,10 @@ use serde::Serialize;
 
 use crate::{error::Error, AsyncRobot};
 
-use super::{wrapper::List, UnauthenticatedRequest};
+use super::{
+    wrapper::{List, Single},
+    UnauthenticatedRequest,
+};
 
 fn list_products(
     monthly_price: Option<RangeInclusive<Decimal>>,
@@ -34,7 +37,26 @@ fn list_products(
     )
 }
 
+fn get_product(id: &ProductId) -> UnauthenticatedRequest<Single<Product>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/order/server/product/{id}"
+    ))
+}
+
 impl AsyncRobot {
+    /// List all available products.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// for product in robot.list_products().await.unwrap() {
+    ///     println!("{}: {}", product.id, product.name);
+    /// }
+    /// # }
+    /// ```
     pub async fn list_products(
         &self,
         monthly_price: Option<RangeInclusive<Decimal>>,
@@ -45,6 +67,23 @@ impl AsyncRobot {
             .go(list_products(monthly_price, setup_price, location)?)
             .await?
             .0)
+    }
+
+    /// Get description of a single product.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// let product = robot.get_product(
+    ///     ProductId::from("EX44")
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn get_product(&self, id: &ProductId) -> Result<Product, Error> {
+        Ok(self.go(get_product(id)).await?.0)
     }
 }
 
@@ -65,6 +104,19 @@ mod tests {
             let robot = AsyncRobot::default();
 
             for product in robot.list_products(None, None, None).await.unwrap() {
+                info!("{product:#?}");
+            }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        async fn get_single_product() {
+            dotenvy::dotenv().ok();
+
+            let robot = AsyncRobot::default();
+
+            if let Some(product) = robot.list_products(None, None, None).await.unwrap().first() {
+                let product = robot.get_product(&product.id).await.unwrap();
                 info!("{product:#?}");
             }
         }
