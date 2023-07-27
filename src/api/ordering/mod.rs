@@ -73,6 +73,24 @@ fn list_market_products() -> UnauthenticatedRequest<List<MarketProduct>> {
     UnauthenticatedRequest::from("https://robot-ws.your-server.de/order/server_market/product/")
 }
 
+fn get_market_product(id: &MarketProductId) -> UnauthenticatedRequest<Single<MarketProduct>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/order/server_market/product/{id}"
+    ))
+}
+
+fn list_market_product_transactions() -> UnauthenticatedRequest<List<MarketTransaction>> {
+    UnauthenticatedRequest::from("https://robot-ws.your-server.de/order/server_market/transaction")
+}
+
+fn get_market_product_transaction(
+    id: &MarketTransactionId,
+) -> UnauthenticatedRequest<Single<MarketTransaction>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/order/server_market/transaction/{id}"
+    ))
+}
+
 impl AsyncRobot {
     /// List all available products.
     ///
@@ -177,6 +195,65 @@ impl AsyncRobot {
     pub async fn list_market_products(&self) -> Result<Vec<MarketProduct>, Error> {
         Ok(self.go(list_market_products()).await?.0)
     }
+
+    /// Get description of a single market (auction) product.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::ordering::MarketProductId;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// let product = robot.get_market_product(
+    ///     &MarketProductId(2128654)
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn get_market_product(&self, id: &MarketProductId) -> Result<MarketProduct, Error> {
+        Ok(self.go(get_market_product(id)).await?.0)
+    }
+
+    /// List market (auction) transactions from the last 30 days.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// for transaction in robot.list_recent_market_transactions().await.unwrap() {
+    ///     println!("{}: {}", transaction.product.id, transaction.date);
+    /// }
+    /// # }
+    /// ```
+    pub async fn list_recent_market_transactions(&self) -> Result<Vec<MarketTransaction>, Error> {
+        Ok(self.go(list_market_product_transactions()).await?.0)
+    }
+
+    /// Get specific market (auction) transaction by ID.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::ordering::MarketTransactionId;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.get_market_transaction(
+    ///     &MarketTransactionId::from("B20150121-344958-251479")
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn get_market_transaction(
+        &self,
+        transaction: &MarketTransactionId,
+    ) -> Result<MarketTransaction, Error> {
+        Ok(self
+            .go(get_market_product_transaction(transaction))
+            .await?
+            .0)
+    }
 }
 
 #[cfg(test)]
@@ -276,6 +353,67 @@ mod tests {
 
             for product in robot.list_market_products().await.unwrap() {
                 info!("{product:#?}");
+            }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        async fn test_get_single_market_product() {
+            dotenvy::dotenv().ok();
+
+            let robot = AsyncRobot::default();
+
+            if let Some(product) = robot.list_market_products().await.unwrap().first() {
+                let product = robot.get_market_product(&product.id).await.unwrap();
+                info!("{product:#?}");
+            }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        async fn test_list_recent_market_transactions() {
+            dotenvy::dotenv().ok();
+
+            let robot = AsyncRobot::default();
+
+            for transaction in robot
+                .list_recent_market_transactions()
+                .await
+                .or_else(|err| {
+                    if matches!(err, Error::Api(ApiError::NotFound { .. })) {
+                        Ok(vec![])
+                    } else {
+                        Err(err)
+                    }
+                })
+                .unwrap()
+            {
+                info!("{transaction:#?}");
+            }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        async fn test_get_recent_market_transactions() {
+            dotenvy::dotenv().ok();
+
+            let robot = AsyncRobot::default();
+
+            if let Some(transaction) = robot
+                .list_recent_market_transactions()
+                .await
+                .or_else(|err| {
+                    if matches!(err, Error::Api(ApiError::NotFound { .. })) {
+                        Ok(vec![])
+                    } else {
+                        Err(err)
+                    }
+                })
+                .unwrap()
+                .first()
+            {
+                let transaction = robot.get_market_transaction(&transaction.id).await.unwrap();
+                info!("{transaction:#?}");
             }
         }
     }
