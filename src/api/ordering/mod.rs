@@ -4,7 +4,7 @@ use std::ops::RangeBounds;
 pub use models::*;
 use serde::Serialize;
 
-use crate::{error::Error, AsyncRobot};
+use crate::{error::Error, urlencode::UrlEncode, AsyncRobot};
 
 use super::{
     server::ServerId,
@@ -108,6 +108,16 @@ fn get_addon_transaction(
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/order/server_addon/transaction/{id}"
     ))
+}
+
+fn place_market_purchase_order(
+    order: MarketProductOrder,
+) -> UnauthenticatedRequest<Single<MarketTransaction>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/order/server_market/transaction"
+    ))
+    .with_method("POST")
+    .with_serialized_body(order.encode())
 }
 
 impl AsyncRobot {
@@ -272,6 +282,27 @@ impl AsyncRobot {
             .go(get_market_product_transaction(transaction))
             .await?
             .0)
+    }
+
+    /// Purchase a server product from the market.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::ordering::AddonTransactionId;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.get_addon_transaction(
+    ///     &AddonTransactionId::from("B20150121-344958-251479")
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn place_market_order(
+        &self,
+        order: MarketProductOrder,
+    ) -> Result<MarketTransaction, Error> {
+        Ok(self.go(place_market_purchase_order(order)).await?.0)
     }
 
     /// List available addons for a server.
@@ -505,6 +536,54 @@ mod tests {
                 for addon in robot.list_available_addons(server.id).await.unwrap() {
                     info!("{addon:#?}");
                 }
+            }
+        }
+    }
+
+    #[cfg(feature = "disruptive-tests")]
+    mod disruptive_tests {
+        use crate::AsyncRobot;
+        use tracing::info;
+        use tracing_test::traced_test;
+
+        use crate::api::ordering::{
+            AddonId, AuthorizationMethod, ImSeriousAboutBuyingAServer, MarketProductOrder,
+        };
+
+        #[tokio::test]
+        #[traced_test]
+        #[ignore = "this test is designed to not make a purchase, but who knows what might go wrong."]
+        async fn test_purchase_cheapest_server() {
+            dotenvy::dotenv().ok();
+
+            let robot = AsyncRobot::default();
+
+            let fingerprint = robot
+                .list_ssh_keys()
+                .await
+                .unwrap()
+                .pop()
+                .unwrap()
+                .fingerprint;
+
+            let mut products = robot.list_market_products().await.unwrap();
+            products.sort_by_key(|product| product.price.monthly.net);
+
+            if let Some(cheapest) = products.first() {
+                let order = MarketProductOrder {
+                    id: cheapest.id,
+                    auth: AuthorizationMethod::Keys(vec![fingerprint]),
+                    distribution: Some("Rescue system".to_string()),
+                    language: Some("en".to_string()),
+                    addons: vec![AddonId::from("primary_ipv4")],
+                    comment: None,
+                    i_want_to_spend_money_to_purchase_a_server_i_mean_it:
+                        ImSeriousAboutBuyingAServer::Uhhhh,
+                };
+
+                let result = robot.place_market_order(order).await.unwrap();
+
+                info!("{result:#?}");
             }
         }
     }

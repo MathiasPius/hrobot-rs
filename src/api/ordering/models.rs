@@ -6,7 +6,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use time::{OffsetDateTime, PrimitiveDateTime};
 use time_tz::PrimitiveDateTimeExt;
 
-use crate::api::server::ServerId;
+use crate::{api::server::ServerId, urlencode::UrlEncode};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Product {
@@ -105,6 +105,7 @@ pub struct PurchasedMarketProduct {
     pub cpu_benchmark: u32,
 
     /// Total amount of memory installed in the server.
+    #[serde(deserialize_with = "crate::conversion::gb")]
     pub memory_size: ByteSize,
 
     /// Primary hard drive capacity.
@@ -117,7 +118,7 @@ pub struct PurchasedMarketProduct {
     /// * 2x SSD SATA 3,84 TB Datacenter
     ///
     /// The HDD size will be 3.84TB, and [`MarketProduct::primary_hdd_count`] will be 6, not 8.
-    #[serde(rename = "hdd_size")]
+    #[serde(rename = "hdd_size", deserialize_with = "crate::conversion::gb")]
     pub primary_hdd_size: ByteSize,
 
     /// Human-readable summary of installed hardware/features, such as
@@ -777,15 +778,108 @@ impl PartialEq<u32> for MarketProductId {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum AuthorizationMethod {
+    Keys(Vec<String>),
+    Password(String),
+}
+
+#[derive(Default, Debug, Clone, Eq, PartialEq)]
+pub enum ImSeriousAboutBuyingAServer {
+    LetMeSpendMyMoneyAlready,
+    #[default]
+    Uhhhh,
+}
+
+#[derive(Debug, Clone)]
+pub struct MarketProductOrder {
+    pub id: MarketProductId,
+    pub auth: AuthorizationMethod,
+    pub distribution: Option<String>,
+    pub language: Option<String>,
+    pub comment: Option<String>,
+    pub addons: Vec<AddonId>,
+    pub i_want_to_spend_money_to_purchase_a_server_i_mean_it: ImSeriousAboutBuyingAServer,
+}
+
+impl UrlEncode for MarketProductOrder {
+    fn encode_into(&self, mut f: crate::urlencode::UrlEncodingBuffer<'_>) {
+        f.set("product_id", self.id);
+
+        match &self.auth {
+            AuthorizationMethod::Keys(keys) => {
+                for key in keys {
+                    f.set("authorized_key[]", key)
+                }
+            }
+            AuthorizationMethod::Password(password) => {
+                f.set("password", password);
+            }
+        }
+
+        if let Some(dist) = &self.distribution {
+            f.set("dist", dist);
+        }
+
+        if let Some(lang) = &self.language {
+            f.set("lang", lang);
+        }
+
+        if let Some(comment) = &self.comment {
+            f.set("comment", comment);
+        }
+
+        for addon in &self.addons {
+            f.set("addon[]", addon);
+        }
+
+        if self.i_want_to_spend_money_to_purchase_a_server_i_mean_it
+            == ImSeriousAboutBuyingAServer::LetMeSpendMyMoneyAlready
+        {
+            f.set("test", "false")
+        } else {
+            f.set("test", "true")
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use tracing::info;
     use tracing_test::traced_test;
 
-    use crate::api::{
-        ordering::{AddonTransaction, AvailableAddon, MarketTransaction, Transaction},
-        wrapper::List,
+    use crate::{
+        api::{
+            ordering::{
+                AddonId, AddonTransaction, AuthorizationMethod, AvailableAddon,
+                ImSeriousAboutBuyingAServer, MarketProductId, MarketTransaction, Transaction,
+            },
+            wrapper::List,
+        },
+        urlencode::UrlEncode,
     };
+
+    use super::MarketProductOrder;
+
+    #[test]
+    #[traced_test]
+    fn test_serialize_market_product_order() {
+        let a = MarketProductOrder {
+            id: MarketProductId(100),
+            auth: AuthorizationMethod::Keys(vec![
+                String::from("15:28:b0:03:95:f0:77:b3:10:56:15:6b:77:22:a5:aa"),
+                String::from("15:28:b0:03:95:f0:77:b3:10:56:15:6b:77:22:a5:bb"),
+            ]),
+            distribution: Some("Rescue System".to_string()),
+            language: Some("en".to_string()),
+            addons: vec![AddonId::from("primary_ipv4")],
+            comment: None,
+            i_want_to_spend_money_to_purchase_a_server_i_mean_it:
+                ImSeriousAboutBuyingAServer::Uhhhh,
+        };
+
+        info!("{}", a.encode());
+    }
 
     #[test]
     #[traced_test]
