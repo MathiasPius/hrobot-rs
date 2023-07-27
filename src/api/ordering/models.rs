@@ -409,19 +409,47 @@ pub struct MarketProduct {
     /// CPU benchmark score.
     pub cpu_benchmark: u32,
 
+    /// Total amount of memory installed in the server.
     pub memory_size: ByteSize,
 
-    pub hdd_size: ByteSize,
+    /// Primary hard drive capacity.
+    ///
+    /// Note that this only covers the capacity of the primary
+    /// hard drive type, not the total capacity across all drives.
+    ///
+    /// In a server with the following configuration for example:
+    /// * 6x SSD U.2 NVMe 3,84 TB Datacenter
+    /// * 2x SSD SATA 3,84 TB Datacenter
+    ///
+    /// The HDD size will be 3.84TB, and [`MarketProduct::primary_hdd_count`] will be 6, not 8.
+    pub primary_hdd_size: ByteSize,
 
-    pub hdd_text: String,
+    /// Human-readable summary of installed hardware/features, such as
+    /// hard drive listing, ECC, INIC, etc.
+    pub features: String,
 
-    pub hdd_count: u8,
+    /// Primary hard drive count.
+    ///
+    /// Note that this only covers the installed count of the primary
+    /// hard drive type, not the total number of drives.
+    ///
+    /// In a server with the following configuration for example:
+    /// * 6x SSD U.2 NVMe 3,84 TB Datacenter
+    /// * 2x SSD SATA 3,84 TB Datacenter
+    ///
+    /// The HDD size will be 3.84TB, and [`MarketProduct::primary_hdd_count`] will be 6, not 8.
+    pub primary_hdd_count: u8,
 
+    /// Price of the market product.
     pub price: LocationPrice,
 
+    /// Time until the price of the product is reduced.
     pub next_reduce_in: std::time::Duration,
 
+    /// Timestamp indicating the time at which the product price will be further reduced.
     pub next_reduce_at: Option<OffsetDateTime>,
+
+    /// List of available addons for the product.
     pub orderable_addons: Vec<Addon>,
 }
 
@@ -438,9 +466,9 @@ impl From<InternalMarketProduct> for MarketProduct {
             cpu: value.cpu,
             cpu_benchmark: value.cpu_benchmark,
             memory_size: value.memory_size,
-            hdd_size: value.hdd_size,
-            hdd_text: value.hdd_text,
-            hdd_count: value.hdd_count,
+            primary_hdd_size: value.hdd_size,
+            features: value.hdd_text,
+            primary_hdd_count: value.hdd_count,
             price: LocationPrice {
                 monthly: Price {
                     net: value.price,
