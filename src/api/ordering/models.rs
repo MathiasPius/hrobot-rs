@@ -196,6 +196,14 @@ pub struct Addon {
     pub prices: HashMap<Location, LocationPrice>,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct AvailableAddon {
+    pub id: String,
+    pub name: String,
+    pub r#type: String,
+    pub price: SingleLocationPrice,
+}
+
 /// Location, e.g. "FSN1".
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Location(pub String);
@@ -775,7 +783,7 @@ mod tests {
     use tracing_test::traced_test;
 
     use crate::api::{
-        ordering::{AddonTransaction, MarketTransaction, Transaction},
+        ordering::{AddonTransaction, AvailableAddon, MarketTransaction, Transaction},
         wrapper::List,
     };
 
@@ -873,7 +881,7 @@ mod tests {
 
     #[test]
     #[traced_test]
-    fn deserialize_market_transaction() {
+    fn test_deserialize_market_transaction() {
         let example_data = r#"
             [
                 {
@@ -979,7 +987,7 @@ mod tests {
 
     #[test]
     #[traced_test]
-    fn deserialize_addon_transactions() {
+    fn test_deserialize_addon_transactions() {
         let example_data = r#"
             [
                 {
@@ -1042,5 +1050,287 @@ mod tests {
         let transactions: List<AddonTransaction> = serde_json::from_str(example_data).unwrap();
 
         info!("{transactions:#?}");
+    }
+
+    #[test]
+    #[traced_test]
+    fn test_deserialize_available_addons() {
+        let example_data = r#"
+            [
+                {
+                    "product": {
+                        "id": "failover_subnet_ipv4_32",
+                        "name": "Failover IP",
+                        "type": "failover_subnet_ipv4",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "4.2017",
+                                "gross": "4.2017"
+                            },
+                            "price_setup": {
+                                "net": "4.9000",
+                                "gross": "4.9000"
+                            }
+                        }
+                    }
+                },
+                {
+                    "product": {
+                        "id": "failover_subnet_ipv4_24",
+                        "name": "Failover subnet \/24",
+                        "type": "failover_subnet_ipv4",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "443.6000",
+                                "gross": "443.6000"
+                            },
+                            "price_setup": {
+                                "net": "659.0000",
+                                "gross": "659.0000"
+                            }
+                        }
+                    }
+                },
+                {
+                    "product": {
+                        "id": "failover_subnet_ipv4_25",
+                        "name": "Failover subnet \/25",
+                        "type": "failover_subnet_ipv4",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "226.0000",
+                                "gross": "226.0000"
+                            },
+                            "price_setup": {
+                                "net": "369.0000",
+                                "gross": "369.0000"
+                            }
+                        }
+                    }
+                },
+                {
+                    "product": {
+                        "id": "failover_subnet_ipv4_26",
+                        "name": "Failover subnet \/26",
+                        "type": "failover_subnet_ipv4",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "117.2000",
+                                "gross": "117.2000"
+                            },
+                            "price_setup": {
+                                "net": "199.0000",
+                                "gross": "199.0000"
+                            }
+                        }
+                    }
+                },
+                {
+                    "product": {
+                        "id": "failover_subnet_ipv4_27",
+                        "name": "Failover subnet \/27",
+                        "type": "failover_subnet_ipv4",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "62.8000",
+                                "gross": "62.8000"
+                            },
+                            "price_setup": {
+                                "net": "109.0000",
+                                "gross": "109.0000"
+                            }
+                        }
+                    }
+                },
+                {
+                    "product": {
+                        "id": "failover_subnet_ipv4_28",
+                        "name": "Failover subnet \/28",
+                        "type": "failover_subnet_ipv4",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "35.6000",
+                                "gross": "35.6000"
+                            },
+                            "price_setup": {
+                                "net": "59.9000",
+                                "gross": "59.9000"
+                            }
+                        }
+                    }
+                },
+                {
+                    "product": {
+                        "id": "failover_subnet_ipv4_29",
+                        "name": "Failover subnet \/29",
+                        "type": "failover_subnet_ipv4",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "22.0000",
+                                "gross": "22.0000"
+                            },
+                            "price_setup": {
+                                "net": "34.9000",
+                                "gross": "34.9000"
+                            }
+                        }
+                    }
+                },
+                {
+                    "product": {
+                        "id": "failover_subnet_ipv6_64",
+                        "name": "IPv6 failover subnet \/64",
+                        "type": "failover_subnet_ipv6",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "1.0000",
+                                "gross": "1.0000"
+                            },
+                            "price_setup": {
+                                "net": "4.9000",
+                                "gross": "4.9000"
+                            }
+                        }
+                    }
+                },
+                {
+                    "product": {
+                        "id": "additional_ipv4",
+                        "name": "Additional IP address",
+                        "type": "ip_ipv4",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "1.7000",
+                                "gross": "1.7000"
+                            },
+                            "price_setup": {
+                                "net": "4.9000",
+                                "gross": "4.9000"
+                            }
+                        }
+                    }
+                },
+                {
+                    "product": {
+                        "id": "subnet_ipv4_24",
+                        "name": "Additional subnet \/24",
+                        "type": "subnet_ipv4",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "435.2000",
+                                "gross": "435.2000"
+                            },
+                            "price_setup": {
+                                "net": "659.0000",
+                                "gross": "659.0000"
+                            }
+                        }
+                    }
+                },
+                {
+                    "product": {
+                        "id": "subnet_ipv4_25",
+                        "name": "Additional subnet \/25",
+                        "type": "subnet_ipv4",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "217.6000",
+                                "gross": "217.6000"
+                            },
+                            "price_setup": {
+                                "net": "369.0000",
+                                "gross": "369.0000"
+                            }
+                        }
+                    }
+                },
+                {
+                    "product": {
+                        "id": "subnet_ipv4_26",
+                        "name": "Additional subnet \/26",
+                        "type": "subnet_ipv4",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "108.8000",
+                                "gross": "108.8000"
+                            },
+                            "price_setup": {
+                                "net": "199.0000",
+                                "gross": "199.0000"
+                            }
+                        }
+                    }
+                },
+                {
+                    "product": {
+                        "id": "subnet_ipv4_27",
+                        "name": "Additional subnet \/27",
+                        "type": "subnet_ipv4",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "54.4000",
+                                "gross": "54.4000"
+                            },
+                            "price_setup": {
+                                "net": "109.0000",
+                                "gross": "109.0000"
+                            }
+                        }
+                    }
+                },
+                {
+                    "product": {
+                        "id": "subnet_ipv4_28",
+                        "name": "Additional subnet \/28",
+                        "type": "subnet_ipv4",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "27.2000",
+                                "gross": "27.2000"
+                            },
+                            "price_setup": {
+                                "net": "59.9000",
+                                "gross": "59.9000"
+                            }
+                        }
+                    }
+                },
+                {
+                    "product": {
+                        "id": "subnet_ipv4_29",
+                        "name": "Additional subnet \/29",
+                        "type": "subnet_ipv4",
+                        "price": {
+                            "location": "FSN1",
+                            "price": {
+                                "net": "13.6000",
+                                "gross": "13.6000"
+                            },
+                            "price_setup": {
+                                "net": "34.9000",
+                                "gross": "34.9000"
+                            }
+                        }
+                    }
+                }
+            ]"#;
+
+        let data: List<AvailableAddon> = serde_json::from_str(&example_data).unwrap();
+
+        info!("{data:#?}");
     }
 }

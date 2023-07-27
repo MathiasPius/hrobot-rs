@@ -7,6 +7,7 @@ use serde::Serialize;
 use crate::{error::Error, AsyncRobot};
 
 use super::{
+    server::ServerId,
     wrapper::{List, Single},
     UnauthenticatedRequest,
 };
@@ -88,6 +89,12 @@ fn get_market_product_transaction(
 ) -> UnauthenticatedRequest<Single<MarketTransaction>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/order/server_market/transaction/{id}"
+    ))
+}
+
+fn list_available_addons(id: ServerId) -> UnauthenticatedRequest<List<AvailableAddon>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/order/server_addon/{id}/product"
     ))
 }
 
@@ -254,6 +261,26 @@ impl AsyncRobot {
             .await?
             .0)
     }
+
+    /// List available addons for a server.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::ordering::ServerId;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// for addon in robot.list_available_addons(
+    ///     ServerId(1234)
+    /// ).await.unwrap() {
+    ///     println!("{addon#:?}");
+    /// }
+    /// # }
+    /// ```
+    pub async fn list_available_addons(&self, id: ServerId) -> Result<Vec<AvailableAddon>, Error> {
+        Ok(self.go(list_available_addons(id)).await?.0)
+    }
 }
 
 #[cfg(test)]
@@ -414,6 +441,20 @@ mod tests {
             {
                 let transaction = robot.get_market_transaction(&transaction.id).await.unwrap();
                 info!("{transaction:#?}");
+            }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        async fn test_list_available_addons() {
+            dotenvy::dotenv().ok();
+
+            let robot = AsyncRobot::default();
+
+            if let Some(server) = robot.list_servers().await.unwrap().first() {
+                for addon in robot.list_available_addons(server.id).await.unwrap() {
+                    info!("{addon:#?}");
+                }
             }
         }
     }
