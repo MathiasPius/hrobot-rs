@@ -98,6 +98,18 @@ fn list_available_addons(id: ServerId) -> UnauthenticatedRequest<List<AvailableA
     ))
 }
 
+fn list_addon_transactions() -> UnauthenticatedRequest<List<AddonTransaction>> {
+    UnauthenticatedRequest::from("https://robot-ws.your-server.de/order/server_addon/transaction")
+}
+
+fn get_addon_transaction(
+    id: &AddonTransactionId,
+) -> UnauthenticatedRequest<Single<AddonTransaction>> {
+    UnauthenticatedRequest::from(&format!(
+        "https://robot-ws.your-server.de/order/server_addon/transaction/{id}"
+    ))
+}
+
 impl AsyncRobot {
     /// List all available products.
     ///
@@ -280,6 +292,44 @@ impl AsyncRobot {
     /// ```
     pub async fn list_available_addons(&self, id: ServerId) -> Result<Vec<AvailableAddon>, Error> {
         Ok(self.go(list_available_addons(id)).await?.0)
+    }
+
+    /// List addon transactions from the last 30 days.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// for transaction in robot.list_recent_product_transactions().await.unwrap() {
+    ///     println!("{}: {}", transaction.product.id, transaction.date);
+    /// }
+    /// # }
+    /// ```
+    pub async fn list_recent_addon_transactions(&self) -> Result<Vec<AddonTransaction>, Error> {
+        Ok(self.go(list_addon_transactions()).await?.0)
+    }
+
+    /// Get specific addon transaction by ID.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::ordering::AddonTransactionId;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// robot.get_addon_transaction(
+    ///     &AddonTransactionId::from("B20150121-344958-251479")
+    /// ).await.unwrap();
+    /// # }
+    /// ```
+    pub async fn get_addon_transaction(
+        &self,
+        transaction: &AddonTransactionId,
+    ) -> Result<AddonTransaction, Error> {
+        Ok(self.go(get_addon_transaction(transaction)).await?.0)
     }
 }
 
