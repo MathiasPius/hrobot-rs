@@ -57,6 +57,12 @@ jobs:
         with:
           command: test
           args: --no-run --all-features
+          
+      - name: Ensure all doc tests compile
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-features --doc
       
       - name: Run safe tests
         uses: actions-rs/cargo@v1
