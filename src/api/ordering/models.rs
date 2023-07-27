@@ -142,12 +142,12 @@ pub struct PurchasedMarketProduct {
 fn location_prices<'de, D: Deserializer<'de>>(
     deserializer: D,
 ) -> Result<HashMap<Location, LocationPrice>, D::Error> {
-    let prices = Vec::<InternalLocationPrice>::deserialize(deserializer)?;
+    let prices = Vec::<SingleLocationPrice>::deserialize(deserializer)?;
 
     Ok(prices
         .into_iter()
         .map(
-            |InternalLocationPrice {
+            |SingleLocationPrice {
                  location,
                  monthly,
                  setup,
@@ -156,11 +156,15 @@ fn location_prices<'de, D: Deserializer<'de>>(
         .collect())
 }
 
+/// Price information for a single location.
 #[derive(Debug, Clone, Deserialize)]
-struct InternalLocationPrice {
+pub struct SingleLocationPrice {
+    /// Location this price applies to.
     pub location: Location,
+    /// Monthly price.
     #[serde(rename = "price")]
     pub monthly: Price,
+    /// One-time setup fee.
     #[serde(rename = "price_setup")]
     pub setup: Price,
 }
@@ -447,6 +451,112 @@ impl PartialEq<str> for MarketTransactionId {
     }
 }
 
+/// Addon Transaction ID, e.g. "B20150121-344957-251478".
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct AddonTransactionId(pub String);
+
+impl From<String> for AddonTransactionId {
+    fn from(value: String) -> Self {
+        AddonTransactionId(value)
+    }
+}
+
+impl From<&str> for AddonTransactionId {
+    fn from(value: &str) -> Self {
+        AddonTransactionId(value.to_string())
+    }
+}
+
+impl From<AddonTransactionId> for String {
+    fn from(value: AddonTransactionId) -> Self {
+        value.0
+    }
+}
+
+impl Display for AddonTransactionId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl PartialEq<str> for AddonTransactionId {
+    fn eq(&self, other: &str) -> bool {
+        self.0.eq(other)
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct AddonTransaction {
+    pub id: AddonTransactionId,
+
+    #[serde(with = "time::serde::rfc3339")]
+    pub date: OffsetDateTime,
+
+    pub status: TransactionStatus,
+
+    #[serde(rename = "server_number")]
+    pub server_id: ServerId,
+
+    /// Summary of the purchased addon.
+    pub product: PurchasedAddon,
+
+    /// Resources associated with this addon purchase.
+    pub resources: Vec<Resource>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Resource {
+    pub r#type: String,
+    pub id: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct PurchasedAddon {
+    /// Unique identifier for this product type.
+    pub id: AddonId,
+
+    /// Human-readable name for this product.
+    pub name: String,
+
+    pub price: SingleLocationPrice,
+}
+
+/// Unique addon ID.
+///
+/// Uniquely identifies an addon.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct AddonId(pub String);
+
+impl From<String> for AddonId {
+    fn from(value: String) -> Self {
+        AddonId(value)
+    }
+}
+
+impl From<&str> for AddonId {
+    fn from(value: &str) -> Self {
+        AddonId(value.to_string())
+    }
+}
+
+impl From<AddonId> for String {
+    fn from(value: AddonId) -> Self {
+        value.0
+    }
+}
+
+impl Display for AddonId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl PartialEq<str> for AddonId {
+    fn eq(&self, other: &str) -> bool {
+        self.0.eq(other)
+    }
+}
+
 /// SSH Public Key provided as an authorized key when purchasing a server.
 ///
 /// This is just key metadata, it does not contain the key itself. To retrieve the key, see [`AsyncRobot::get_ssh_key`](crate::AsyncRobot::get_ssh_key).
@@ -665,7 +775,7 @@ mod tests {
     use tracing_test::traced_test;
 
     use crate::api::{
-        ordering::{MarketTransaction, Transaction},
+        ordering::{AddonTransaction, MarketTransaction, Transaction},
         wrapper::List,
     };
 
@@ -870,7 +980,7 @@ mod tests {
     #[test]
     #[traced_test]
     fn deserialize_addon_transactions() {
-        let _example_data = r#"
+        let example_data = r#"
             [
                 {
                     "transaction":{
@@ -882,15 +992,15 @@ mod tests {
                         "id":"failover_subnet_ipv4_29",
                         "name":"Failover subnet \/29",
                         "price":{
-                        "location":"NBG1",
-                        "price":{
-                            "net":"15.1261",
-                            "gross":"15.1261"
-                        },
-                        "price_setup":{
-                            "net":"152.0000",
-                            "gross":"152.0000"
-                        }
+                            "location":"NBG1",
+                            "price":{
+                                "net":"15.1261",
+                                "gross":"15.1261"
+                            },
+                            "price_setup":{
+                                "net":"152.0000",
+                                "gross":"152.0000"
+                            }
                         }
                     },
                     "resources":[
@@ -908,15 +1018,15 @@ mod tests {
                         "id":"failover_subnet_ipv4_29",
                         "name":"Failover subnet \/29",
                         "price":{
-                        "location":"NBG1",
-                        "price":{
-                            "net":"15.1261",
-                            "gross":"15.1261"
-                        },
-                        "price_setup":{
-                            "net":"152.0000",
-                            "gross":"152.0000"
-                        }
+                            "location":"NBG1",
+                            "price":{
+                                "net":"15.1261",
+                                "gross":"15.1261"
+                            },
+                            "price_setup":{
+                                "net":"152.0000",
+                                "gross":"152.0000"
+                            }
                         }
                     },
                     "resources":[
@@ -928,5 +1038,9 @@ mod tests {
                     }
                 }
             ]"#;
+
+        let transactions: List<AddonTransaction> = serde_json::from_str(example_data).unwrap();
+
+        info!("{transactions:#?}");
     }
 }
