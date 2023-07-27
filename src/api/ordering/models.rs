@@ -413,7 +413,7 @@ pub struct MarketTransaction {
     pub product: PurchasedMarketProduct,
 }
 
-/// Transaction ID, e.g. "B20150121-344957-251478".
+/// Market Transaction ID, e.g. "B20150121-344957-251478".
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MarketTransactionId(pub String);
 
