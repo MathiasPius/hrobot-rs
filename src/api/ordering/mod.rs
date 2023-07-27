@@ -266,7 +266,7 @@ impl AsyncRobot {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::ordering::ServerId;
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
@@ -274,7 +274,7 @@ impl AsyncRobot {
     /// for addon in robot.list_available_addons(
     ///     ServerId(1234)
     /// ).await.unwrap() {
-    ///     println!("{addon#:?}");
+    ///     println!("{addon:#?}");
     /// }
     /// # }
     /// ```
