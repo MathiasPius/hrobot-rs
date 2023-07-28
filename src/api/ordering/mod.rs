@@ -182,7 +182,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # use hrobot::api::ordering::{
     /// #   AddonId, ProductId, AuthorizationMethod, ProductOrder,
-    /// #   ImSeriousAboutBuyingAServer, Location,
+    /// #   ImSeriousAboutSpendingMoney, Location,
     /// # };
     /// # use tracing::info;
     /// # #[tokio::main]
@@ -201,7 +201,7 @@ impl AsyncRobot {
     ///         addons: vec![AddonId::from("primary_ipv4")],
     ///         comment: None,
     ///         // Don't forget to change this line, if you ACTUALLY want to make the purchase!
-    ///         i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutBuyingAServer::Uhhhh,
+    ///         i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutSpendingMoney::Uhhhh,
     ///     }
     /// ).await.unwrap();
     /// info!("{transaction:#?}");
@@ -334,7 +334,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # use hrobot::api::ordering::{
     /// #   AddonId, MarketProductId, AuthorizationMethod, MarketProductOrder,
-    /// #   ImSeriousAboutBuyingAServer,
+    /// #   ImSeriousAboutSpendingMoney,
     /// # };
     /// # use tracing::info;
     /// # #[tokio::main]
@@ -352,7 +352,7 @@ impl AsyncRobot {
     ///         addons: vec![AddonId::from("primary_ipv4")],
     ///         comment: None,
     ///         // Don't forget to change this line, if you ACTUALLY want to make the purchase!
-    ///         i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutBuyingAServer::Uhhhh,
+    ///         i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutSpendingMoney::Uhhhh,
     ///     }
     /// ).await.unwrap();
     /// info!("{transaction:#?}");
@@ -607,7 +607,7 @@ mod tests {
         use tracing_test::traced_test;
 
         use crate::api::ordering::{
-            AddonId, AuthorizationMethod, ImSeriousAboutBuyingAServer, Location,
+            AddonId, AuthorizationMethod, ImSeriousAboutSpendingMoney, Location,
             MarketProductOrder, ProductId, ProductOrder,
         };
 
@@ -638,7 +638,7 @@ mod tests {
                     language: Some("en".to_string()),
                     addons: vec![AddonId::from("primary_ipv4")],
                     comment: None,
-                    i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutBuyingAServer::Uhhhh,
+                    i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutSpendingMoney::Uhhhh,
                 };
 
                 let result = robot.place_market_order(order).await.unwrap();
@@ -671,7 +671,7 @@ mod tests {
                 location: Location::from("FSN1"),
                 addons: vec![AddonId::from("primary_ipv4")],
                 comment: None,
-                i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutBuyingAServer::Uhhhh,
+                i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutSpendingMoney::Uhhhh,
             };
 
             let result = robot.place_product_order(order).await.unwrap();

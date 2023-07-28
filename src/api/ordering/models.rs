@@ -778,17 +778,33 @@ impl PartialEq<u32> for MarketProductId {
     }
 }
 
+/// Authorization method chosen for the purchase.
+/// Only one can be selected.
 #[derive(Debug, Clone)]
 pub enum AuthorizationMethod {
+    /// List of fingerprints corresponding to ssh keys already
+    /// provisioned within the Hetzner Robot system.
     Keys(Vec<String>),
+    /// Set a root password for the server upon provisioning.
     Password(String),
 }
 
+/// LetMeSpendMyMoneyAlready must be selected for any purchase order to
+/// actually go through, otherwise the "test" flag will be set.
+/// and the API will just simulate a purchase, returning a
+/// "Cancelled" transaction.
 #[derive(Default, Debug, Clone, Eq, PartialEq)]
-pub enum ImSeriousAboutBuyingAServer {
+pub enum ImSeriousAboutSpendingMoney {
+    /// This variant must be selected for any purchase order to
+    /// actually go through, otherwise the "test" flag will be set.
+    /// and the API will just simulate a purchase, returning a
+    /// "Cancelled" transaction.
     LetMeSpendMyMoneyAlready,
+    /// This variant will mark the purchase order as just a test,
+    /// meaning the API will return a "Cancelled" transaction, and
+    /// not actually go through with the purchase, only simulate it.
     #[default]
-    Uhhhh,
+    NoThisIsJustATest,
 }
 
 #[derive(Debug, Clone)]
@@ -800,7 +816,7 @@ pub struct ProductOrder {
     pub language: Option<String>,
     pub comment: Option<String>,
     pub addons: Vec<AddonId>,
-    pub i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutBuyingAServer,
+    pub i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutSpendingMoney,
 }
 
 impl UrlEncode for ProductOrder {
@@ -837,7 +853,7 @@ impl UrlEncode for ProductOrder {
         }
 
         if self.i_want_to_spend_money_to_purchase_a_server
-            == ImSeriousAboutBuyingAServer::LetMeSpendMyMoneyAlready
+            == ImSeriousAboutSpendingMoney::LetMeSpendMyMoneyAlready
         {
             f.set("test", "false")
         } else {
@@ -854,7 +870,7 @@ pub struct MarketProductOrder {
     pub language: Option<String>,
     pub comment: Option<String>,
     pub addons: Vec<AddonId>,
-    pub i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutBuyingAServer,
+    pub i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutSpendingMoney,
 }
 
 impl UrlEncode for MarketProductOrder {
@@ -889,7 +905,7 @@ impl UrlEncode for MarketProductOrder {
         }
 
         if self.i_want_to_spend_money_to_purchase_a_server
-            == ImSeriousAboutBuyingAServer::LetMeSpendMyMoneyAlready
+            == ImSeriousAboutSpendingMoney::LetMeSpendMyMoneyAlready
         {
             f.set("test", "false")
         } else {
@@ -907,7 +923,7 @@ mod tests {
         api::{
             ordering::{
                 AddonId, AddonTransaction, AuthorizationMethod, AvailableAddon,
-                ImSeriousAboutBuyingAServer, MarketProductId, MarketTransaction,
+                ImSeriousAboutSpendingMoney, MarketProductId, MarketTransaction,
                 ProductTransaction,
             },
             wrapper::List,
@@ -930,7 +946,8 @@ mod tests {
             language: Some("en".to_string()),
             addons: vec![AddonId::from("primary_ipv4")],
             comment: None,
-            i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutBuyingAServer::Uhhhh,
+            i_want_to_spend_money_to_purchase_a_server:
+                ImSeriousAboutSpendingMoney::NoThisIsJustATest,
         };
 
         info!("{}", a.encode());
