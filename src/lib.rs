@@ -62,10 +62,6 @@
     unused_results
 )]
 #![forbid(unsafe_code)]
-#![feature(try_trait_v2)]
-#![feature(const_trait_impl)]
-#![feature(const_mut_refs)]
-#![feature(const_replace)]
 pub mod api;
 pub mod error;
 
