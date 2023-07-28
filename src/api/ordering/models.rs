@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::HashMap, fmt::Display, net::IpAddr};
 
 use bytesize::ByteSize;
 use rust_decimal::Decimal;
@@ -816,6 +816,11 @@ pub struct ProductOrder {
     pub language: Option<String>,
     pub comment: Option<String>,
     pub addons: Vec<AddonId>,
+
+    /// LetMeSpendMyMoneyAlready must be selected for any purchase order to
+    /// actually go through, otherwise the "test" flag will be set.
+    /// and the API will just simulate a purchase, returning a
+    /// "Cancelled" transaction.
     pub i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutSpendingMoney,
 }
 
@@ -870,6 +875,11 @@ pub struct MarketProductOrder {
     pub language: Option<String>,
     pub comment: Option<String>,
     pub addons: Vec<AddonId>,
+
+    /// LetMeSpendMyMoneyAlready must be selected for any purchase order to
+    /// actually go through, otherwise the "test" flag will be set.
+    /// and the API will just simulate a purchase, returning a
+    /// "Cancelled" transaction.
     pub i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutSpendingMoney,
 }
 
@@ -905,6 +915,53 @@ impl UrlEncode for MarketProductOrder {
         }
 
         if self.i_want_to_spend_money_to_purchase_a_server
+            == ImSeriousAboutSpendingMoney::LetMeSpendMyMoneyAlready
+        {
+            f.set("test", "false")
+        } else {
+            f.set("test", "true")
+        }
+    }
+}
+
+/// Addon purchase order.
+#[derive(Debug, Clone)]
+pub struct AddonOrder {
+    /// Unique ID of the addon to be purchased.
+    pub id: AddonId,
+
+    /// Server ID which this addon applies to.
+    pub server: ServerId,
+
+    /// RIPE reason: mandatory for addon types "ip_ipv4", "subnet_ipv4"
+    /// and "failover_subnet_ipv4"
+    pub reason: Option<String>,
+
+    /// Routing target for subnets: usable for addon type "subnet_ipv4"
+    /// (Optional: default is the server's primary IP address)
+    pub gateway: Option<IpAddr>,
+
+    /// LetMeSpendMyMoneyAlready must be selected for any purchase order to
+    /// actually go through, otherwise the "test" flag will be set.
+    /// and the API will just simulate a purchase, returning a
+    /// "Cancelled" transaction.
+    pub i_want_to_spend_money_to_purchase_an_addon: ImSeriousAboutSpendingMoney,
+}
+
+impl UrlEncode for AddonOrder {
+    fn encode_into(&self, mut f: crate::urlencode::UrlEncodingBuffer<'_>) {
+        f.set("product_id", &self.id);
+        f.set("server_number", self.server);
+
+        if let Some(reason) = &self.reason {
+            f.set("reason", reason);
+        }
+
+        if let Some(gateway) = &self.gateway {
+            f.set("gateway", gateway);
+        }
+
+        if self.i_want_to_spend_money_to_purchase_an_addon
             == ImSeriousAboutSpendingMoney::LetMeSpendMyMoneyAlready
         {
             f.set("test", "false")

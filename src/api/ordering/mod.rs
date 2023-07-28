@@ -126,6 +126,14 @@ fn place_purchase_order(order: ProductOrder) -> UnauthenticatedRequest<Single<Pr
         .with_serialized_body(order.encode())
 }
 
+fn place_addon_purchase_order(
+    order: AddonOrder,
+) -> UnauthenticatedRequest<Single<AddonTransaction>> {
+    UnauthenticatedRequest::from("https://robot-ws.your-server.de/order/server_addon/transaction")
+        .with_method("POST")
+        .with_serialized_body(order.encode())
+}
+
 impl AsyncRobot {
     /// List all available products.
     ///
@@ -201,7 +209,7 @@ impl AsyncRobot {
     ///         addons: vec![AddonId::from("primary_ipv4")],
     ///         comment: None,
     ///         // Don't forget to change this line, if you ACTUALLY want to make the purchase!
-    ///         i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutSpendingMoney::Uhhhh,
+    ///         i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutSpendingMoney::NoThisIsJustATest,
     ///     }
     /// ).await.unwrap();
     /// info!("{transaction:#?}");
@@ -352,7 +360,7 @@ impl AsyncRobot {
     ///         addons: vec![AddonId::from("primary_ipv4")],
     ///         comment: None,
     ///         // Don't forget to change this line, if you ACTUALLY want to make the purchase!
-    ///         i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutSpendingMoney::Uhhhh,
+    ///         i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutSpendingMoney::NoThisIsJustATest,
     ///     }
     /// ).await.unwrap();
     /// info!("{transaction:#?}");
@@ -383,6 +391,37 @@ impl AsyncRobot {
     /// ```
     pub async fn list_available_addons(&self, id: ServerId) -> Result<Vec<AvailableAddon>, Error> {
         Ok(self.go(list_available_addons(id)).await?.0)
+    }
+
+    /// Purchase an addon for a server.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::ordering::{
+    /// #   AddonId, AddonOrder,
+    /// #   ImSeriousAboutSpendingMoney,
+    /// # };
+    /// # use hrobot::api::server::ServerId;
+    /// # use tracing::info;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// let transaction = robot.place_addon_order(
+    ///     AddonOrder {
+    ///         id: AddonId::from("additional_ipv4"),
+    ///         server: ServerId(1234567),
+    ///         reason: Some("VPS".to_string()),
+    ///         gateway: Some("10.0.0.1".parse().unwrap()),
+    ///         // Don't forget to change this line, if you ACTUALLY want to make the purchase!
+    ///         i_want_to_spend_money_to_purchase_an_addon: ImSeriousAboutSpendingMoney::NoThisIsJustATest,
+    ///     }
+    /// ).await.unwrap();
+    /// info!("{transaction:#?}");
+    /// # }
+    /// ```
+    pub async fn place_addon_order(&self, order: AddonOrder) -> Result<AddonTransaction, Error> {
+        Ok(self.go(place_addon_purchase_order(order)).await?.0)
     }
 
     /// List addon transactions from the last 30 days.
@@ -607,7 +646,7 @@ mod tests {
         use tracing_test::traced_test;
 
         use crate::api::ordering::{
-            AddonId, AuthorizationMethod, ImSeriousAboutSpendingMoney, Location,
+            AddonId, AddonOrder, AuthorizationMethod, ImSeriousAboutSpendingMoney, Location,
             MarketProductOrder, ProductId, ProductOrder,
         };
 
@@ -638,7 +677,8 @@ mod tests {
                     language: Some("en".to_string()),
                     addons: vec![AddonId::from("primary_ipv4")],
                     comment: None,
-                    i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutSpendingMoney::Uhhhh,
+                    i_want_to_spend_money_to_purchase_a_server:
+                        ImSeriousAboutSpendingMoney::NoThisIsJustATest,
                 };
 
                 let result = robot.place_market_order(order).await.unwrap();
@@ -671,12 +711,38 @@ mod tests {
                 location: Location::from("FSN1"),
                 addons: vec![AddonId::from("primary_ipv4")],
                 comment: None,
-                i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutSpendingMoney::Uhhhh,
+                i_want_to_spend_money_to_purchase_a_server:
+                    ImSeriousAboutSpendingMoney::NoThisIsJustATest,
             };
 
             let result = robot.place_product_order(order).await.unwrap();
 
             info!("{result:#?}");
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        #[ignore = "this test is designed to not make a purchase, but who knows what might go wrong."]
+        async fn test_purchase_additional_ipv4() {
+            dotenvy::dotenv().ok();
+
+            let robot = AsyncRobot::default();
+
+            if let Some(server) = robot.list_servers().await.unwrap().first() {
+                let transaction = robot
+                    .place_addon_order(AddonOrder {
+                        id: AddonId::from("additional_ipv4"),
+                        server: server.id,
+                        reason: Some("VPS".to_string()),
+                        gateway: None,
+                        i_want_to_spend_money_to_purchase_an_addon:
+                            ImSeriousAboutSpendingMoney::NoThisIsJustATest,
+                    })
+                    .await
+                    .unwrap();
+
+                info!("{transaction:#?}");
+            }
         }
     }
 }
