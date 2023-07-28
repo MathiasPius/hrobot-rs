@@ -48,12 +48,21 @@ bar: Server Auction in FSN1-DC5
 
 <!-- cargo-rdme end -->
 
-# API Endpoint Implementation Progress
+## API Endpoint Implementation Progress
 
-**Warning**:
+The entire Hetzner Robot API is covered at this point!
 
-* [^1] not tested, use at your own risk.
-* [^2] not officially documented by Hetzner, use at own risk.
+Some endpoints have not been tested due to the cost and disruption to running servers, so
+please consult the section below for a detailed overview of the endpoints.
+<details><summary>
+Detailed API overview.
+</summary>
+
+**Warning!**
+
+[^1] not tested, use at your own risk.
+
+[^2] not officially documented by Hetzner, use at own risk.
 
 - [x] **Server.**
     - [x] List servers.
@@ -160,7 +169,7 @@ bar: Server Auction in FSN1-DC5
         - [x] List available addons for server.
         - [x] List recent addon transactions.[^1]
         - [x] Get specific addon transaction information.[^1]
-        - [ ] Order addon for server.
+        - [x] Order addon for server.
 - [x] **Storage Box.**
     - [x] List storageboxes.
     - [x] Get specific storage box.
@@ -207,7 +216,9 @@ bar: Server Auction in FSN1-DC5
     - [x] Remove servers from vSwitch.
 
 [^1]: Not tested, but *should* work. Use at own risk.
+
 [^2]: Not officially documented by Hetzner, use at own risk.
+</details>
 
 # Testing
 Tests are divided into three categories:
