@@ -1,6 +1,6 @@
-//! `hrobot` is an unofficial synchronous Rust client for interacting with the [Hetzner Robot API](https://robot.your-server.de/doc/webservice/en.html)
+//! `hrobot` is an unofficial asynchronous Rust client for interacting with the [Hetzner Robot API](https://robot.your-server.de/doc/webservice/en.html)
 //!
-//! See the trait implementations for [`Robot`](crate::robot::Robot) for a complete list of supported API Endpoints.
+//! See the [`AsyncRobot`](crate::AsyncRobot) struct for a complete list of supported API Endpoints.
 //!
 //! **Disclaimer:** the authors are not associated with Hetzner (except as customers), and the crate is in no way endorsed or supported by Hetzner Online GmbH.
 //!
@@ -10,53 +10,66 @@
 //! If you already have a Hetzner account, you can create one through the [Hetzner Robot](https://robot.your-server.de) web interface under [Settings/Preferences](https://robot.your-server.de/preferences/index).
 //!
 //! # Example
-//! Here's a quick example showing how to instantiate the [`Robot`](crate::robot::Robot) client object
+//! Here's a quick example showing how to instantiate the [`AsyncRobot`](crate::AsyncRobot) client object
 //! and fetching a list of all dedicated servers owned by the account identified by `username`
-//! ```no_run
+//! ```rust,no_run
 //! use hrobot::*;
 //!
-//! let client = Robot::new(
-//!     &std::env::var("HROBOT_USERNAME").unwrap(),
-//!     &std::env::var("HROBOT_PASSWORD").unwrap()
-//! );
+//! #[tokio::main]
+//! async fn main() {
+//!     // Robot is instantiated using the environment
+//!     // variables HROBOT_USERNAME an HROBOT_PASSWORD.
+//!     let robot = AsyncRobot::default();
 //!
-//! for server in client.list_servers().unwrap() {
-//!     println!("{name}: {product} in {location}",
-//!         name = server.name,
-//!         product = server.product,
-//!         location = server.dc
-//!     );
+//!     for server in robot.list_servers().await.unwrap() {
+//!         println!("{name}: {product} in {location}",
+//!             name = server.name,
+//!             product = server.product,
+//!             location = server.dc
+//!         );
+//!     }
 //! }
 //! ```
 //!
-//! Running the above example should yield something similar to the anonymized output below
+//! Running the above example should yield something similar to the output below:
 //! ```text
-//! foobar: AX51-NVMe in FSN1-DC18
+//! foo: AX51-NVMe in FSN1-DC18
+//! bar: Server Auction in FSN1-DC5
 //! ```
-mod boot;
-mod error;
-mod firewall;
-mod ip;
-mod keys;
-mod order;
-mod rdns;
-mod reset;
-mod robot;
-mod server;
-mod subnet;
-mod vswitch;
-mod wol;
+#![deny(
+    bad_style,
+    dead_code,
+    improper_ctypes,
+    non_shorthand_field_patterns,
+    no_mangle_generic_items,
+    overflowing_literals,
+    path_statements,
+    patterns_in_fns_without_body,
+    private_in_public,
+    unconditional_recursion,
+    unused,
+    unused_allocation,
+    unused_comparisons,
+    unused_parens,
+    while_true,
+    missing_debug_implementations,
+    missing_docs,
+    trivial_casts,
+    trivial_numeric_casts,
+    unused_extern_crates,
+    unused_import_braces,
+    unused_qualifications,
+    unused_results
+)]
+#![forbid(unsafe_code)]
+pub mod api;
+pub mod error;
 
-pub use boot::*;
-pub use error::*;
-pub use firewall::*;
-pub use ip::*;
-pub use keys::*;
-pub use order::*;
-pub use rdns::*;
-pub use reset::*;
-pub use robot::*;
-pub use server::*;
-pub use subnet::*;
-pub use vswitch::*;
-pub use wol::*;
+mod client;
+mod conversion;
+mod urlencode;
+
+pub use ::bytesize::ByteSize;
+pub use ::rust_decimal::Decimal;
+pub use ::time;
+pub use client::*;

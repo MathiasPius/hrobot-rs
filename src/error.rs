@@ -1,166 +1,495 @@
+//! Typed error handling for API responses.
+
 use std::fmt::Display;
 
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use thiserror::Error;
 
+fn deserialize_null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    T: Default + Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_default())
+}
+
+/// Error returned by the Hetzner Robot API.
 #[derive(Debug, Deserialize, Error)]
 #[serde(tag = "code", rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum APIError {
+pub enum ApiError {
+    /// Resource Unavailable.
     #[error("resource unavailable")]
     Unavailable,
+
+    /// Resource not found.
     #[error("not found: {message}")]
-    NotFound { message: String },
+    NotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Server not found.
     #[error("server not found: {message}")]
-    ServerNotFound { message: String },
+    ServerNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// IP address not found.
     #[error("ip address not found: {message}")]
-    IpNotFound { message: String },
+    IpNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Subnet not found.
     #[error("subnet not found: {message}")]
-    SubnetNotFound { message: String },
+    SubnetNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// MAC address not found.
     #[error("mac address not found: {message}")]
-    MacNotFound { message: String },
+    MacNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// MAC address not available.
     #[error("mac address not available: {message}")]
-    MacNotAvailable { message: String },
+    MacNotAvailable {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// MAC address already set.
     #[error("mac address already set: {message}")]
-    MacAlreadySet { message: String },
+    MacAlreadySet {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// MAC address failure.
     #[error("mac address failure: {message}")]
-    MacFailed { message: String },
+    MacFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Wake-on-LAN not available.
     #[error("wak-on-lan not available: {message}")]
-    WolNotAvailable { message: String },
+    WolNotAvailable {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Wake-on-LAN failed.
     #[error("wake-on-lan failed: {message}")]
-    WolFailed { message: String },
+    WolFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Outdated Windows version.
     #[error("outdated windows version: {message}")]
-    WindowsOutdatedVersion { message: String },
+    WindowsOutdatedVersion {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Missing Windows addon.
     #[error("windows addon missing: {message}")]
-    WindowsMissingAddon { message: String },
+    WindowsMissingAddon {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Missing Plesk addon.
     #[error("plesk addon missing: {message}")]
-    PleskMissingAddon { message: String },
+    PleskMissingAddon {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Missing CPanel addon.
     #[error("cpanel addon missing: {message}")]
-    CpanelMissingAddon { message: String },
+    CpanelMissingAddon {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// API Rate limit exceeded.
     #[error("rate limit exceeded: {message} (max req: {max_request}, interval: {interval}")]
     RateLimitExceeded {
+        /// Human-readable message associated with the error.
         message: String,
+        /// Maximum number of requests allowed within the specified interval.
         max_request: u32,
+        /// Interval within which the max_requests are the limit.
         interval: u32,
     },
+
+    /// Reset not available.
     #[error("reset not available: {message}")]
-    ResetNotAvailable { message: String },
+    ResetNotAvailable {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Storage Box not found.
     #[error("storage box not found: {message}")]
-    StorageboxNotFound { message: String },
+    StorageboxNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Storage Box sub-account not found.
     #[error("storage box sub-account not found: {message}")]
-    StorageboxSubaccountNotFound { message: String },
+    StorageboxSubaccountNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Storage Box sub-account limit exceeded.
     #[error("stoage box sub-account limit exceeded: {message}")]
-    StorageboxSubaccountLimitExceeded { message: String },
+    StorageboxSubaccountLimitExceeded {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Snapshot not found.
     #[error("snapshot not found: {message}")]
-    SnapshotNotFound { message: String },
+    SnapshotNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Snapshot limit exceeded.
     #[error("snapshot limit exceeded: {message}")]
-    SnapshotLimitExceeded { message: String },
+    SnapshotLimitExceeded {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Firewall port not found.
     #[error("firewall port not found: {message}")]
-    FirewallPortNotFound { message: String },
+    FirewallPortNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Firewall not available.
     #[error("firewall not available: {message}")]
-    FirewallNotAvailable { message: String },
+    FirewallNotAvailable {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Firewall template not found.
     #[error("firewall template not found: {message}")]
-    FirewallTemplateNotFound { message: String },
+    FirewallTemplateNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Firewall is already processing a request.
     #[error("firewall is already processing a request: {message}")]
-    FirewallInProcess { message: String },
+    FirewallInProcess {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// vSwitch limit reached.
     #[error("vSwitch limit reached: {message}")]
-    VswitchLimitReached { message: String },
+    VswitchLimitReached {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// vSwitch not available.
     #[error("vswitch not available: {message}")]
-    VswitchNotAvailable { message: String },
+    VswitchNotAvailable {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// vSwitch server limit reached.
     #[error("vSwitch server limit reached: {message}")]
-    VswitchServerLimitReached { message: String },
+    VswitchServerLimitReached {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// vSwitch-per-server limit reached.
     #[error("vSwitch-per-server limit reached: {message}")]
-    VswitchPerServerLimitReached { message: String },
+    VswitchPerServerLimitReached {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// vSwitch is already processing a request.
     #[error("vSwitch is already processing a request: {message}")]
-    VswitchInProcess { message: String },
+    VswitchInProcess {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// vSwitch VLAN-ID is not unique.
     #[error("vSwitch VLAN-ID must be unique: {message}")]
-    VswitchVlanNotUnique { message: String },
+    VswitchVlanNotUnique {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Manual reset is active.
     #[error("manual reset is active: {message}")]
-    ResetManualActive { message: String },
+    ResetManualActive {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Key update failed.
     #[error("key update failed: {message}")]
-    KeyUpdateFailed { message: String },
+    KeyUpdateFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Key creation failed.
     #[error("key creation failed: {message}")]
-    KeyCreateFailed { message: String },
+    KeyCreateFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Key deletion failed.
     #[error("key deletion failed: {message}")]
-    KeyDeleteFailed { message: String },
+    KeyDeleteFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Key already exists.
     #[error("key already exists: {message}")]
-    KeyAlreadyExists { message: String },
+    KeyAlreadyExists {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Reverse DNS entry not found.
     #[error("rnds entry not found: {message}")]
-    RdnsNotFound { message: String },
+    RdnsNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Reverse DNS entry creation failed.
     #[error("rdns creation failed: {message}")]
-    RdnsCreateFailed { message: String },
+    RdnsCreateFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Reverse DNS update failed.
     #[error("rdns update failed: {message}")]
-    RdnsUpdateFailed { message: String },
+    RdnsUpdateFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Reverse DNS entry deletion failed.
     #[error("rnds deletion failed: {message}")]
-    RdnsDeleteFailed { message: String },
+    RdnsDeleteFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Reverse DNS entry already exists.
     #[error("rnds entry already exists: {message}")]
-    RdnsAlreadyExists { message: String },
+    RdnsAlreadyExists {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Reset failed.
     #[error("reset failed: {message}")]
-    ResetFailed { message: String },
+    ResetFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Invalid input.
     #[error("invalid input: {message}")]
     InvalidInput {
+        /// Human-readable message associated with the error.
         message: String,
-        #[serde(default)]
+        #[serde(default, deserialize_with = "deserialize_null_default")]
+        /// List of fields that are missing from the request.
         missing: Vec<String>,
-        #[serde(default)]
+        /// List of fields which contained invalid data.
+        #[serde(default, deserialize_with = "deserialize_null_default")]
         invalid: Vec<String>,
     },
+    /// Conflict.
     #[error("conflict: {message}")]
-    Conflict { message: String },
+    Conflict {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Server cancellation "reserve location" must be false.
     #[error("server cancellation reserve location must be false: {message}")]
-    ServerCancellationReserveLocationFalseOnly { message: String },
+    ServerCancellationReserveLocationFalseOnly {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Traffic warning update failed.
     #[error("traffic warning update failed: {message}")]
-    TrafficWarningUpdateFailed { message: String },
+    TrafficWarningUpdateFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Boot is not available.
     #[error("boot not available: {message}")]
-    BootNotAvailable { message: String },
+    BootNotAvailable {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Internal Error.
     #[error("internal error: {message}")]
-    InternalError { message: String },
+    InternalError {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Failover is already routed.
     #[error("failover already routed: {message}")]
-    FailoverAlreadyRouted { message: String },
+    FailoverAlreadyRouted {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Failover failed.
     #[error("failover failed: {message}")]
-    FailoverFailed { message: String },
+    FailoverFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Failover is locked.
     #[error("failover locked: {message}")]
-    FailoverLocked { message: String },
+    FailoverLocked {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Failover not complete.
     #[error("failover not complete: {message}")]
-    FailoverNotComplete { message: String },
+    FailoverNotComplete {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// New failover server not found.
     #[error("new failover server not found: {message}")]
-    FailoverNewServerNotFound { message: String },
-    #[error("server reversal not possible: {message}")]
-    ServerReversalNotPossible { message: String },
+    FailoverNewServerNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Withdrawal of server order not possible.
+    #[error("withdrawal of server order not possible: {message}")]
+    ServerReversalNotPossible {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Boot activation failed.
     #[error("boot activation failed: {message}")]
-    BootActivationFailed { message: String },
+    BootActivationFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Boot deactivation failed.
     #[error("boot deactivation failed: {message}")]
-    BootDeactivationFailed { message: String },
+    BootDeactivationFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Boot already enabled.
     #[error("boot already enabled: {message}")]
-    BootAlreadyEnabled { message: String },
+    BootAlreadyEnabled {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Boot blocked.
     #[error("boot locked: {message}")]
-    BootBlocked { message: String },
+    BootBlocked {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
+
+    /// Unknown/generic error.
     #[serde(skip_deserializing)]
     #[error("unknown error {0}")]
     Generic(GenericError),
 }
 
+/// Provided input parameters were either incomplete or invalid.
 #[derive(Debug, Deserialize)]
 pub struct InvalidInputError {
+    /// Missing input fields.
     #[serde(default)]
     pub missing: Vec<String>,
+
+    /// Invalid input fields.
     #[serde(default)]
     pub invalid: Vec<String>,
 }
 
+/// Hetzner Robot API rate-limit has been exceeded.
 #[derive(Debug, Deserialize)]
 pub struct RateLimitError {
+    /// Time interval in which the [`max_request`](RateLimitError::max_request)
+    /// limit applies.
     pub interval: u32,
+
+    /// Maximum number of requests allowed within a given [`interval`](RateLimitError::interval).
     pub max_request: u32,
 }
 
+/// Catches generic error cases not explicitly defined in [`ApiError`]
 #[derive(Debug, Deserialize)]
 pub struct GenericError {
+    /// HTTP Status Code, e.g. `404`.
     pub status: u32,
+
+    /// Short error code, e.g. `"BOOT_NOT_AVAILABLE"`
     pub code: String,
+
+    /// Human-readable explanation of the error.
     pub message: String,
+
+    /// Invalid input description.
+    ///
+    /// Only available if [`code`](GenericError::code)
+    /// is `"INVALID_INPUT"`
     #[serde(flatten)]
     pub invalid_input: Option<InvalidInputError>,
     #[serde(flatten)]
+
+    /// Rate limit error description.
+    ///
+    /// Only available if [`code`](GenericError::code)
+    /// is `"RATE_LIMIT_EXCEEDED"`
     pub rate_limit: Option<RateLimitError>,
 }
 
@@ -179,7 +508,7 @@ impl Display for GenericError {
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub(crate) enum MaybeTyped {
-    Typed(APIError),
+    Typed(ApiError),
     Untyped(GenericError),
 }
 
@@ -204,44 +533,39 @@ impl MaybeTyped {
     }
 }
 
-impl From<MaybeTyped> for APIError {
+impl From<MaybeTyped> for ApiError {
     fn from(maybe: MaybeTyped) -> Self {
         match maybe {
             MaybeTyped::Typed(t) => t,
-            MaybeTyped::Untyped(t) => APIError::Generic(t),
+            MaybeTyped::Untyped(t) => ApiError::Generic(t),
         }
     }
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-pub(crate) enum APIResult<T> {
-    Ok(T),
-    Error(MaybeTypedResponse),
-}
-
-impl<T> From<APIResult<T>> for Result<T, Error> {
-    fn from(result: APIResult<T>) -> Self {
-        match result {
-            APIResult::Ok(inner) => Ok(inner),
-            APIResult::Error(e) => Err(Error::API(e.error.into())),
-        }
-    }
-}
-
+/// Error which can originate at any stage of the API request.
 #[derive(Debug, Error)]
 pub enum Error {
+    /// Covers any errors produced by the Client implementations.
     #[error("transport error: {0}")]
     Transport(#[from] Box<dyn std::error::Error>),
+    /// Failure when deserializing json body response from the API.
     #[error("json decode error: {0}")]
-    Decode(#[from] serde_json::Error),
+    Deserialization(#[from] serde_json::Error),
+    /// Failure while attempting to encode the specified input
+    /// parameters as `application/x-www-form-urlencoded`
+    #[error("html form encoding error: {0}")]
+    Serialization(#[from] serde_html_form::ser::Error),
+    /// Error returned by the Hetzner Robot API.
     #[error("api error: {0}")]
-    API(#[from] APIError),
+    Api(#[from] ApiError),
 }
 
-impl From<reqwest::Error> for Error {
-    fn from(e: reqwest::Error) -> Self {
-        Error::Transport(Box::new(e))
+impl Error {
+    /// Construct an [`Error::Transport`] from the given error.
+    ///
+    /// Utility function for use with [`Result::map_err()`] specifically.
+    pub fn transport(error: impl std::error::Error + 'static) -> Error {
+        Error::Transport(Box::new(error))
     }
 }
 
@@ -323,7 +647,7 @@ mod tests {
     }
 
     #[test]
-    fn deserialize_error_code() {
+    fn test_deserialize_error_code() {
         for code in ERROR_CODES {
             let format = ErrorFormat {
                 status: 200,
@@ -333,7 +657,33 @@ mod tests {
 
             let error: MaybeTyped =
                 serde_json::from_str(&serde_json::to_string(&format).unwrap()).unwrap();
-            assert!(error.is_typed(), "{}: {:#?}", code, APIError::from(error));
+            assert!(error.is_typed(), "{}: {:#?}", code, ApiError::from(error));
         }
+    }
+
+    #[test]
+    fn test_deserialize_invalid_input() {
+        let error = r#"
+            {
+                "error": {
+                    "status":400,
+                    "code":"INVALID_INPUT",
+                    "message":"invalid input",
+                    "missing":null,
+                    "invalid":[
+                        "rules"
+                    ]
+                }
+            }
+        "#;
+
+        let err: MaybeTypedResponse = serde_json::from_str(error).unwrap();
+
+        assert!(matches!(
+            err,
+            MaybeTypedResponse {
+                error: MaybeTyped::Typed(ApiError::InvalidInput { .. })
+            }
+        ));
     }
 }
