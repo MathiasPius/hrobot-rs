@@ -314,7 +314,7 @@ impl PartialEq<str> for ProductId {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct Transaction {
+pub struct ProductTransaction {
     pub id: TransactionId,
 
     #[serde(with = "time::serde::rfc3339")]
@@ -792,6 +792,61 @@ pub enum ImSeriousAboutBuyingAServer {
 }
 
 #[derive(Debug, Clone)]
+pub struct ProductOrder {
+    pub id: ProductId,
+    pub auth: AuthorizationMethod,
+    pub location: Location,
+    pub distribution: Option<String>,
+    pub language: Option<String>,
+    pub comment: Option<String>,
+    pub addons: Vec<AddonId>,
+    pub i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutBuyingAServer,
+}
+
+impl UrlEncode for ProductOrder {
+    fn encode_into(&self, mut f: crate::urlencode::UrlEncodingBuffer<'_>) {
+        f.set("product_id", &self.id);
+
+        match &self.auth {
+            AuthorizationMethod::Keys(keys) => {
+                for key in keys {
+                    f.set("authorized_key[]", key)
+                }
+            }
+            AuthorizationMethod::Password(password) => {
+                f.set("password", password);
+            }
+        }
+
+        f.set("location", &self.location);
+
+        if let Some(dist) = &self.distribution {
+            f.set("dist", dist);
+        }
+
+        if let Some(lang) = &self.language {
+            f.set("lang", lang);
+        }
+
+        if let Some(comment) = &self.comment {
+            f.set("comment", comment);
+        }
+
+        for addon in &self.addons {
+            f.set("addon[]", addon);
+        }
+
+        if self.i_want_to_spend_money_to_purchase_a_server
+            == ImSeriousAboutBuyingAServer::LetMeSpendMyMoneyAlready
+        {
+            f.set("test", "false")
+        } else {
+            f.set("test", "true")
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct MarketProductOrder {
     pub id: MarketProductId,
     pub auth: AuthorizationMethod,
@@ -799,7 +854,7 @@ pub struct MarketProductOrder {
     pub language: Option<String>,
     pub comment: Option<String>,
     pub addons: Vec<AddonId>,
-    pub i_want_to_spend_money_to_purchase_a_server_i_mean_it: ImSeriousAboutBuyingAServer,
+    pub i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutBuyingAServer,
 }
 
 impl UrlEncode for MarketProductOrder {
@@ -833,7 +888,7 @@ impl UrlEncode for MarketProductOrder {
             f.set("addon[]", addon);
         }
 
-        if self.i_want_to_spend_money_to_purchase_a_server_i_mean_it
+        if self.i_want_to_spend_money_to_purchase_a_server
             == ImSeriousAboutBuyingAServer::LetMeSpendMyMoneyAlready
         {
             f.set("test", "false")
@@ -852,7 +907,8 @@ mod tests {
         api::{
             ordering::{
                 AddonId, AddonTransaction, AuthorizationMethod, AvailableAddon,
-                ImSeriousAboutBuyingAServer, MarketProductId, MarketTransaction, Transaction,
+                ImSeriousAboutBuyingAServer, MarketProductId, MarketTransaction,
+                ProductTransaction,
             },
             wrapper::List,
         },
@@ -874,8 +930,7 @@ mod tests {
             language: Some("en".to_string()),
             addons: vec![AddonId::from("primary_ipv4")],
             comment: None,
-            i_want_to_spend_money_to_purchase_a_server_i_mean_it:
-                ImSeriousAboutBuyingAServer::Uhhhh,
+            i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutBuyingAServer::Uhhhh,
         };
 
         info!("{}", a.encode());
@@ -968,7 +1023,7 @@ mod tests {
                     }
                 }
             ]"#;
-        let transactions: List<Transaction> = serde_json::from_str(example_data).unwrap();
+        let transactions: List<ProductTransaction> = serde_json::from_str(example_data).unwrap();
 
         info!("{transactions:#?}");
     }

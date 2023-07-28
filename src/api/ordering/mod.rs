@@ -60,11 +60,13 @@ fn get_product(id: &ProductId) -> UnauthenticatedRequest<Single<Product>> {
     ))
 }
 
-fn list_product_tranactions() -> UnauthenticatedRequest<List<Transaction>> {
+fn list_product_tranactions() -> UnauthenticatedRequest<List<ProductTransaction>> {
     UnauthenticatedRequest::from("https://robot-ws.your-server.de/order/server/transaction")
 }
 
-fn get_product_transaction(id: &TransactionId) -> UnauthenticatedRequest<Single<Transaction>> {
+fn get_product_transaction(
+    id: &TransactionId,
+) -> UnauthenticatedRequest<Single<ProductTransaction>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/order/server/transaction/{id}"
     ))
@@ -113,11 +115,15 @@ fn get_addon_transaction(
 fn place_market_purchase_order(
     order: MarketProductOrder,
 ) -> UnauthenticatedRequest<Single<MarketTransaction>> {
-    UnauthenticatedRequest::from(&format!(
-        "https://robot-ws.your-server.de/order/server_market/transaction"
-    ))
-    .with_method("POST")
-    .with_serialized_body(order.encode())
+    UnauthenticatedRequest::from("https://robot-ws.your-server.de/order/server_market/transaction")
+        .with_method("POST")
+        .with_serialized_body(order.encode())
+}
+
+fn place_purchase_order(order: ProductOrder) -> UnauthenticatedRequest<Single<ProductTransaction>> {
+    UnauthenticatedRequest::from("https://robot-ws.your-server.de/order/server/transaction")
+        .with_method("POST")
+        .with_serialized_body(order.encode())
 }
 
 impl AsyncRobot {
@@ -170,6 +176,44 @@ impl AsyncRobot {
         Ok(self.go(get_product(id)).await?.0)
     }
 
+    /// Purchase a standard server product.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use hrobot::api::ordering::{
+    /// #   AddonId, ProductId, AuthorizationMethod, ProductOrder,
+    /// #   ImSeriousAboutBuyingAServer, Location,
+    /// # };
+    /// # use tracing::info;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # dotenvy::dotenv().ok();
+    /// let robot = hrobot::AsyncRobot::default();
+    /// let transaction = robot.place_product_order(
+    ///     ProductOrder {
+    ///         id: ProductId::from("EX41"),
+    ///         auth: AuthorizationMethod::Keys(vec![
+    ///             "15:28:b0:03:95:f0:77:b3:10:56:15:6b:77:22:a5:bb".to_string()
+    ///         ]),
+    ///         distribution: Some("Rescue system".to_string()),
+    ///         language: Some("en".to_string()),
+    ///         location: Location::from("FSN1"),
+    ///         addons: vec![AddonId::from("primary_ipv4")],
+    ///         comment: None,
+    ///         // Don't forget to change this line, if you ACTUALLY want to make the purchase!
+    ///         i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutBuyingAServer::Uhhhh,
+    ///     }
+    /// ).await.unwrap();
+    /// info!("{transaction:#?}");
+    /// # }
+    /// ```
+    pub async fn place_product_order(
+        &self,
+        order: ProductOrder,
+    ) -> Result<ProductTransaction, Error> {
+        Ok(self.go(place_purchase_order(order)).await?.0)
+    }
+
     /// List product transactions from the last 30 days.
     ///
     /// # Example
@@ -183,7 +227,7 @@ impl AsyncRobot {
     /// }
     /// # }
     /// ```
-    pub async fn list_recent_product_transactions(&self) -> Result<Vec<Transaction>, Error> {
+    pub async fn list_recent_product_transactions(&self) -> Result<Vec<ProductTransaction>, Error> {
         Ok(self.go(list_product_tranactions()).await?.0)
     }
 
@@ -204,7 +248,7 @@ impl AsyncRobot {
     pub async fn get_product_transaction(
         &self,
         transaction: &TransactionId,
-    ) -> Result<Transaction, Error> {
+    ) -> Result<ProductTransaction, Error> {
         Ok(self.go(get_product_transaction(transaction)).await?.0)
     }
 
@@ -288,14 +332,30 @@ impl AsyncRobot {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::ordering::AddonTransactionId;
+    /// # use hrobot::api::ordering::{
+    /// #   AddonId, MarketProductId, AuthorizationMethod, MarketProductOrder,
+    /// #   ImSeriousAboutBuyingAServer,
+    /// # };
+    /// # use tracing::info;
     /// # #[tokio::main]
     /// # async fn main() {
     /// # dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.get_addon_transaction(
-    ///     &AddonTransactionId::from("B20150121-344958-251479")
+    /// let transaction = robot.place_market_order(
+    ///     MarketProductOrder {
+    ///         id: MarketProductId(12345678),
+    ///         auth: AuthorizationMethod::Keys(vec![
+    ///             "15:28:b0:03:95:f0:77:b3:10:56:15:6b:77:22:a5:bb".to_string()
+    ///         ]),
+    ///         distribution: Some("Rescue system".to_string()),
+    ///         language: Some("en".to_string()),
+    ///         addons: vec![AddonId::from("primary_ipv4")],
+    ///         comment: None,
+    ///         // Don't forget to change this line, if you ACTUALLY want to make the purchase!
+    ///         i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutBuyingAServer::Uhhhh,
+    ///     }
     /// ).await.unwrap();
+    /// info!("{transaction:#?}");
     /// # }
     /// ```
     pub async fn place_market_order(
@@ -547,7 +607,8 @@ mod tests {
         use tracing_test::traced_test;
 
         use crate::api::ordering::{
-            AddonId, AuthorizationMethod, ImSeriousAboutBuyingAServer, MarketProductOrder,
+            AddonId, AuthorizationMethod, ImSeriousAboutBuyingAServer, Location,
+            MarketProductOrder, ProductId, ProductOrder,
         };
 
         #[tokio::test]
@@ -577,14 +638,45 @@ mod tests {
                     language: Some("en".to_string()),
                     addons: vec![AddonId::from("primary_ipv4")],
                     comment: None,
-                    i_want_to_spend_money_to_purchase_a_server_i_mean_it:
-                        ImSeriousAboutBuyingAServer::Uhhhh,
+                    i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutBuyingAServer::Uhhhh,
                 };
 
                 let result = robot.place_market_order(order).await.unwrap();
 
                 info!("{result:#?}");
             }
+        }
+
+        #[tokio::test]
+        #[traced_test]
+        #[ignore = "this test is designed to not make a purchase, but who knows what might go wrong."]
+        async fn test_purchase_ax41() {
+            dotenvy::dotenv().ok();
+
+            let robot = AsyncRobot::default();
+
+            let fingerprint = robot
+                .list_ssh_keys()
+                .await
+                .unwrap()
+                .pop()
+                .unwrap()
+                .fingerprint;
+
+            let order = ProductOrder {
+                id: ProductId::from("AX41"),
+                auth: AuthorizationMethod::Keys(vec![fingerprint]),
+                distribution: Some("Rescue system".to_string()),
+                language: Some("en".to_string()),
+                location: Location::from("FSN1"),
+                addons: vec![AddonId::from("primary_ipv4")],
+                comment: None,
+                i_want_to_spend_money_to_purchase_a_server: ImSeriousAboutBuyingAServer::Uhhhh,
+            };
+
+            let result = robot.place_product_order(order).await.unwrap();
+
+            info!("{result:#?}");
         }
     }
 }

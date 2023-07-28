@@ -144,13 +144,13 @@ bar: Server Auction in FSN1-DC5
     - [x] Rename SSH key
     - [x] Delete SSH key
 - [ ] **Server Ordering.**
-    - [ ] **Products.**
+    - [x] **Products.**
         - [x] List products.
         - [x] Get product information.
         - [x] List recent product transactions.[^1]
         - [x] Get specific transaction information.[^1]
-        - [ ] Order new product.
-    - [ ] **Market (auction).**
+        - [x] Order new product.
+    - [x] **Market (auction).**
         - [x] List market products.
         - [x] Get market product information.
         - [x] List recent market transactions.[^1]
