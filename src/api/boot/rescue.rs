@@ -141,21 +141,29 @@ use crate::api::keys::SshKeyReference;
 /// Defaults to US.
 #[derive(Debug, Clone, Default, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Keyboard {
+    /// US layout
     #[default]
     #[serde(rename = "us")]
     US,
+    /// UK layout
     #[serde(rename = "uk")]
     UK,
+    /// Swiss layout
     #[serde(rename = "ch")]
     Swiss,
+    /// German layout
     #[serde(rename = "de")]
     German,
+    /// Finnish layout
     #[serde(rename = "fi")]
     Finnish,
+    /// French layout
     #[serde(rename = "fr")]
     French,
+    /// Japanese layout.
     #[serde(rename = "jp")]
     Japanese,
+    /// Other layout.
     #[serde(untagged)]
     Other(String),
 }
@@ -242,7 +250,7 @@ mod isolated_tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_get_rescue_configuration() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -269,7 +277,7 @@ mod isolated_tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_enable_disable_vkvm() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -293,7 +301,7 @@ mod isolated_tests {
 
                 assert_eq!(Rescue::Active(activated_config.clone()), config);
 
-                robot.disable_rescue_config(server.id).await.unwrap();
+                let _ = robot.disable_rescue_config(server.id).await.unwrap();
 
                 assert!(matches!(
                     robot.get_rescue_config(server.id).await.unwrap(),

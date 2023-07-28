@@ -226,7 +226,7 @@ mod tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_get_linux_configuration() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -253,7 +253,7 @@ mod tests {
         #[ignore = "unexpected failure might leave the linux installation system enabled."]
         #[serial("boot-configuration")]
         async fn test_enable_disable_linux() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -278,7 +278,7 @@ mod tests {
 
                 assert_eq!(Linux::Active(activated_config.clone()), config);
 
-                robot.disable_linux_config(server.id).await.unwrap();
+                let _ = robot.disable_linux_config(server.id).await.unwrap();
 
                 assert!(matches!(
                     robot.get_linux_config(server.id).await.unwrap(),

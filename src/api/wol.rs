@@ -1,3 +1,5 @@
+//! Wake-on-LAN structs and implementation.
+
 use serde::Deserialize;
 
 use crate::{
@@ -76,7 +78,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_wake_on_lan_available() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 

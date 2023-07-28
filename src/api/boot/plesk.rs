@@ -209,7 +209,7 @@ mod tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_get_plesk_configuration() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -235,7 +235,7 @@ mod tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_last_plesk_config() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -268,7 +268,7 @@ mod tests {
             #[ignore = "enabling the Plesk installation system is expensive, even if the system is never activated."]
             #[serial("boot-configuration")]
             async fn test_enable_disable_plesk() {
-                dotenvy::dotenv().ok();
+                let _ = dotenvy::dotenv().ok();
 
                 let robot = crate::AsyncRobot::default();
 
@@ -293,7 +293,7 @@ mod tests {
 
                     assert_eq!(Plesk::Active(activated_config.clone()), config);
 
-                    robot.disable_plesk_config(server.id).await.unwrap();
+                    let _ = robot.disable_plesk_config(server.id).await.unwrap();
 
                     assert!(matches!(
                         robot.get_plesk_config(server.id).await.unwrap(),

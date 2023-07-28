@@ -1,3 +1,5 @@
+//! vSwitch structs and implementation.
+
 use std::{fmt::Display, net::IpAddr};
 
 use ipnet::IpNet;
@@ -158,7 +160,9 @@ impl AsyncRobot {
         name: &str,
         vlan_id: VlanId,
     ) -> Result<(), Error> {
-        self.go(update_vswitch(vswitch_id, name, vlan_id)?).await?;
+        self.go(update_vswitch(vswitch_id, name, vlan_id)?)
+            .await?
+            .throw_away();
         Ok(())
     }
 
@@ -183,7 +187,8 @@ impl AsyncRobot {
         cancellation_date: Date,
     ) -> Result<(), Error> {
         self.go(delete_vswitch(vswitch_id, cancellation_date))
-            .await?;
+            .await?
+            .throw_away();
         Ok(())
     }
 
@@ -207,7 +212,9 @@ impl AsyncRobot {
         vswitch_id: VSwitchId,
         server_ids: &[ServerId],
     ) -> Result<(), Error> {
-        self.go(add_servers(vswitch_id, server_ids)).await?;
+        self.go(add_servers(vswitch_id, server_ids))
+            .await?
+            .throw_away();
         Ok(())
     }
 
@@ -231,7 +238,9 @@ impl AsyncRobot {
         vswitch_id: VSwitchId,
         server_ids: &[ServerId],
     ) -> Result<(), Error> {
-        self.go(remove_servers(vswitch_id, server_ids)).await?;
+        self.go(remove_servers(vswitch_id, server_ids))
+            .await?
+            .throw_away();
         Ok(())
     }
 }
@@ -493,7 +502,7 @@ mod tests {
         #[traced_test]
         #[serial("vswitch")]
         async fn test_list_vswitches() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -505,7 +514,7 @@ mod tests {
         #[traced_test]
         #[serial("vswitch")]
         async fn test_get_vswitch() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -532,7 +541,7 @@ mod tests {
         #[ignore = "modifies vswitch connectivity of servers"]
         #[serial("vswitch")]
         async fn test_vswitch_end_to_end() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -596,7 +605,7 @@ mod tests {
         #[ignore = "modifies vswitch connectivity of servers"]
         #[serial("vswitch")]
         async fn test_connect_disconnect_multiple() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 

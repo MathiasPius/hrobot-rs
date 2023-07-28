@@ -1,3 +1,4 @@
+//! Failover IP/subnet structs and implementation.
 use std::net::IpAddr;
 
 use ipnet::IpNet;
@@ -50,7 +51,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.list_failover_ips().await.unwrap();
     /// # }

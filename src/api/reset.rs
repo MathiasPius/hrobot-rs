@@ -1,3 +1,4 @@
+//! Server reset structs and implementation.
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
@@ -178,7 +179,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_list_reset_options() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
             let options = robot.list_reset_options().await.unwrap();
@@ -189,7 +190,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_reset_options() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 

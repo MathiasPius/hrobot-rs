@@ -84,7 +84,12 @@ pub enum SwitchPort {
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Protocol {
     /// Transmission Control Protocol.
-    Tcp { flags: Option<String> },
+    Tcp {
+        /// Optional TCP flags which this rule applies to separated
+        /// by a vertical pipe |
+        /// For example: `RST|ACK`
+        flags: Option<String>,
+    },
 
     /// User Datagram Protocol.
     Udp,
@@ -106,6 +111,7 @@ pub enum Protocol {
 }
 
 impl Protocol {
+    /// Construct a TCP filter which only applies to the given flags.
     pub fn tcp_with_flags(flags: &str) -> Self {
         Protocol::Tcp {
             flags: Some(flags.to_string()),
@@ -418,8 +424,11 @@ impl<'de> Deserialize<'de> for PortRange {
 /// Describes a filter which narrows the scope of affected traffic for a [`Rule`]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Filter {
+    /// Filters applies to both IPv4 and IPv6 traffic.
     Any(AnyFilter),
+    /// Filter applies only to IPv4 traffic.
     Ipv4(Ipv4Filter),
+    /// Filter applies only to IPv6 traffic.
     Ipv6(Ipv6Filter),
 }
 
@@ -697,6 +706,10 @@ pub struct Rule {
 }
 
 impl Rule {
+    /// Construct a new rule which allows all traffic.
+    ///
+    /// After construction, you can narrow the scope of the rule using
+    /// [`Rule::matching`].
     pub fn accept(name: &str) -> Self {
         Rule {
             name: name.to_string(),
@@ -705,6 +718,10 @@ impl Rule {
         }
     }
 
+    /// Construct a new rule which discards all traffic.
+    ///
+    /// After construction, you can narrow the scope of the rule using
+    /// [`Rule::matching`].
     pub fn discard(name: &str) -> Self {
         Rule {
             name: name.to_string(),
@@ -713,6 +730,7 @@ impl Rule {
         }
     }
 
+    /// Narrow the scope of the rule using the provided filter.
     pub fn matching<F: Into<Filter>>(self, filter: F) -> Self {
         Rule {
             name: self.name,

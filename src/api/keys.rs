@@ -1,3 +1,5 @@
+//! SSH Key structs and implementations.
+
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
@@ -28,6 +30,7 @@ pub struct SshKey {
     /// OpenSSH-formatted Key
     pub data: String,
 
+    /// Timestamp for the creation of the ssh key within the Hetzner Robot system.
     #[serde(with = "time::serde::iso8601")]
     pub created_at: OffsetDateTime,
 }
@@ -53,6 +56,7 @@ pub struct SshKeyReference {
     #[serde(rename = "size")]
     pub bits: u16,
 
+    /// Timestamp for the creation of the ssh key within the Hetzner Robot system.
     #[serde(deserialize_with = "crate::conversion::assume_berlin_timezone")]
     pub created_at: OffsetDateTime,
 }
@@ -112,7 +116,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// for key in robot.list_ssh_keys().await.unwrap() {
     ///     println!("{}: {}", key.name, key.fingerprint)
@@ -129,7 +133,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// let key = robot.get_ssh_key("d7:34:1c:8c:4e:20:e0:1f:07:66:45:d9:97:22:ec:07").await.unwrap();
     ///
@@ -146,7 +150,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// let key = robot.create_ssh_key(
     ///     "hrobot-rs-test-key",
@@ -166,7 +170,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.remove_ssh_key(
     ///     "d7:34:1c:8c:4e:20:e0:1f:07:66:45:d9:97:22:ec:07"
@@ -174,7 +178,7 @@ impl AsyncRobot {
     /// # }
     /// ```
     pub async fn remove_ssh_key(&self, fingerprint: &str) -> Result<(), Error> {
-        self.go(remove_ssh_key(fingerprint)).await?;
+        self.go(remove_ssh_key(fingerprint)).await?.throw_away();
         Ok(())
     }
 
@@ -184,7 +188,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.rename_ssh_key(
     ///     "d7:34:1c:8c:4e:20:e0:1f:07:66:45:d9:97:22:ec:07",
@@ -238,7 +242,7 @@ mod tests {
         #[serial("ssh-keys")]
         #[ignore = "unexpected failure might leave test key behind."]
         async fn test_create_delete_key() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -264,7 +268,7 @@ mod tests {
                 .is_some());
 
             // Rename the key
-            robot
+            let _ = robot
                 .rename_ssh_key(&added_key.fingerprint, "new-key-name")
                 .await
                 .unwrap();

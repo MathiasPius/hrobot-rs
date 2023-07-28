@@ -1,3 +1,5 @@
+//! Reverse DNS structs and implementations.
+
 use std::net::IpAddr;
 
 use serde::{Deserialize, Serialize};
@@ -52,7 +54,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.list_rdns_entries().await.unwrap();
     /// # }
@@ -85,9 +87,8 @@ impl AsyncRobot {
     /// robot.create_rdns_entry("123.123.123.123".parse().unwrap(), "test.example.com").await.unwrap();
     /// # }
     /// ```
-    pub async fn create_rdns_entry(&self, ip: IpAddr, ptr: &str) -> Result<(), Error> {
-        self.go(create_rdns_entry(ip, ptr)?).await?;
-        Ok(())
+    pub async fn create_rdns_entry(&self, ip: IpAddr, ptr: &str) -> Result<RdnsEntry, Error> {
+        Ok(self.go(create_rdns_entry(ip, ptr)?).await?.0)
     }
 
     /// Update Reverse DNS entry for IP address.
@@ -100,9 +101,8 @@ impl AsyncRobot {
     /// robot.update_rdns_entry("123.123.123.123".parse().unwrap(), "test.example.com").await.unwrap();
     /// # }
     /// ```
-    pub async fn update_rdns_entry(&self, ip: IpAddr, ptr: &str) -> Result<(), Error> {
-        self.go(update_rdns_entry(ip, ptr)?).await?;
-        Ok(())
+    pub async fn update_rdns_entry(&self, ip: IpAddr, ptr: &str) -> Result<RdnsEntry, Error> {
+        Ok(self.go(update_rdns_entry(ip, ptr)?).await?.0)
     }
 
     /// Delete Reverse DNS entry for IP address.
@@ -116,7 +116,7 @@ impl AsyncRobot {
     /// # }
     /// ```
     pub async fn delete_rdns_entry(&self, ip: IpAddr) -> Result<(), Error> {
-        self.go(delete_rdns_entry(ip)).await?;
+        self.go(delete_rdns_entry(ip)).await?.throw_away();
         Ok(())
     }
 }
@@ -143,7 +143,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_list_rdns() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -154,7 +154,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_rdns() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -180,7 +180,7 @@ mod tests {
         #[traced_test]
         #[ignore = "unexpected failure can leave rdns entries intact"]
         async fn test_create_update_delete_rdns() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -205,14 +205,14 @@ mod tests {
                     Err(Error::Api(ApiError::RdnsNotFound { .. }))
                 ));
 
-                robot
+                let _ = robot
                     .create_rdns_entry(ip, "test.example.com")
                     .await
                     .unwrap();
 
                 assert_eq!(robot.get_rdns_entry(ip).await.unwrap(), "test.example.com");
 
-                robot
+                let _ = robot
                     .update_rdns_entry(ip, "test2.example.com")
                     .await
                     .unwrap();

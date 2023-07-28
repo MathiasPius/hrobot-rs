@@ -24,244 +24,418 @@ pub enum ApiError {
 
     /// Resource not found.
     #[error("not found: {message}")]
-    NotFound { message: String },
+    NotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Server not found.
     #[error("server not found: {message}")]
-    ServerNotFound { message: String },
+    ServerNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// IP address not found.
     #[error("ip address not found: {message}")]
-    IpNotFound { message: String },
+    IpNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Subnet not found.
     #[error("subnet not found: {message}")]
-    SubnetNotFound { message: String },
+    SubnetNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// MAC address not found.
     #[error("mac address not found: {message}")]
-    MacNotFound { message: String },
+    MacNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// MAC address not available.
     #[error("mac address not available: {message}")]
-    MacNotAvailable { message: String },
+    MacNotAvailable {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// MAC address already set.
     #[error("mac address already set: {message}")]
-    MacAlreadySet { message: String },
+    MacAlreadySet {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// MAC address failure.
     #[error("mac address failure: {message}")]
-    MacFailed { message: String },
+    MacFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Wake-on-LAN not available.
     #[error("wak-on-lan not available: {message}")]
-    WolNotAvailable { message: String },
+    WolNotAvailable {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
-    // Wake-on-LAN failed.
+    /// Wake-on-LAN failed.
     #[error("wake-on-lan failed: {message}")]
-    WolFailed { message: String },
+    WolFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Outdated Windows version.
     #[error("outdated windows version: {message}")]
-    WindowsOutdatedVersion { message: String },
+    WindowsOutdatedVersion {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Missing Windows addon.
     #[error("windows addon missing: {message}")]
-    WindowsMissingAddon { message: String },
+    WindowsMissingAddon {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Missing Plesk addon.
     #[error("plesk addon missing: {message}")]
-    PleskMissingAddon { message: String },
+    PleskMissingAddon {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Missing CPanel addon.
     #[error("cpanel addon missing: {message}")]
-    CpanelMissingAddon { message: String },
+    CpanelMissingAddon {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// API Rate limit exceeded.
     #[error("rate limit exceeded: {message} (max req: {max_request}, interval: {interval}")]
     RateLimitExceeded {
+        /// Human-readable message associated with the error.
         message: String,
+        /// Maximum number of requests allowed within the specified interval.
         max_request: u32,
+        /// Interval within which the max_requests are the limit.
         interval: u32,
     },
 
     /// Reset not available.
     #[error("reset not available: {message}")]
-    ResetNotAvailable { message: String },
+    ResetNotAvailable {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Storage Box not found.
     #[error("storage box not found: {message}")]
-    StorageboxNotFound { message: String },
+    StorageboxNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Storage Box sub-account not found.
     #[error("storage box sub-account not found: {message}")]
-    StorageboxSubaccountNotFound { message: String },
+    StorageboxSubaccountNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Storage Box sub-account limit exceeded.
     #[error("stoage box sub-account limit exceeded: {message}")]
-    StorageboxSubaccountLimitExceeded { message: String },
+    StorageboxSubaccountLimitExceeded {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Snapshot not found.
     #[error("snapshot not found: {message}")]
-    SnapshotNotFound { message: String },
+    SnapshotNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Snapshot limit exceeded.
     #[error("snapshot limit exceeded: {message}")]
-    SnapshotLimitExceeded { message: String },
+    SnapshotLimitExceeded {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Firewall port not found.
     #[error("firewall port not found: {message}")]
-    FirewallPortNotFound { message: String },
+    FirewallPortNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Firewall not available.
     #[error("firewall not available: {message}")]
-    FirewallNotAvailable { message: String },
+    FirewallNotAvailable {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Firewall template not found.
     #[error("firewall template not found: {message}")]
-    FirewallTemplateNotFound { message: String },
+    FirewallTemplateNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Firewall is already processing a request.
     #[error("firewall is already processing a request: {message}")]
-    FirewallInProcess { message: String },
+    FirewallInProcess {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// vSwitch limit reached.
     #[error("vSwitch limit reached: {message}")]
-    VswitchLimitReached { message: String },
+    VswitchLimitReached {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// vSwitch not available.
     #[error("vswitch not available: {message}")]
-    VswitchNotAvailable { message: String },
+    VswitchNotAvailable {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// vSwitch server limit reached.
     #[error("vSwitch server limit reached: {message}")]
-    VswitchServerLimitReached { message: String },
+    VswitchServerLimitReached {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// vSwitch-per-server limit reached.
     #[error("vSwitch-per-server limit reached: {message}")]
-    VswitchPerServerLimitReached { message: String },
+    VswitchPerServerLimitReached {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// vSwitch is already processing a request.
     #[error("vSwitch is already processing a request: {message}")]
-    VswitchInProcess { message: String },
+    VswitchInProcess {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// vSwitch VLAN-ID is not unique.
     #[error("vSwitch VLAN-ID must be unique: {message}")]
-    VswitchVlanNotUnique { message: String },
+    VswitchVlanNotUnique {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Manual reset is active.
     #[error("manual reset is active: {message}")]
-    ResetManualActive { message: String },
+    ResetManualActive {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Key update failed.
     #[error("key update failed: {message}")]
-    KeyUpdateFailed { message: String },
+    KeyUpdateFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Key creation failed.
     #[error("key creation failed: {message}")]
-    KeyCreateFailed { message: String },
+    KeyCreateFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Key deletion failed.
     #[error("key deletion failed: {message}")]
-    KeyDeleteFailed { message: String },
+    KeyDeleteFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Key already exists.
     #[error("key already exists: {message}")]
-    KeyAlreadyExists { message: String },
+    KeyAlreadyExists {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Reverse DNS entry not found.
     #[error("rnds entry not found: {message}")]
-    RdnsNotFound { message: String },
+    RdnsNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Reverse DNS entry creation failed.
     #[error("rdns creation failed: {message}")]
-    RdnsCreateFailed { message: String },
+    RdnsCreateFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Reverse DNS update failed.
     #[error("rdns update failed: {message}")]
-    RdnsUpdateFailed { message: String },
+    RdnsUpdateFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Reverse DNS entry deletion failed.
     #[error("rnds deletion failed: {message}")]
-    RdnsDeleteFailed { message: String },
+    RdnsDeleteFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Reverse DNS entry already exists.
     #[error("rnds entry already exists: {message}")]
-    RdnsAlreadyExists { message: String },
+    RdnsAlreadyExists {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Reset failed.
     #[error("reset failed: {message}")]
-    ResetFailed { message: String },
+    ResetFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Invalid input.
     #[error("invalid input: {message}")]
     InvalidInput {
+        /// Human-readable message associated with the error.
         message: String,
         #[serde(default, deserialize_with = "deserialize_null_default")]
+        /// List of fields that are missing from the request.
         missing: Vec<String>,
+        /// List of fields which contained invalid data.
         #[serde(default, deserialize_with = "deserialize_null_default")]
         invalid: Vec<String>,
     },
     /// Conflict.
     #[error("conflict: {message}")]
-    Conflict { message: String },
+    Conflict {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Server cancellation "reserve location" must be false.
     #[error("server cancellation reserve location must be false: {message}")]
-    ServerCancellationReserveLocationFalseOnly { message: String },
+    ServerCancellationReserveLocationFalseOnly {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Traffic warning update failed.
     #[error("traffic warning update failed: {message}")]
-    TrafficWarningUpdateFailed { message: String },
+    TrafficWarningUpdateFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Boot is not available.
     #[error("boot not available: {message}")]
-    BootNotAvailable { message: String },
+    BootNotAvailable {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Internal Error.
     #[error("internal error: {message}")]
-    InternalError { message: String },
+    InternalError {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Failover is already routed.
     #[error("failover already routed: {message}")]
-    FailoverAlreadyRouted { message: String },
+    FailoverAlreadyRouted {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Failover failed.
     #[error("failover failed: {message}")]
-    FailoverFailed { message: String },
+    FailoverFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Failover is locked.
     #[error("failover locked: {message}")]
-    FailoverLocked { message: String },
+    FailoverLocked {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Failover not complete.
     #[error("failover not complete: {message}")]
-    FailoverNotComplete { message: String },
+    FailoverNotComplete {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// New failover server not found.
     #[error("new failover server not found: {message}")]
-    FailoverNewServerNotFound { message: String },
+    FailoverNewServerNotFound {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Withdrawal of server order not possible.
     #[error("withdrawal of server order not possible: {message}")]
-    ServerReversalNotPossible { message: String },
+    ServerReversalNotPossible {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Boot activation failed.
     #[error("boot activation failed: {message}")]
-    BootActivationFailed { message: String },
+    BootActivationFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Boot deactivation failed.
     #[error("boot deactivation failed: {message}")]
-    BootDeactivationFailed { message: String },
+    BootDeactivationFailed {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Boot already enabled.
     #[error("boot already enabled: {message}")]
-    BootAlreadyEnabled { message: String },
+    BootAlreadyEnabled {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Boot blocked.
     #[error("boot locked: {message}")]
-    BootBlocked { message: String },
+    BootBlocked {
+        /// Human-readable message associated with the error.
+        message: String,
+    },
 
     /// Unknown/generic error.
     #[serde(skip_deserializing)]

@@ -1,3 +1,4 @@
+//! Storagebox structs and implementation.
 use crate::{error::Error, AsyncRobot};
 
 use super::{
@@ -230,7 +231,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.list_storageboxes().await.unwrap();
     /// # }
@@ -246,7 +247,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.get_storagebox(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -262,7 +263,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.rename_storagebox(StorageBoxId(1234), "my-backups").await.unwrap();
     /// # }
@@ -282,7 +283,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::{StorageBoxId, Accessibility};
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.configure_storagebox_accessibility(StorageBoxId(1234), Accessibility {
     ///     webdav: false,
@@ -310,7 +311,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.enable_storagebox_samba(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -326,7 +327,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.disable_storagebox_samba(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -342,7 +343,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.enable_storagebox_webdav(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -358,7 +359,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.disable_storagebox_webdav(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -374,7 +375,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.enable_storagebox_ssh(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -390,7 +391,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.disable_storagebox_ssh(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -411,7 +412,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.enable_storagebox_external_reachability(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -438,7 +439,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.disable_storagebox_external_reachability(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -465,7 +466,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.enable_storagebox_snapshot_directory(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -489,7 +490,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.disable_storagebox_snapshot_directory(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -508,7 +509,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.reset_storagebox_password(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -524,7 +525,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.list_snapshots(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -540,7 +541,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.create_snapshot(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -563,7 +564,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.delete_snapshot(
     ///     StorageBoxId(1234),
@@ -576,7 +577,9 @@ impl AsyncRobot {
         id: StorageBoxId,
         snapshot_name: &str,
     ) -> Result<(), Error> {
-        self.go(delete_snapshot(id, snapshot_name)).await?;
+        self.go(delete_snapshot(id, snapshot_name))
+            .await?
+            .throw_away();
         Ok(())
     }
 
@@ -587,7 +590,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.revert_to_snapshot(
     ///     StorageBoxId(1234),
@@ -600,7 +603,9 @@ impl AsyncRobot {
         id: StorageBoxId,
         snapshot_name: &str,
     ) -> Result<(), Error> {
-        self.go(revert_to_snapshot(id, snapshot_name)).await?;
+        self.go(revert_to_snapshot(id, snapshot_name))
+            .await?
+            .throw_away();
         Ok(())
     }
 
@@ -611,7 +616,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.change_snapshot_comment(
     ///     StorageBoxId(1234),
@@ -627,7 +632,8 @@ impl AsyncRobot {
         comment: &str,
     ) -> Result<(), Error> {
         self.go(change_snapshot_comment(id, snapshot_name, comment)?)
-            .await?;
+            .await?
+            .throw_away();
         Ok(())
     }
 
@@ -638,7 +644,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.get_snapshot_plan(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -655,7 +661,7 @@ impl AsyncRobot {
     /// # use hrobot::time::Weekday;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.update_snapshot_plan(
     ///     StorageBoxId(1234),
@@ -678,7 +684,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::StorageBoxId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.list_subaccounts(StorageBoxId(1234)).await.unwrap();
     /// # }
@@ -694,7 +700,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId, Permission, Accessibility};
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.create_subaccount(
     ///     StorageBoxId(1234),
@@ -732,7 +738,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId, Accessibility};
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.set_subaccount_home_directory(
     ///     StorageBoxId(1234),
@@ -755,7 +761,8 @@ impl AsyncRobot {
             None,
             None,
         )?)
-        .await?;
+        .await?
+        .throw_away();
         Ok(())
     }
 
@@ -766,7 +773,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId, Permission};
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.update_subaccount(
     ///     StorageBoxId(1234),
@@ -795,7 +802,8 @@ impl AsyncRobot {
             permissions,
             comment,
         )?)
-        .await?;
+        .await?
+        .throw_away();
         Ok(())
     }
 
@@ -806,7 +814,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId};
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// let password = robot.reset_subaccount_password(
     ///     StorageBoxId(1234),
@@ -834,7 +842,7 @@ impl AsyncRobot {
     /// # use hrobot::api::storagebox::{StorageBoxId, SubaccountId};
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.delete_subaccount(
     ///     StorageBoxId(1234),
@@ -847,7 +855,9 @@ impl AsyncRobot {
         storagebox: StorageBoxId,
         subaccount: SubaccountId,
     ) -> Result<(), Error> {
-        self.go(delete_subaccount(storagebox, subaccount)).await?;
+        self.go(delete_subaccount(storagebox, subaccount))
+            .await?
+            .throw_away();
         Ok(())
     }
 }
@@ -863,7 +873,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_storageboxes() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -875,7 +885,7 @@ mod tests {
         #[traced_test]
         #[serial("storagebox")]
         async fn test_get_storagebox() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -892,7 +902,7 @@ mod tests {
         #[traced_test]
         #[serial("storagebox")]
         async fn test_list_snapshots() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -908,7 +918,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_snapshotplans() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -924,7 +934,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_list_subaccounts() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -955,7 +965,7 @@ mod tests {
         #[serial("storagebox")]
         #[ignore = "resets password, potentially breaking existing pasword-based clients"]
         async fn test_reset_password() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -976,7 +986,7 @@ mod tests {
         #[serial("storagebox")]
         #[ignore = "messes up enabled/disabled services for the storagebox, potentially leaving it in an unsafe state"]
         async fn test_toggle_all_settings() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -995,12 +1005,12 @@ mod tests {
 
                 // Test WebDAV
                 if original_settings.webdav {
-                    robot
+                    let _ = robot
                         .disable_storagebox_webdav(storagebox.id)
                         .await
                         .unwrap();
                 } else {
-                    robot.enable_storagebox_webdav(storagebox.id).await.unwrap();
+                    let _ = robot.enable_storagebox_webdav(storagebox.id).await.unwrap();
                 }
                 tokio::time::sleep(std::time::Duration::from_secs(10)).await;
                 let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
@@ -1008,9 +1018,9 @@ mod tests {
 
                 // Test Samba
                 if original_settings.samba {
-                    robot.disable_storagebox_samba(storagebox.id).await.unwrap();
+                    let _ = robot.disable_storagebox_samba(storagebox.id).await.unwrap();
                 } else {
-                    robot.enable_storagebox_samba(storagebox.id).await.unwrap();
+                    let _ = robot.enable_storagebox_samba(storagebox.id).await.unwrap();
                 }
                 tokio::time::sleep(std::time::Duration::from_secs(10)).await;
                 let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
@@ -1018,9 +1028,9 @@ mod tests {
 
                 // Test SSH
                 if original_settings.ssh {
-                    robot.disable_storagebox_ssh(storagebox.id).await.unwrap();
+                    let _ = robot.disable_storagebox_ssh(storagebox.id).await.unwrap();
                 } else {
-                    robot.enable_storagebox_ssh(storagebox.id).await.unwrap();
+                    let _ = robot.enable_storagebox_ssh(storagebox.id).await.unwrap();
                 }
                 tokio::time::sleep(std::time::Duration::from_secs(10)).await;
                 let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
@@ -1028,12 +1038,12 @@ mod tests {
 
                 // Test reachability
                 if original_settings.external_reachability {
-                    robot
+                    let _ = robot
                         .disable_storagebox_external_reachability(storagebox.id)
                         .await
                         .unwrap();
                 } else {
-                    robot
+                    let _ = robot
                         .enable_storagebox_external_reachability(storagebox.id)
                         .await
                         .unwrap();
@@ -1046,7 +1056,7 @@ mod tests {
                 );
 
                 // Reset all configurations.
-                robot
+                let _ = robot
                     .configure_storagebox_accessibility(storagebox.id, original_settings.clone())
                     .await
                     .unwrap();
@@ -1065,7 +1075,7 @@ mod tests {
         #[serial("storagebox")]
         #[ignore = "creating, reverting and deleting snapshots could lead to data loss"]
         async fn test_create_revert_delete_snapshot() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -1098,7 +1108,7 @@ mod tests {
         #[serial("storagebox")]
         #[ignore = "creating and deleting snapshots could lead to data loss"]
         async fn test_create_comment_delete_snapshot() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -1135,7 +1145,7 @@ mod tests {
         #[serial("storagebox")]
         #[ignore = "replaces the snapshot plan of the storage box."]
         async fn test_update_snapshot_plans() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -1147,14 +1157,14 @@ mod tests {
 
                 if plan.status == PlanStatus::Disabled {
                     // Daily
-                    robot
+                    let _ = robot
                         .update_snapshot_plan(storagebox.id, SnapshotPlan::daily(10, 10))
                         .await
                         .unwrap();
 
                     tokio::time::sleep(Duration::from_secs(10)).await;
 
-                    robot
+                    let _ = robot
                         .update_snapshot_plan(
                             storagebox.id,
                             SnapshotPlan::weekly(Weekday::Monday, 10, 10),
@@ -1164,14 +1174,14 @@ mod tests {
 
                     tokio::time::sleep(Duration::from_secs(10)).await;
 
-                    robot
+                    let _ = robot
                         .update_snapshot_plan(storagebox.id, SnapshotPlan::monthly(5, 10, 10))
                         .await
                         .unwrap();
 
                     tokio::time::sleep(Duration::from_secs(10)).await;
 
-                    robot
+                    let _ = robot
                         .update_snapshot_plan(storagebox.id, SnapshotPlan::default())
                         .await
                         .unwrap();
@@ -1188,7 +1198,7 @@ mod tests {
         #[serial("storagebox")]
         #[ignore = "creates new subaccounts with read/write permissions"]
         async fn test_create_update_delete_subaccount() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 

@@ -197,7 +197,7 @@ mod tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_get_vnc_configuration() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -214,7 +214,7 @@ mod tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_last_vnc_config() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -242,7 +242,7 @@ mod tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_enable_disable_vnc() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -266,7 +266,7 @@ mod tests {
 
                 assert_eq!(Vnc::Active(activated_config.clone()), config);
 
-                robot.disable_vnc_config(server.id).await.unwrap();
+                let _ = robot.disable_vnc_config(server.id).await.unwrap();
 
                 assert!(matches!(
                     robot.get_vnc_config(server.id).await.unwrap(),

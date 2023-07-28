@@ -1,3 +1,4 @@
+//! Traffic querying structs and implementation.
 use std::{collections::HashMap, net::IpAddr};
 
 use bytesize::ByteSize;
@@ -54,7 +55,7 @@ impl AsyncRobot {
     /// # use hrobot::time::Month;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// let traffic = robot.get_traffic(
     ///     &[
@@ -99,10 +100,13 @@ impl AsyncRobot {
 /// Traffic statistics for a single "unit". For hourly range, this is a single hour. For monthly it's a day, for yearly it's a month.
 #[derive(Debug, Clone, Deserialize)]
 pub struct TrafficStatistic {
+    /// Amount of ingress (incoming) traffic within the specified time range.
     #[serde(rename = "in", deserialize_with = "crate::conversion::gib_float")]
     pub ingress: ByteSize,
+    /// Amount of egress (outgoing) traffic within the specified time range.
     #[serde(rename = "out", deserialize_with = "crate::conversion::gib_float")]
     pub egress: ByteSize,
+    /// Total amount of traffic (both incoming and outgoing) within the specified time range.
     #[serde(rename = "sum", deserialize_with = "crate::conversion::gib_float")]
     pub total: ByteSize,
 }
@@ -136,10 +140,18 @@ pub enum TimeRange {
         to: u8,
     },
     /// Range within a single year.
-    Monthly { year: u32, from: Month, to: Month },
+    Monthly {
+        /// Year within which to compute usage.
+        year: u32,
+        /// Start month (inclusive)
+        from: Month,
+        /// End monht (inclusive)
+        to: Month,
+    },
 }
 
 impl TimeRange {
+    /// Time range spanning a single day from 00:00 to 24:00.
     pub fn day(date: Date) -> Self {
         TimeRange::Hourly {
             date,
@@ -148,6 +160,7 @@ impl TimeRange {
         }
     }
 
+    /// Time range spanning a single month from day 1 to last.
     pub fn month(year: u32, month: Month) -> Self {
         TimeRange::Daily {
             year,
@@ -157,6 +170,7 @@ impl TimeRange {
         }
     }
 
+    /// Time range spanning an entire year, from first day of january to last day of december.
     pub fn year(year: u32) -> Self {
         TimeRange::Monthly {
             year,
@@ -285,7 +299,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn get_traffic_data() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 

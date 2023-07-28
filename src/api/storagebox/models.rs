@@ -286,10 +286,13 @@ impl SnapshotPlan {
     }
 }
 
+/// Indicates whether the snapshot plan is enabled or not.
 #[derive(Default, Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum PlanStatus {
+    /// Plan is enabled.
     Enabled,
+    /// Plan is disabled.
     #[default]
     Disabled,
 }
@@ -377,10 +380,13 @@ impl PartialEq<str> for SubaccountId {
     }
 }
 
+/// Permissions of the sub-account.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Permission {
+    /// Subaccount is only able to read from the storagebox/directory
     #[default]
     ReadOnly,
+    /// Subaccount can read, write, create and delete within the storagebox/directory
     ReadWrite,
 }
 

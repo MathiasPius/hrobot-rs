@@ -81,7 +81,7 @@ pub struct ServerFlags {
     /// Plesk installation is available
     pub plesk: bool,
 
-    // CPanel installation is available.
+    /// CPanel installation is available.
     pub cpanel: bool,
 
     /// Wake-on-LAN is available.

@@ -8,6 +8,7 @@ use time_tz::PrimitiveDateTimeExt;
 
 use crate::{api::server::ServerId, urlencode::UrlEncode};
 
+/// Describes a product available for purchase.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Product {
     /// Unique identifier for this product type.
@@ -43,6 +44,7 @@ pub struct Product {
     pub orderable_addons: Vec<Addon>,
 }
 
+/// Describes a product purchase, as listed in a [`ProductTransaction`].
 #[derive(Debug, Clone, Deserialize)]
 pub struct PurchasedProduct {
     /// Unique identifier for this product type.
@@ -71,6 +73,7 @@ pub struct PurchasedProduct {
     pub location: Option<Location>,
 }
 
+/// Describes a purchased market (auction) product, as described in a [`MarketTransaction`]
 #[derive(Debug, Clone, Deserialize)]
 pub struct PurchasedMarketProduct {
     /// Unique identifier for this product type.
@@ -173,7 +176,9 @@ pub struct SingleLocationPrice {
 /// Price (both setup and monthly) for a single location.
 #[derive(Debug, Clone)]
 pub struct LocationPrice {
+    /// Monthly price in euros.
     pub monthly: Price,
+    /// One-time setup price in euros.
     pub setup: Price,
 }
 
@@ -186,22 +191,42 @@ pub struct Price {
     pub gross: Decimal,
 }
 
+/// Describes an addon which can be purchased.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Addon {
-    pub id: String,
+    /// Unique identifier for this addon.
+    pub id: AddonId,
+
+    /// Human-readable name for the addon.
     pub name: String,
+
+    /// Location where this addon is available, or `None` is everywhere.
     pub location: Option<Location>,
+
+    /// Minimum number available.
     pub min: u32,
+
+    /// Maximum number available.
     pub max: u32,
+
+    /// Prices for this addon in each location.
     #[serde(deserialize_with = "location_prices")]
     pub prices: HashMap<Location, LocationPrice>,
 }
 
+/// Describes an addon available for purchase for a specific server.
 #[derive(Debug, Clone, Deserialize)]
 pub struct AvailableAddon {
-    pub id: String,
+    /// Unique ID for this addon.
+    pub id: AddonId,
+
+    /// Human-readable name for the addon.
     pub name: String,
+
+    /// Type of addon.
     pub r#type: String,
+
+    /// Price for this addon in the target server's location.
     pub price: SingleLocationPrice,
 }
 
@@ -313,15 +338,20 @@ impl PartialEq<str> for ProductId {
     }
 }
 
+/// Describes the purchase of a single standard hetzner product.
 #[derive(Debug, Clone, Deserialize)]
 pub struct ProductTransaction {
+    /// Unique transaction ID.
     pub id: TransactionId,
 
+    /// Timestamp for the purchase.
     #[serde(with = "time::serde::rfc3339")]
     pub date: OffsetDateTime,
 
+    /// Status of the transaction.
     pub status: TransactionStatus,
 
+    /// Server ID of the purchased product.
     #[serde(rename = "server_number")]
     pub server_id: Option<ServerId>,
 
@@ -349,12 +379,18 @@ pub struct ProductTransaction {
     pub addons: Vec<String>,
 }
 
+/// Status of the transaction.
 #[derive(Debug, Clone, Deserialize)]
 pub enum TransactionStatus {
+    /// Transaction completed.
     #[serde(rename = "ready")]
     Ready,
+
+    /// Transaction is still getting processed.
     #[serde(rename = "in process")]
     InProcess,
+
+    /// Transaction has been cancelled.
     #[serde(rename = "cancelled")]
     Cancelled,
 }
@@ -393,15 +429,20 @@ impl PartialEq<str> for TransactionId {
     }
 }
 
+/// Describes the purchase of a single Hetzner market (auction) server.
 #[derive(Debug, Clone, Deserialize)]
 pub struct MarketTransaction {
+    /// Unique transaction ID.
     pub id: MarketTransactionId,
 
+    /// Timestamp for the purchase.
     #[serde(with = "time::serde::rfc3339")]
     pub date: OffsetDateTime,
 
+    /// Status of the transaction.
     pub status: TransactionStatus,
 
+    /// Server ID of the purchased server.
     #[serde(rename = "server_number")]
     pub server_id: Option<ServerId>,
 
@@ -494,15 +535,20 @@ impl PartialEq<str> for AddonTransactionId {
     }
 }
 
+/// Describes the purchase of a single addon.
 #[derive(Debug, Clone, Deserialize)]
 pub struct AddonTransaction {
+    /// Unique transacton ID.
     pub id: AddonTransactionId,
 
+    /// Timestamp for the purchase.
     #[serde(with = "time::serde::rfc3339")]
     pub date: OffsetDateTime,
 
+    /// Status of the transaction.
     pub status: TransactionStatus,
 
+    /// Server ID which the purchased addon applies to.
     #[serde(rename = "server_number")]
     pub server_id: ServerId,
 
@@ -513,12 +559,16 @@ pub struct AddonTransaction {
     pub resources: Vec<Resource>,
 }
 
+/// Resource associated with an addon purchase.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Resource {
+    /// Indicates the type of the resource. e.g. `subnet`
     pub r#type: String,
+    /// The ID of the resource. e.g. `10.0.0.0`
     pub id: String,
 }
 
+/// Describes a purchased addon as it appears in an [`AddonTransaction`]
 #[derive(Debug, Clone, Deserialize)]
 pub struct PurchasedAddon {
     /// Unique identifier for this product type.
@@ -527,6 +577,7 @@ pub struct PurchasedAddon {
     /// Human-readable name for this product.
     pub name: String,
 
+    /// Price the addon was purchased for.
     pub price: SingleLocationPrice,
 }
 
@@ -604,7 +655,7 @@ pub struct HostKey {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct InternalMarketProduct {
+struct InternalMarketProduct {
     pub id: MarketProductId,
     pub name: String,
     pub description: Vec<String>,
@@ -633,6 +684,7 @@ pub struct InternalMarketProduct {
     pub orderable_addons: Vec<Addon>,
 }
 
+/// Describes a Hetzner market (auction) product.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(from = "InternalMarketProduct")]
 pub struct MarketProduct {
@@ -807,14 +859,26 @@ pub enum ImSeriousAboutSpendingMoney {
     NoThisIsJustATest,
 }
 
+/// Order for a standard Hetzner product, such as AX41.
+///
+/// Note: this is different from a [`MarketProductOrder`] which pertains
+/// to purchase orders on the Hetzner auction market.
 #[derive(Debug, Clone)]
 pub struct ProductOrder {
+    /// Id of the product to purchase.
     pub id: ProductId,
+    /// Authorization method which should be enabled for the installed distribution.
     pub auth: AuthorizationMethod,
+    /// Where this product should be provisioned.
     pub location: Location,
+    /// Distribution to install on the target server.
     pub distribution: Option<String>,
+    /// Chosen language for the installed distribution.
     pub language: Option<String>,
+    /// Comment for the order. Note that comments require manual provisioning,
+    /// which can increase the processing time for the purchase request.
     pub comment: Option<String>,
+    /// Addons to order alongside this product.
     pub addons: Vec<AddonId>,
 
     /// LetMeSpendMyMoneyAlready must be selected for any purchase order to
@@ -867,13 +931,29 @@ impl UrlEncode for ProductOrder {
     }
 }
 
+/// Hetzner Auction market order.
+///
+/// Note: this is distinct from the [`ProductOrder`] which pertains to
+/// standard Hetzner products such as AX41.
 #[derive(Debug, Clone)]
 pub struct MarketProductOrder {
+    /// Auction server ID.
     pub id: MarketProductId,
+
+    /// Authorization method which should be enabled for the installed distribution.
     pub auth: AuthorizationMethod,
+
+    /// Distribution to install on the purchased server.
     pub distribution: Option<String>,
+
+    /// Chosen language for the selected distribution.
     pub language: Option<String>,
+
+    /// Comment for the order. Note that comments require manual provisioning,
+    /// which can increase the processing time for the purchase request.
     pub comment: Option<String>,
+
+    /// Addons to purchase alongside this server.
     pub addons: Vec<AddonId>,
 
     /// LetMeSpendMyMoneyAlready must be selected for any purchase order to

@@ -196,7 +196,7 @@ mod tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_get_windows_configuration() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -222,7 +222,7 @@ mod tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_last_windows_config() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -256,7 +256,7 @@ mod tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_enable_disable_windows() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -280,7 +280,7 @@ mod tests {
 
                 assert_eq!(Windows::Active(activated_config.clone()), config);
 
-                robot.disable_windows_config(server.id).await.unwrap();
+                let _ = robot.disable_windows_config(server.id).await.unwrap();
 
                 assert!(matches!(
                     robot.get_windows_config(server.id).await.unwrap(),

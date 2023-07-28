@@ -1,3 +1,5 @@
+//! Firewall & template structs and implementation.
+
 mod models;
 mod serde;
 
@@ -224,7 +226,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// let templates = robot.list_firewall_templates().await.unwrap();
     /// # }
@@ -307,7 +309,9 @@ impl AsyncRobot {
     /// # }
     /// ```
     pub async fn delete_firewall_template(&self, template_number: TemplateId) -> Result<(), Error> {
-        self.go(delete_firewall_template(template_number)).await?;
+        self.go(delete_firewall_template(template_number))
+            .await?
+            .throw_away();
         Ok(())
     }
 
@@ -359,7 +363,7 @@ mod tests {
         #[traced_test]
         #[serial("firewall")]
         async fn test_get_firewall() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -377,7 +381,7 @@ mod tests {
         #[traced_test]
         #[serial("firewall-templates")]
         async fn test_list_firewall_templates() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -389,7 +393,7 @@ mod tests {
         #[traced_test]
         #[serial("firewall-templates")]
         async fn test_get_firewall_template() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -416,7 +420,7 @@ mod tests {
         #[serial("firewall")]
         #[ignore = "unexpected failure might leave firewall in modified state."]
         async fn test_set_firewall_configuration() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -438,7 +442,7 @@ mod tests {
 
                 info!("{config:#?}");
 
-                robot.set_firewall_config(server.id, &config).await.unwrap();
+                let _ = robot.set_firewall_config(server.id, &config).await.unwrap();
 
                 info!("Waiting for firewall to be applied to {}", server.name);
 
@@ -463,7 +467,7 @@ mod tests {
                 );
 
                 // Revert to the original firewall config.
-                robot
+                let _ = robot
                     .set_firewall_config(server.id, &original_firewall.config())
                     .await
                     .unwrap();
@@ -475,7 +479,7 @@ mod tests {
         #[serial("firewall")]
         #[ignore = "unexpected failure might leave firewall in modified state."]
         async fn test_apply_firewall_template() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -499,7 +503,7 @@ mod tests {
                     .await
                     .unwrap();
 
-                robot
+                let _ = robot
                     .apply_firewall_template(server.id, template.id)
                     .await
                     .unwrap();
@@ -529,7 +533,7 @@ mod tests {
                 assert_eq!(applied_configuration.rules, template.rules);
 
                 // Revert to the original firewall config.
-                robot
+                let _ = robot
                     .set_firewall_config(server.id, &original_firewall.config())
                     .await
                     .unwrap();
@@ -544,7 +548,7 @@ mod tests {
         #[serial("firewall")]
         #[ignore = "removing a production server's firewall, even temporarily, is obviously always *very* dangerous."]
         async fn test_delete_firewall() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -559,7 +563,7 @@ mod tests {
 
                 info!("{original_config:#?}");
 
-                robot.delete_firewall(server.id).await.unwrap();
+                let _ = robot.delete_firewall(server.id).await.unwrap();
 
                 info!("Waiting for firewall to be applied to {}", server.name);
 
@@ -583,7 +587,7 @@ mod tests {
                 assert_eq!(applied_configuration.rules.egress.len(), 1);
 
                 // Revert to the original firewall config.
-                robot
+                let _ = robot
                     .set_firewall_config(server.id, &original_firewall.config())
                     .await
                     .unwrap();
@@ -595,7 +599,7 @@ mod tests {
         #[traced_test]
         #[serial("firewall-templates")]
         async fn test_create_update_delete_firewall_template() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -613,7 +617,7 @@ mod tests {
                 .await
                 .unwrap();
 
-            robot
+            let _ = robot
                 .update_firewall_template(
                     template.id,
                     FirewallTemplateConfig {

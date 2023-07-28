@@ -76,6 +76,11 @@ pub struct Single<T: DeserializeOwned>(#[serde(deserialize_with = "deserialize_i
 #[derive(Debug)]
 pub struct Empty;
 
+impl Empty {
+    /// Used to explicitly throwaway an empty result, to satisfy the unused_result lint.
+    pub fn throw_away(self) {}
+}
+
 impl<'de> Deserialize<'de> for Empty {
     fn deserialize<D>(_: D) -> Result<Self, D::Error>
     where
@@ -219,6 +224,6 @@ mod tests {
             "error": "hello"
         }"#;
 
-        serde_json::from_str::<Empty>(response).unwrap_err();
+        let _err = serde_json::from_str::<Empty>(response).unwrap_err();
     }
 }

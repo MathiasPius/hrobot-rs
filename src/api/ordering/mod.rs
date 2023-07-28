@@ -1,3 +1,5 @@
+//! Server and addon purchasing structs and implementation.
+
 mod models;
 use std::ops::RangeBounds;
 
@@ -143,7 +145,7 @@ impl AsyncRobot {
     /// # use hrobot::Decimal;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// for product in robot.list_products(
     ///     30..50,
@@ -173,7 +175,7 @@ impl AsyncRobot {
     /// # use hrobot::api::ordering::ProductId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// let product = robot.get_product(
     ///     &ProductId::from("EX44")
@@ -195,7 +197,7 @@ impl AsyncRobot {
     /// # use tracing::info;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// let transaction = robot.place_product_order(
     ///     ProductOrder {
@@ -228,7 +230,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// for transaction in robot.list_recent_product_transactions().await.unwrap() {
     ///     println!("{}: {}", transaction.product.id, transaction.date);
@@ -246,7 +248,7 @@ impl AsyncRobot {
     /// # use hrobot::api::ordering::TransactionId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.get_product_transaction(
     ///     &TransactionId::from("B20150121-344958-251479")
@@ -266,7 +268,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// for market_product in robot.list_market_products().await.unwrap() {
     ///     println!("{}: {}", market_product.id, market_product.name);
@@ -284,7 +286,7 @@ impl AsyncRobot {
     /// # use hrobot::api::ordering::MarketProductId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// let product = robot.get_market_product(
     ///     &MarketProductId(2128654)
@@ -301,7 +303,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// for transaction in robot.list_recent_market_transactions().await.unwrap() {
     ///     println!("{}: {}", transaction.product.id, transaction.date);
@@ -319,7 +321,7 @@ impl AsyncRobot {
     /// # use hrobot::api::ordering::MarketTransactionId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.get_market_transaction(
     ///     &MarketTransactionId::from("B20150121-344958-251479")
@@ -347,7 +349,7 @@ impl AsyncRobot {
     /// # use tracing::info;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// let transaction = robot.place_market_order(
     ///     MarketProductOrder {
@@ -380,7 +382,7 @@ impl AsyncRobot {
     /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// for addon in robot.list_available_addons(
     ///     ServerId(1234)
@@ -405,7 +407,7 @@ impl AsyncRobot {
     /// # use tracing::info;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// let transaction = robot.place_addon_order(
     ///     AddonOrder {
@@ -430,7 +432,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// for transaction in robot.list_recent_product_transactions().await.unwrap() {
     ///     println!("{}: {}", transaction.product.id, transaction.date);
@@ -448,7 +450,7 @@ impl AsyncRobot {
     /// # use hrobot::api::ordering::AddonTransactionId;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.get_addon_transaction(
     ///     &AddonTransactionId::from("B20150121-344958-251479")
@@ -478,7 +480,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_product_listing() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 
@@ -490,7 +492,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_single_product() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 
@@ -503,7 +505,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_list_recent_product_transactions() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 
@@ -526,7 +528,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_recent_product_transactions() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 
@@ -554,7 +556,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_list_market_products() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 
@@ -566,7 +568,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_single_market_product() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 
@@ -579,7 +581,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_list_recent_market_transactions() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 
@@ -602,7 +604,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_recent_market_transactions() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 
@@ -627,7 +629,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_list_available_addons() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 
@@ -654,7 +656,7 @@ mod tests {
         #[traced_test]
         #[ignore = "this test is designed to not make a purchase, but who knows what might go wrong."]
         async fn test_purchase_cheapest_server() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 
@@ -691,7 +693,7 @@ mod tests {
         #[traced_test]
         #[ignore = "this test is designed to not make a purchase, but who knows what might go wrong."]
         async fn test_purchase_ax41() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 
@@ -724,7 +726,7 @@ mod tests {
         #[traced_test]
         #[ignore = "this test is designed to not make a purchase, but who knows what might go wrong."]
         async fn test_purchase_additional_ipv4() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = AsyncRobot::default();
 

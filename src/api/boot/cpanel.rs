@@ -209,7 +209,7 @@ mod tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_get_cpanel_configuration() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -235,7 +235,7 @@ mod tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_last_cpanel_config() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -269,7 +269,7 @@ mod tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_enable_disable_cpanel() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -294,7 +294,7 @@ mod tests {
 
                 assert_eq!(Cpanel::Active(activated_config.clone()), config);
 
-                robot.disable_cpanel_config(server.id).await.unwrap();
+                let _ = robot.disable_cpanel_config(server.id).await.unwrap();
 
                 assert!(matches!(
                     robot.get_cpanel_config(server.id).await.unwrap(),

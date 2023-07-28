@@ -1,3 +1,5 @@
+//! Boot Configuration structs and implementation.
+
 mod cpanel;
 mod linux;
 mod plesk;
@@ -46,11 +48,17 @@ pub struct Config {
 /// Contains only the currently active boot configuration system.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ActiveConfig {
+    /// Active rescue system configuration.
     Rescue(ActiveRescueConfig),
+    /// Active Linux installation configuration.
     Linux(ActiveLinuxConfig),
+    /// Active VNC installation configuration.
     Vnc(ActiveVncConfig),
+    /// Active Windows installation configuration.
     Windows(ActiveWindowsConfig),
+    /// Active Plesk installation configuration.
     Plesk(ActivePleskConfig),
+    /// Active CPanel installation configuration.
     CPanel(ActiveCpanelConfig),
 }
 
@@ -123,7 +131,7 @@ mod tests {
         #[traced_test]
         #[serial("boot-configuration")]
         async fn test_get_boot_configuration() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 

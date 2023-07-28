@@ -1,9 +1,9 @@
 [package]
 name = "hrobot"
 description = "Unofficial Hetzner Robot API client"
-keywords = ["hetzner", "robot", "api", "client"]
+keywords = ["hetzner", "robot", "api", "client", "async"]
 repository = "https://github.com/MathiasPius/hrobot-rs"
-version = "0.1.14"
+version = "1.0.0-alpha.1"
 license = "MIT"
 edition = "2021"
 

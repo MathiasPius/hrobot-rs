@@ -1,3 +1,5 @@
+//! Server structs and implementations.
+
 mod models;
 
 use crate::{
@@ -93,7 +95,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// for server in robot.list_servers().await.unwrap() {
     ///     println!("{}: {}", server.id, server.name);
@@ -258,7 +260,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_list_servers() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -269,7 +271,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_server() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -286,7 +288,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_nonexistent_server() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -302,7 +304,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_server_cancellation() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -326,7 +328,7 @@ mod tests {
         #[traced_test]
         #[ignore = "unexpected failure might leave server in renamed state."]
         async fn test_rename_server() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 

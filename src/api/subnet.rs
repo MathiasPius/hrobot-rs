@@ -1,3 +1,5 @@
+//! Subnet structs and implementation.
+
 use std::{
     collections::HashMap,
     net::{IpAddr, Ipv4Addr},
@@ -284,6 +286,7 @@ impl From<InternalSubnet> for Subnet {
     }
 }
 
+/// IPv4/IPv6 subnet.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Subnet {
     /// Address
@@ -347,7 +350,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_list_subnets() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
             let subnets = robot.list_subnets().await.unwrap();
@@ -358,7 +361,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_subnets() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
             let subnets = robot.list_subnets().await.unwrap();
@@ -378,7 +381,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_subnet_cancellation() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
             let subnets = robot.list_subnets().await.unwrap();

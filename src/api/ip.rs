@@ -1,3 +1,5 @@
+//! IP structs and implementation.
+
 use std::{collections::HashMap, net::Ipv4Addr};
 
 use bytesize::ByteSize;
@@ -82,7 +84,7 @@ impl AsyncRobot {
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # dotenvy::dotenv().ok();
+    /// # let _ = dotenvy::dotenv().ok();
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.list_ips().await.unwrap();
     /// # }
@@ -252,6 +254,7 @@ impl AsyncRobot {
     }
 }
 
+/// Traffic warning configuration.
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 #[serde(try_from = "InternalTrafficWarnings")]
 pub struct TrafficWarnings {
@@ -323,6 +326,7 @@ impl From<TrafficWarnings> for InternalTrafficWarnings {
     }
 }
 
+/// Describes a network.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Network {
     /// Gateway for the IP address.
@@ -335,6 +339,7 @@ pub struct Network {
     pub broadcast: Ipv4Addr,
 }
 
+/// Describes a single server-attached IPv4 Address.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Ip {
     /// Address
@@ -418,7 +423,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_list_ips() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
             let ips = robot.list_ips().await.unwrap();
@@ -429,7 +434,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_server_ip_information() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -445,7 +450,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_separate_mac() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -464,7 +469,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         async fn test_get_server_ip_cancellation() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -491,7 +496,7 @@ mod tests {
         #[serial("ip")]
         #[ignore = "unexpected failure can leave the traffic warning in undesired configuration"]
         async fn test_enable_and_disable_traffic_warnings() {
-            dotenvy::dotenv().ok();
+            let _ = dotenvy::dotenv().ok();
 
             let robot = crate::AsyncRobot::default();
 
@@ -514,11 +519,11 @@ mod tests {
                     TrafficWarnings::default()
                 );
 
-                robot.disable_ip_traffic_warnings(ip.ip).await.unwrap();
+                let _ = robot.disable_ip_traffic_warnings(ip.ip).await.unwrap();
 
                 // Restore the original traffic warning settings.
                 if let Some(warnings) = original_traffic_warning {
-                    robot
+                    let _ = robot
                         .enable_ip_traffic_warnings(ip.ip, Some(warnings))
                         .await
                         .unwrap();
