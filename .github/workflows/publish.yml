@@ -84,9 +84,10 @@ jobs:
         shell: bash
 
       - name: Publish crate to crates.io
-        uses: katyo/publish-crates@v1
+        uses: katyo/publish-crates@v2
         with:
           registry-token: ${{ secrets.CARGO_LOGIN_TOKEN }}
+          ignore-unpublished-changes: true
 
       - name: Push the crate version as a tag
         id: tag_version
