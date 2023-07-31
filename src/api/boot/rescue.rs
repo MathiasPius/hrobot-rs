@@ -1,3 +1,6 @@
+use std::borrow::Cow;
+use std::fmt::Display;
+
 use crate::api::server::ServerId;
 use crate::{error::Error, AsyncRobot};
 
@@ -55,7 +58,7 @@ impl AsyncRobot {
     ///         // e.g.: currently active rescue system is: vkvm
     ///     },
     ///     Rescue::Available(AvailableRescueConfig { operating_systems, .. }) => {
-    ///         println!("available rescue systems are: {}", operating_systems.join(", "))
+    ///         println!("available rescue systems are: {:?}", operating_systems)
     ///         // e.g.: available rescue systems are: linux, linuxold, vkvm
     ///     }
     /// }
@@ -91,12 +94,12 @@ impl AsyncRobot {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::server::ServerId;
-    /// # use hrobot::api::boot::{Rescue, RescueConfig, Keyboard};
+    /// # use hrobot::api::boot::{Rescue, RescueConfig, Keyboard, RescueOperatingSystem};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.enable_rescue_config(ServerId(1234567), RescueConfig {
-    ///     operating_system: "vkvm".to_string(),
+    ///     operating_system: RescueOperatingSystem::from("vkvm"),
     ///     authorized_keys: vec!["d7:34:1c:8c:4e:20:e0:1f:07:66:45:d9:97:22:ec:07".to_string()],
     ///     keyboard: Keyboard::German,
     /// }).await.unwrap();
@@ -169,11 +172,11 @@ pub enum Keyboard {
 }
 
 /// Configuration of the rescue system to enable.
-#[derive(Debug, Default, Clone, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct RescueConfig {
     /// Rescue operating system to activate.
     #[serde(rename = "os")]
-    pub operating_system: String,
+    pub operating_system: RescueOperatingSystem,
 
     /// Key fingerprints to authorize for server access.
     #[serde(rename = "authorized_key", skip_serializing_if = "Vec::is_empty")]
@@ -190,7 +193,7 @@ pub struct RescueConfig {
 pub struct ActiveRescueConfig {
     /// Active rescue operating system.
     #[serde(rename = "os")]
-    pub operating_system: String,
+    pub operating_system: RescueOperatingSystem,
 
     /// Root password for the currently active rescue system.
     pub password: Option<String>,
@@ -212,7 +215,7 @@ pub struct ActiveRescueConfig {
 pub struct AvailableRescueConfig {
     /// Available rescue operating systems.
     #[serde(rename = "os")]
-    pub operating_systems: Vec<String>,
+    pub operating_systems: Vec<RescueOperatingSystem>,
 }
 
 /// Represents the currently active rescue configuration,
@@ -225,6 +228,34 @@ pub enum Rescue {
 
     /// Available rescue system configurations
     Available(AvailableRescueConfig),
+}
+
+/// Rescue Distribution, e.g. "vkvm".
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct RescueOperatingSystem(pub Cow<'static, str>);
+
+impl From<String> for RescueOperatingSystem {
+    fn from(value: String) -> Self {
+        RescueOperatingSystem(Cow::from(value))
+    }
+}
+
+impl From<&'static str> for RescueOperatingSystem {
+    fn from(value: &'static str) -> Self {
+        RescueOperatingSystem(Cow::from(value))
+    }
+}
+
+impl Display for RescueOperatingSystem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl PartialEq<str> for RescueOperatingSystem {
+    fn eq(&self, other: &str) -> bool {
+        self.0.eq(other)
+    }
 }
 
 #[cfg(test)]
@@ -270,7 +301,7 @@ mod isolated_tests {
         use tracing::info;
         use tracing_test::traced_test;
 
-        use crate::api::boot::{Rescue, RescueConfig};
+        use crate::api::boot::{Keyboard, Rescue, RescueConfig, RescueOperatingSystem};
 
         #[tokio::test]
         #[ignore = "unexpected failure might leave the rescue system enabled."]
@@ -289,8 +320,9 @@ mod isolated_tests {
                     .enable_rescue_config(
                         server.id,
                         RescueConfig {
-                            operating_system: "vkvm".to_string(),
-                            ..Default::default()
+                            operating_system: RescueOperatingSystem::from("vkvm"),
+                            authorized_keys: vec![],
+                            keyboard: Keyboard::US,
                         },
                     )
                     .await
