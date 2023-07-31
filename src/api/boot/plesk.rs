@@ -1,3 +1,5 @@
+use std::{borrow::Cow, fmt::Display};
+
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -58,7 +60,7 @@ impl AsyncRobot {
     ///         // e.g.: currently active plesk distribution is: CentOS-Stream
     ///     },
     ///     Plesk::Available(AvailablePleskConfig { distributions, .. }) => {
-    ///         println!("available plesk distributions are: {}", distributions.join(", "))
+    ///         println!("available plesk distributions are: {:?}", distributions)
     ///         // e.g.: available plesk distributions are: CentOS-Stream, ...
     ///     }
     /// }
@@ -97,12 +99,12 @@ impl AsyncRobot {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::server::ServerId;
-    /// # use hrobot::api::boot::{Plesk, PleskConfig};
+    /// # use hrobot::api::boot::{Plesk, PleskConfig, PleskDistribution};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.enable_plesk_config(ServerId(1234567), PleskConfig {
-    ///     distribution: "CentOS-Stream".to_string(),
+    ///     distribution: PleskDistribution::from("CentOS-Stream"),
     ///     language: "en_US".to_string(),
     ///     hostname: "plesk.example.com".to_string(),
     /// }).await.unwrap();
@@ -143,7 +145,7 @@ impl AsyncRobot {
 pub struct PleskConfig {
     /// Distribution for the Plesk installation.
     #[serde(rename = "dist")]
-    pub distribution: String,
+    pub distribution: PleskDistribution,
 
     /// Hostname for the Plesk installation.
     pub hostname: String,
@@ -158,7 +160,7 @@ pub struct PleskConfig {
 pub struct AvailablePleskConfig {
     /// Available distributions for Plesk installation.
     #[serde(rename = "dist")]
-    pub distributions: Vec<String>,
+    pub distributions: Vec<PleskDistribution>,
 
     /// Available languages for the Plesk installation.
     #[serde(rename = "lang")]
@@ -170,7 +172,7 @@ pub struct AvailablePleskConfig {
 pub struct ActivePleskConfig {
     /// Distribution selected in currently active Plesk installation.
     #[serde(rename = "dist")]
-    pub distribution: String,
+    pub distribution: PleskDistribution,
 
     /// Language selected in currently active Plesk installation.
     #[serde(rename = "lang")]
@@ -195,6 +197,34 @@ pub enum Plesk {
     Active(ActivePleskConfig),
     /// Describes available Plesk configuration options.
     Available(AvailablePleskConfig),
+}
+
+/// Plesk Distribution, e.g. "CentOS-Stream".
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct PleskDistribution(pub Cow<'static, str>);
+
+impl From<String> for PleskDistribution {
+    fn from(value: String) -> Self {
+        PleskDistribution(Cow::from(value))
+    }
+}
+
+impl From<&'static str> for PleskDistribution {
+    fn from(value: &'static str) -> Self {
+        PleskDistribution(Cow::from(value))
+    }
+}
+
+impl Display for PleskDistribution {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl PartialEq<str> for PleskDistribution {
+    fn eq(&self, other: &str) -> bool {
+        self.0.eq(other)
+    }
 }
 
 #[cfg(test)]
@@ -261,7 +291,7 @@ mod tests {
             use tracing::info;
             use tracing_test::traced_test;
 
-            use crate::api::boot::{Plesk, PleskConfig};
+            use crate::api::boot::{Plesk, PleskConfig, PleskDistribution};
 
             #[tokio::test]
             #[traced_test]
@@ -280,7 +310,7 @@ mod tests {
                         .enable_plesk_config(
                             server.id,
                             PleskConfig {
-                                distribution: "CentOS Stream".to_string(),
+                                distribution: PleskDistribution::from("CentOS Stream"),
                                 language: "en_US".to_string(),
                                 hostname: "plesk.example.com".to_string(),
                             },
