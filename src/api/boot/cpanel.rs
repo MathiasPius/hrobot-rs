@@ -315,7 +315,7 @@ mod tests {
                     .enable_cpanel_config(
                         server.id,
                         CpanelConfig {
-                            distribution: CPanelDistribution::from("CentOS Stream"),
+                            distribution: CpanelDistribution::from("CentOS Stream"),
                             language: "en_US".to_string(),
                             hostname: "cpanel.example.com".to_string(),
                         },
