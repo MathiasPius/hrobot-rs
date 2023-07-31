@@ -1,3 +1,5 @@
+use std::{borrow::Cow, fmt::Display};
+
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -48,7 +50,9 @@ impl AsyncRobot {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::server::ServerId;
-    /// # use hrobot::api::boot::{Cpanel, ActiveCpanelConfig, AvailableCpanelConfig};
+    /// # use hrobot::api::boot::{
+    /// #   Cpanel, ActiveCpanelConfig, AvailableCpanelConfig,
+    /// # };
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
@@ -58,7 +62,7 @@ impl AsyncRobot {
     ///         // e.g.: currently active cpanel distribution is: CentOS-Stream
     ///     },
     ///     Cpanel::Available(AvailableCpanelConfig { distributions, .. }) => {
-    ///         println!("available cpanel distributions are: {}", distributions.join(", "))
+    ///         println!("available cpanel distributions are: {:?}", distributions)
     ///         // e.g.: available cpanel distributions are: CentOS-Stream, ...
     ///     }
     /// }
@@ -96,13 +100,13 @@ impl AsyncRobot {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::boot::{Cpanel, CpanelConfig};
+    /// # use hrobot::api::boot::{Cpanel, CpanelConfig, CpanelDistribution};
     /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.enable_cpanel_config(ServerId(1234567), CpanelConfig {
-    ///     distribution: "CentOS-Stream".to_string(),
+    ///     distribution: CpanelDistribution::from("CentOS-Stream"),
     ///     language: "en_US".to_string(),
     ///     hostname: "cpanel.example.com".to_string(),
     /// }).await.unwrap();
@@ -143,7 +147,7 @@ impl AsyncRobot {
 pub struct CpanelConfig {
     /// Distribution for the Cpanel installation.
     #[serde(rename = "dist")]
-    pub distribution: String,
+    pub distribution: CpanelDistribution,
 
     /// Hostname for the Cpanel installation.
     pub hostname: String,
@@ -158,7 +162,7 @@ pub struct CpanelConfig {
 pub struct AvailableCpanelConfig {
     /// Available distributions for Cpanel installation.
     #[serde(rename = "dist")]
-    pub distributions: Vec<String>,
+    pub distributions: Vec<CpanelDistribution>,
 
     /// Available languages for the Cpanel installation.
     #[serde(rename = "lang")]
@@ -170,7 +174,7 @@ pub struct AvailableCpanelConfig {
 pub struct ActiveCpanelConfig {
     /// Distribution selected in currently active Cpanel installation.
     #[serde(rename = "dist")]
-    pub distribution: String,
+    pub distribution: CpanelDistribution,
 
     /// Language selected in currently active Cpanel installation.
     #[serde(rename = "lang")]
@@ -195,6 +199,34 @@ pub enum Cpanel {
     Active(ActiveCpanelConfig),
     /// Describes available Cpanel configuration options.
     Available(AvailableCpanelConfig),
+}
+
+/// CPanel Distribution, e.g. "CentOS-Stream".
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct CpanelDistribution(pub Cow<'static, str>);
+
+impl From<String> for CpanelDistribution {
+    fn from(value: String) -> Self {
+        CpanelDistribution(Cow::from(value))
+    }
+}
+
+impl From<&'static str> for CpanelDistribution {
+    fn from(value: &'static str) -> Self {
+        CpanelDistribution(Cow::from(value))
+    }
+}
+
+impl Display for CpanelDistribution {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl PartialEq<str> for CpanelDistribution {
+    fn eq(&self, other: &str) -> bool {
+        self.0.eq(other)
+    }
 }
 
 #[cfg(test)]
@@ -264,6 +296,8 @@ mod tests {
 
         use crate::api::boot::{Cpanel, CpanelConfig};
 
+        use crate::api::boot::CpanelDistribution;
+
         #[tokio::test]
         #[ignore = "enabling the Cpanel installation system is expensive, even if the system is never activated."]
         #[traced_test]
@@ -281,7 +315,7 @@ mod tests {
                     .enable_cpanel_config(
                         server.id,
                         CpanelConfig {
-                            distribution: "CentOS Stream".to_string(),
+                            distribution: CPanelDistribution::from("CentOS Stream"),
                             language: "en_US".to_string(),
                             hostname: "cpanel.example.com".to_string(),
                         },
