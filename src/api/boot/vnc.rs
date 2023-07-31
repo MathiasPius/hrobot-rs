@@ -1,3 +1,5 @@
+use std::{borrow::Cow, fmt::Display};
+
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -56,7 +58,7 @@ impl AsyncRobot {
     ///         // e.g.: currently active vnc distribution is: Fedora-37
     ///     },
     ///     Vnc::Available(AvailableVncConfig { distributions, .. }) => {
-    ///         println!("available vnc distributions are: {}", distributions.join(", "))
+    ///         println!("available vnc distributions are: {:?}", distributions)
     ///         // e.g.: available vnc distributions are: Fedora-37, ...
     ///     }
     /// }
@@ -95,12 +97,12 @@ impl AsyncRobot {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::server::ServerId;
-    /// # use hrobot::api::boot::{Vnc, VncConfig};
+    /// # use hrobot::api::boot::{Vnc, VncConfig, VncDistribution};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.enable_vnc_config(ServerId(1234567), VncConfig {
-    ///     distribution: "Fedora-37".to_string(),
+    ///     distribution: VncDistribution::from("Fedora-37"),
     ///     language: "en_US".to_string(),
     /// }).await.unwrap();
     /// # }
@@ -137,7 +139,7 @@ impl AsyncRobot {
 pub struct VncConfig {
     /// Distribution for the VNC installation.
     #[serde(rename = "dist")]
-    pub distribution: String,
+    pub distribution: VncDistribution,
 
     /// Language of the distribution
     #[serde(rename = "lang")]
@@ -149,7 +151,7 @@ pub struct VncConfig {
 pub struct AvailableVncConfig {
     /// Available distributions for VNC installation.
     #[serde(rename = "dist")]
-    pub distributions: Vec<String>,
+    pub distributions: Vec<VncDistribution>,
 
     /// Available languages for the VNC installation.
     #[serde(rename = "lang")]
@@ -161,7 +163,7 @@ pub struct AvailableVncConfig {
 pub struct ActiveVncConfig {
     /// Distribution selected in currently active VNC installation.
     #[serde(rename = "dist")]
-    pub distribution: String,
+    pub distribution: VncDistribution,
 
     /// Language selected in currently active VNC installation.
     #[serde(rename = "lang")]
@@ -183,6 +185,34 @@ pub enum Vnc {
     Active(ActiveVncConfig),
     /// Describes available VNC configuration options.
     Available(AvailableVncConfig),
+}
+
+/// VNC Distribution, e.g. "CentOS-Stream".
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct VncDistribution(pub Cow<'static, str>);
+
+impl From<String> for VncDistribution {
+    fn from(value: String) -> Self {
+        VncDistribution(Cow::from(value))
+    }
+}
+
+impl From<&'static str> for VncDistribution {
+    fn from(value: &'static str) -> Self {
+        VncDistribution(Cow::from(value))
+    }
+}
+
+impl Display for VncDistribution {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl PartialEq<str> for VncDistribution {
+    fn eq(&self, other: &str) -> bool {
+        self.0.eq(other)
+    }
 }
 
 #[cfg(test)]
@@ -235,7 +265,7 @@ mod tests {
         use tracing::info;
         use tracing_test::traced_test;
 
-        use crate::api::boot::{Vnc, VncConfig};
+        use crate::api::boot::{Vnc, VncConfig, VncDistribution};
 
         #[tokio::test]
         #[ignore = "unexpected failure might leave the vnc installation system enabled."]
@@ -254,7 +284,7 @@ mod tests {
                     .enable_vnc_config(
                         server.id,
                         VncConfig {
-                            distribution: "Fedora-37".to_string(),
+                            distribution: VncDistribution::from("Fedora-37"),
                             language: "en_US".to_string(),
                         },
                     )
