@@ -1,3 +1,6 @@
+use std::borrow::Cow;
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 use crate::api::server::ServerId;
@@ -56,7 +59,7 @@ impl AsyncRobot {
     ///         // e.g.: currently active rescue system is: vkvm
     ///     },
     ///     Windows::Available(AvailableWindowsConfig { distributions, .. }) => {
-    ///         println!("available windows installation distributions are: {}", distributions.join(", "))
+    ///         println!("available windows installation distributions are: {:?}", distributions)
     ///         // e.g.: available rescue systems are: linux, linuxold, vkvm
     ///     }
     /// }
@@ -95,12 +98,12 @@ impl AsyncRobot {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::server::ServerId;
-    /// # use hrobot::api::boot::WindowsConfig;
+    /// # use hrobot::api::boot::{WindowsConfig, WindowsDistribution};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.enable_windows_config(ServerId(1234567), WindowsConfig {
-    ///     distribution: "standard".to_string(),
+    ///     distribution: WindowsDistribution::from("standard"),
     ///     language: "en".to_string()
     /// }).await.unwrap();
     /// # }
@@ -140,7 +143,7 @@ impl AsyncRobot {
 pub struct ActiveWindowsConfig {
     /// Active Windows installation distribution.
     #[serde(rename = "dist")]
-    pub distribution: String,
+    pub distribution: WindowsDistribution,
 
     /// Active Windows installation language.
     #[serde(rename = "lang")]
@@ -156,7 +159,7 @@ pub struct ActiveWindowsConfig {
 pub struct AvailableWindowsConfig {
     /// Available Windows installation distributions.
     #[serde(rename = "dist")]
-    pub distributions: Vec<String>,
+    pub distributions: Vec<WindowsDistribution>,
 
     /// Available Windows installation languages.
     #[serde(rename = "lang")]
@@ -177,11 +180,39 @@ pub enum Windows {
 pub struct WindowsConfig {
     /// Distribution of Windows to install.
     #[serde(rename = "dist")]
-    pub distribution: String,
+    pub distribution: WindowsDistribution,
 
     /// Language to install.
     #[serde(rename = "lang")]
     pub language: String,
+}
+
+/// Windows Distribution, e.g. "standard".
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct WindowsDistribution(pub Cow<'static, str>);
+
+impl From<String> for WindowsDistribution {
+    fn from(value: String) -> Self {
+        WindowsDistribution(Cow::from(value))
+    }
+}
+
+impl From<&'static str> for WindowsDistribution {
+    fn from(value: &'static str) -> Self {
+        WindowsDistribution(Cow::from(value))
+    }
+}
+
+impl Display for WindowsDistribution {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl PartialEq<str> for WindowsDistribution {
+    fn eq(&self, other: &str) -> bool {
+        self.0.eq(other)
+    }
 }
 
 #[cfg(test)]
@@ -249,7 +280,7 @@ mod tests {
         use tracing::info;
         use tracing_test::traced_test;
 
-        use crate::api::boot::{Windows, WindowsConfig};
+        use crate::api::boot::{Windows, WindowsConfig, WindowsDistribution};
 
         #[tokio::test]
         #[ignore = "enabling the Windows installation system is expensive, even if the system is never activated."]
@@ -268,7 +299,7 @@ mod tests {
                     .enable_windows_config(
                         server.id,
                         WindowsConfig {
-                            distribution: "standard".to_string(),
+                            distribution: WindowsDistribution::from("standard"),
                             language: "en_US".to_string(),
                         },
                     )
