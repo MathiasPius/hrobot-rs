@@ -1,3 +1,6 @@
+use std::borrow::Cow;
+use std::fmt::Display;
+
 use crate::api::server::ServerId;
 use crate::client::AsyncRobot;
 use crate::{
@@ -58,7 +61,7 @@ impl AsyncRobot {
     ///         // e.g.: currently active linux distribution is: Arch Linux latest minimal
     ///     },
     ///     Linux::Available(AvailableLinuxConfig { distributions, .. }) => {
-    ///         println!("available linux distributions are: {}", distributions.join(", "))
+    ///         println!("available linux distributions are: {:?}", distributions)
     ///         // e.g.: available linux distributions are: Alma Linux 8.7, ...
     ///     }
     /// }
@@ -93,13 +96,13 @@ impl AsyncRobot {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::boot::{Linux, LinuxConfig, Keyboard};
+    /// # use hrobot::api::boot::{Linux, LinuxConfig, Keyboard, LinuxDistribution};
     /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.enable_linux_config(ServerId(1234567), LinuxConfig {
-    ///     distribution: "Arch Linux latest minimal".to_string(),
+    ///     distribution: LinuxDistribution::from("Arch Linux latest minimal"),
     ///     authorized_keys: vec!["d7:34:1c:8c:4e:20:e0:1f:07:66:45:d9:97:22:ec:07".to_string()],
     ///     language: "en".to_string(),
     /// }).await.unwrap();
@@ -140,7 +143,7 @@ impl AsyncRobot {
 pub struct LinuxConfig {
     /// Distribution to install.
     #[serde(rename = "dist")]
-    pub distribution: String,
+    pub distribution: LinuxDistribution,
 
     /// Language to use for the installation.
     #[serde(rename = "lang")]
@@ -161,7 +164,7 @@ pub struct LinuxConfig {
 pub struct ActiveLinuxConfig {
     /// Distribution to be installed.
     #[serde(rename = "dist")]
-    pub distribution: String,
+    pub distribution: LinuxDistribution,
 
     /// Language of the distribution to be installed.
     #[serde(rename = "lang")]
@@ -192,7 +195,7 @@ pub struct ActiveLinuxConfig {
 pub struct AvailableLinuxConfig {
     /// Available linux distributions for installation.
     #[serde(rename = "dist")]
-    pub distributions: Vec<String>,
+    pub distributions: Vec<LinuxDistribution>,
 
     /// Available languages for installation.
     #[serde(rename = "lang")]
@@ -212,6 +215,34 @@ pub enum Linux {
     /// Linux installation config is not active,
     /// these are the available distributions and languages.
     Available(AvailableLinuxConfig),
+}
+
+/// Linux Distribution, e.g. "CentOS-Stream".
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct LinuxDistribution(pub Cow<'static, str>);
+
+impl From<String> for LinuxDistribution {
+    fn from(value: String) -> Self {
+        LinuxDistribution(Cow::from(value))
+    }
+}
+
+impl From<&'static str> for LinuxDistribution {
+    fn from(value: &'static str) -> Self {
+        LinuxDistribution(Cow::from(value))
+    }
+}
+
+impl Display for LinuxDistribution {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl PartialEq<str> for LinuxDistribution {
+    fn eq(&self, other: &str) -> bool {
+        self.0.eq(other)
+    }
 }
 
 #[cfg(test)]
@@ -246,7 +277,7 @@ mod tests {
         use tracing::info;
         use tracing_test::traced_test;
 
-        use crate::api::boot::{Linux, LinuxConfig};
+        use crate::api::boot::{Linux, LinuxConfig, LinuxDistribution};
 
         #[tokio::test]
         #[traced_test]
@@ -265,7 +296,7 @@ mod tests {
                     .enable_linux_config(
                         server.id,
                         LinuxConfig {
-                            distribution: "Arch Linux latest minimal".to_string(),
+                            distribution: LinuxDistribution::from("Arch Linux latest minimal"),
                             language: "en".to_string(),
                             authorized_keys: vec![],
                         },
