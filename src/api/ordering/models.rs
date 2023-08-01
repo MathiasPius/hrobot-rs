@@ -749,6 +749,9 @@ pub struct MarketProduct {
     /// Price of the market product.
     pub price: LocationPrice,
 
+    /// Indicates that the lowest price point has been reached, and won't be lowered further.
+    pub fixed_price: bool,
+
     /// Time until the price of the product is reduced.
     pub next_reduce_in: std::time::Duration,
 
@@ -775,6 +778,7 @@ impl From<InternalMarketProduct> for MarketProduct {
             primary_hdd_size: value.hdd_size,
             features: value.hdd_text,
             primary_hdd_count: value.hdd_count,
+            fixed_price: value.fixed_price,
             price: LocationPrice {
                 monthly: Price {
                     net: value.price,
