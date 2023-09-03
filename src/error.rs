@@ -2,17 +2,8 @@
 
 use std::fmt::Display;
 
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
 use thiserror::Error;
-
-fn deserialize_null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
-where
-    T: Default + Deserialize<'de>,
-    D: Deserializer<'de>,
-{
-    let opt = Option::deserialize(deserializer)?;
-    Ok(opt.unwrap_or_default())
-}
 
 /// Error returned by the Hetzner Robot API.
 #[derive(Debug, Deserialize, Error)]
@@ -325,11 +316,17 @@ pub enum ApiError {
     InvalidInput {
         /// Human-readable message associated with the error.
         message: String,
-        #[serde(default, deserialize_with = "deserialize_null_default")]
+        #[serde(
+            default,
+            deserialize_with = "crate::conversion::deserialize_null_default"
+        )]
         /// List of fields that are missing from the request.
         missing: Vec<String>,
         /// List of fields which contained invalid data.
-        #[serde(default, deserialize_with = "deserialize_null_default")]
+        #[serde(
+            default,
+            deserialize_with = "crate::conversion::deserialize_null_default"
+        )]
         invalid: Vec<String>,
     },
     /// Conflict.

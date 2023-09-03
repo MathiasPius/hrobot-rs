@@ -142,7 +142,11 @@ pub struct Server {
     ///
     /// Includes both IPv4 and IPv6 but excludes associated subnets,
     /// which are instead listed in [`subnets`](Server::subnets)
-    #[serde(rename = "ip", default)]
+    #[serde(
+        rename = "ip",
+        default,
+        deserialize_with = "crate::conversion::deserialize_null_default"
+    )]
     pub ips: Vec<String>,
 
     /// Subnets associated with this server.

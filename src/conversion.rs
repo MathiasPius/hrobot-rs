@@ -11,6 +11,18 @@ use serde::{de::Error, Deserialize, Deserializer};
 use time::{macros::format_description, OffsetDateTime, PrimitiveDateTime};
 use time_tz::PrimitiveDateTimeExt;
 
+/// Deserializes a null value as the default instantiation of itself instead.
+///
+/// Useful when the API might return null for empty arrays.
+pub(crate) fn deserialize_null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    T: Default + Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_default())
+}
+
 /// Deserialize as [`OffsetDateTime`](time::OffsetDateTime)
 /// based on the assumption that the timezone is Europe/Berlin.
 pub(crate) fn assume_berlin_timezone<'de, D: Deserializer<'de>>(

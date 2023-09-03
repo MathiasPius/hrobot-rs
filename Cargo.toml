@@ -21,7 +21,7 @@ rust_decimal = { version = "1.30.0", features = ["serde"] }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-serde_html_form = "0.2.1"
+serde_html_form = "0.2.2"
 
 base64 = "0.21.2"
 urlencoding = "2"
