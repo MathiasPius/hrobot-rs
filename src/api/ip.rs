@@ -119,7 +119,7 @@ impl AsyncRobot {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::ip::TrafficWarnings;
-    /// # use hrobot::ByteSize;
+    /// # use hrobot::bytesize::ByteSize;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();

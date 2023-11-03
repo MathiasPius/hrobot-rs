@@ -142,7 +142,7 @@ impl AsyncRobot {
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::ordering::Location;
-    /// # use hrobot::Decimal;
+    /// # use hrobot::rust_decimal::Decimal;
     /// # #[tokio::main]
     /// # async fn main() {
     /// # let _ = dotenvy::dotenv().ok();

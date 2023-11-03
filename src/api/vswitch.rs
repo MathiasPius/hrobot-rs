@@ -282,7 +282,7 @@ impl PartialEq<u16> for VlanId {
 /// Uniquely identifies a vSwitch.
 ///
 /// Simple wrapper around a u32, to avoid confusion with other simple integer-based IDs
-/// such as [`VlanId`](crate::api::vswitch::VlanId) and to make it intuitive what kind
+/// such as [`VlanId`] and to make it intuitive what kind
 /// of argument you need to give to functions.
 ///
 /// Using a plain integer means it isn't clear what the argument is, is it a counter of
@@ -462,7 +462,7 @@ pub struct CloudNetwork {
 
 /// Cloud Netowrk unique ID.
 ///
-/// Simple wrapper around a u32, to avoid confusion with for example [`VSwitchId`](crate::api::vswitch::VSwitchId)
+/// Simple wrapper around a u32, to avoid confusion with for example [`VSwitchId`]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CloudNetworkId(pub u32);
 
