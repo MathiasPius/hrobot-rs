@@ -239,7 +239,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("ssh-keys")]
+        #[serial(ssh_keys)]
         #[ignore = "unexpected failure might leave test key behind."]
         async fn test_create_delete_key() {
             let _ = dotenvy::dotenv().ok();

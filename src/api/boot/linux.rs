@@ -255,7 +255,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("boot-configuration")]
+        #[serial(boot_configuration)]
         async fn test_get_linux_configuration() {
             let _ = dotenvy::dotenv().ok();
 
@@ -282,7 +282,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         #[ignore = "unexpected failure might leave the linux installation system enabled."]
-        #[serial("boot-configuration")]
+        #[serial(boot_configuration)]
         async fn test_enable_disable_linux() {
             let _ = dotenvy::dotenv().ok();
 

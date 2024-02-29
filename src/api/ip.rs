@@ -493,7 +493,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("ip")]
+        #[serial(ip)]
         #[ignore = "unexpected failure can leave the traffic warning in undesired configuration"]
         async fn test_enable_and_disable_traffic_warnings() {
             let _ = dotenvy::dotenv().ok();

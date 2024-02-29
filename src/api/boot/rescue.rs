@@ -279,7 +279,7 @@ mod isolated_tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("boot-configuration")]
+        #[serial(boot_configuration)]
         async fn test_get_rescue_configuration() {
             let _ = dotenvy::dotenv().ok();
 
@@ -306,7 +306,7 @@ mod isolated_tests {
         #[tokio::test]
         #[ignore = "unexpected failure might leave the rescue system enabled."]
         #[traced_test]
-        #[serial("boot-configuration")]
+        #[serial(boot_configuration)]
         async fn test_enable_disable_vkvm() {
             let _ = dotenvy::dotenv().ok();
 

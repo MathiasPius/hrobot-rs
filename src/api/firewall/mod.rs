@@ -361,7 +361,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("firewall")]
+        #[serial(firewall)]
         async fn test_get_firewall() {
             let _ = dotenvy::dotenv().ok();
 
@@ -379,7 +379,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("firewall-templates")]
+        #[serial(firewall_templates)]
         async fn test_list_firewall_templates() {
             let _ = dotenvy::dotenv().ok();
 
@@ -391,7 +391,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("firewall-templates")]
+        #[serial(firewall_templates)]
         async fn test_get_firewall_template() {
             let _ = dotenvy::dotenv().ok();
 
@@ -417,7 +417,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("firewall")]
+        #[serial(firewall)]
         #[ignore = "unexpected failure might leave firewall in modified state."]
         async fn test_set_firewall_configuration() {
             let _ = dotenvy::dotenv().ok();
@@ -476,7 +476,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("firewall")]
+        #[serial(firewall)]
         #[ignore = "unexpected failure might leave firewall in modified state."]
         async fn test_apply_firewall_template() {
             let _ = dotenvy::dotenv().ok();
@@ -545,7 +545,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("firewall")]
+        #[serial(firewall)]
         #[ignore = "removing a production server's firewall, even temporarily, is obviously always *very* dangerous."]
         async fn test_delete_firewall() {
             let _ = dotenvy::dotenv().ok();
@@ -597,7 +597,7 @@ mod tests {
         #[tokio::test]
         #[ignore = "unexpected failure could leave template behind."]
         #[traced_test]
-        #[serial("firewall-templates")]
+        #[serial(firewall_templates)]
         async fn test_create_update_delete_firewall_template() {
             let _ = dotenvy::dotenv().ok();
 

@@ -500,7 +500,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("vswitch")]
+        #[serial(vswitch)]
         async fn test_list_vswitches() {
             let _ = dotenvy::dotenv().ok();
 
@@ -512,7 +512,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("vswitch")]
+        #[serial(vswitch)]
         async fn test_get_vswitch() {
             let _ = dotenvy::dotenv().ok();
 
@@ -539,7 +539,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         #[ignore = "modifies vswitch connectivity of servers"]
-        #[serial("vswitch")]
+        #[serial(vswitch)]
         async fn test_vswitch_end_to_end() {
             let _ = dotenvy::dotenv().ok();
 
@@ -603,7 +603,7 @@ mod tests {
         #[tokio::test]
         #[traced_test]
         #[ignore = "modifies vswitch connectivity of servers"]
-        #[serial("vswitch")]
+        #[serial(vswitch)]
         async fn test_connect_disconnect_multiple() {
             let _ = dotenvy::dotenv().ok();
 

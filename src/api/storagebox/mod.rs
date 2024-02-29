@@ -883,7 +883,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("storagebox")]
+        #[serial(storagebox)]
         async fn test_get_storagebox() {
             let _ = dotenvy::dotenv().ok();
 
@@ -900,7 +900,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("storagebox")]
+        #[serial(storagebox)]
         async fn test_list_snapshots() {
             let _ = dotenvy::dotenv().ok();
 
@@ -962,7 +962,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("storagebox")]
+        #[serial(storagebox)]
         #[ignore = "resets password, potentially breaking existing pasword-based clients"]
         async fn test_reset_password() {
             let _ = dotenvy::dotenv().ok();
@@ -983,7 +983,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("storagebox")]
+        #[serial(storagebox)]
         #[ignore = "messes up enabled/disabled services for the storagebox, potentially leaving it in an unsafe state"]
         async fn test_toggle_all_settings() {
             let _ = dotenvy::dotenv().ok();
@@ -1072,7 +1072,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("storagebox")]
+        #[serial(storagebox)]
         #[ignore = "creating, reverting and deleting snapshots could lead to data loss"]
         async fn test_create_revert_delete_snapshot() {
             let _ = dotenvy::dotenv().ok();
@@ -1105,7 +1105,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("storagebox")]
+        #[serial(storagebox)]
         #[ignore = "creating and deleting snapshots could lead to data loss"]
         async fn test_create_comment_delete_snapshot() {
             let _ = dotenvy::dotenv().ok();
@@ -1142,7 +1142,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("storagebox")]
+        #[serial(storagebox)]
         #[ignore = "replaces the snapshot plan of the storage box."]
         async fn test_update_snapshot_plans() {
             let _ = dotenvy::dotenv().ok();
@@ -1195,7 +1195,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("storagebox")]
+        #[serial(storagebox)]
         #[ignore = "creates new subaccounts with read/write permissions"]
         async fn test_create_update_delete_subaccount() {
             let _ = dotenvy::dotenv().ok();

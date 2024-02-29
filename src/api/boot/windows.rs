@@ -225,7 +225,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("boot-configuration")]
+        #[serial(boot_configuration)]
         async fn test_get_windows_configuration() {
             let _ = dotenvy::dotenv().ok();
 
@@ -251,7 +251,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("boot-configuration")]
+        #[serial(boot_configuration)]
         async fn test_last_windows_config() {
             let _ = dotenvy::dotenv().ok();
 
@@ -285,7 +285,7 @@ mod tests {
         #[tokio::test]
         #[ignore = "enabling the Windows installation system is expensive, even if the system is never activated."]
         #[traced_test]
-        #[serial("boot-configuration")]
+        #[serial(boot_configuration)]
         async fn test_enable_disable_windows() {
             let _ = dotenvy::dotenv().ok();
 

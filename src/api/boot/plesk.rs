@@ -237,7 +237,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("boot-configuration")]
+        #[serial(boot_configuration)]
         async fn test_get_plesk_configuration() {
             let _ = dotenvy::dotenv().ok();
 
@@ -263,7 +263,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("boot-configuration")]
+        #[serial(boot_configuration)]
         async fn test_last_plesk_config() {
             let _ = dotenvy::dotenv().ok();
 
@@ -296,7 +296,7 @@ mod tests {
             #[tokio::test]
             #[traced_test]
             #[ignore = "enabling the Plesk installation system is expensive, even if the system is never activated."]
-            #[serial("boot-configuration")]
+            #[serial(boot_configuration)]
             async fn test_enable_disable_plesk() {
                 let _ = dotenvy::dotenv().ok();
 
