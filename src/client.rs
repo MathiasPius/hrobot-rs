@@ -1,6 +1,11 @@
 mod r#async {
-    use hyper::{client::HttpConnector, Body};
+    use http_body_util::{BodyExt, Full};
+    use hyper::body::Bytes;
     use hyper_rustls::HttpsConnector;
+    use hyper_util::{
+        client::legacy::{connect::HttpConnector, Client},
+        rt::TokioExecutor,
+    };
     use serde::de::DeserializeOwned;
     use tracing::trace;
 
@@ -31,17 +36,17 @@ mod r#async {
     #[derive(Debug, Clone)]
     pub struct AsyncRobot {
         credentials: Credentials,
-        client: hyper::Client<HttpsConnector<HttpConnector>, Body>,
+        client: Client<HttpsConnector<HttpConnector>, Full<Bytes>>,
     }
 
     impl Default for AsyncRobot {
         fn default() -> Self {
-            let https = hyper_rustls::HttpsConnectorBuilder::new()
-                .with_native_roots()
+            let https: HttpsConnector<HttpConnector> = hyper_rustls::HttpsConnectorBuilder::new()
+                .with_webpki_roots()
                 .https_only()
                 .enable_http1()
                 .build();
-            let client = hyper::Client::builder().build(https);
+            let client = Client::builder(TokioExecutor::new()).build(https);
 
             Self::from_env(client).unwrap()
         }
@@ -53,23 +58,25 @@ mod r#async {
         /// and the given client.
         ///
         /// # Example
-        /// Construct an [`AsyncRobot`] using a [`hyper::Client`] and [`hyper_rustls`].
+        /// Construct an [`AsyncRobot`] using a [`hyper_util::client::legacy::Client`] and [`hyper_rustls`].
         /// ```rust
         /// # #[tokio::main]
         /// # async fn main() {
         /// let https = hyper_rustls::HttpsConnectorBuilder::new()
-        ///     .with_native_roots()
+        ///     .with_webpki_roots()
         ///     .https_only()
         ///     .enable_http1()
         ///     .build();
         ///
-        /// let client = hyper::Client::builder().build(https);
+        /// let client = hyper_util::client::legacy::Client::builder(
+        ///     hyper_util::rt::TokioExecutor::new()
+        /// ).build(https);
         ///
         /// let robot = hrobot::AsyncRobot::from_env(client);
         /// # }
         /// ```
         pub fn from_env(
-            client: hyper::Client<HttpsConnector<HttpConnector>, Body>,
+            client: Client<HttpsConnector<HttpConnector>, Full<Bytes>>,
         ) -> Result<Self, std::env::VarError> {
             Ok(Self::new(
                 client,
@@ -81,23 +88,25 @@ mod r#async {
         /// Construct a new [`AsyncRobot`], using the given client, username and password.
         ///
         /// # Example
-        /// Construct an [`AsyncRobot`] using a custom [`hyper::Client`].
+        /// Construct an [`AsyncRobot`] using a custom [`hyper_util::client::legacy::Client`].
         /// ```rust
         /// # #[tokio::main]
         /// # async fn main() {
         /// let https = hyper_rustls::HttpsConnectorBuilder::new()
-        ///     .with_native_roots()
+        ///     .with_webpki_roots()
         ///     .https_only()
         ///     .enable_http1()
         ///     .build();
         ///
-        /// let client = hyper::Client::builder().build(https);
+        /// let client = hyper_util::client::legacy::Client::builder(
+        ///     hyper_util::rt::TokioExecutor::new()
+        /// ).build(https);
         ///
         /// let robot = hrobot::AsyncRobot::new(client, "#ws+username", "p@ssw0rd");
         /// # }
         /// ```
         pub fn new(
-            client: hyper::Client<HttpsConnector<HttpConnector>, Body>,
+            client: Client<HttpsConnector<HttpConnector>, Full<Bytes>>,
             username: &str,
             password: &str,
         ) -> Self {
@@ -118,8 +127,8 @@ mod r#async {
             let authenticated_request = request.authenticate(&self.credentials);
 
             let body = match authenticated_request.body() {
-                None => Body::empty(),
-                Some(value) => Body::from(value.to_owned()),
+                None => Full::default(),
+                Some(value) => Full::from(value.to_owned()),
             };
 
             let request = hyper::Request::builder()
@@ -140,9 +149,12 @@ mod r#async {
                 .await
                 .map_err(Error::transport)?;
 
-            let body = hyper::body::to_bytes(response.into_body())
+            let body = response
+                .into_body()
+                .collect()
                 .await
-                .map_err(Error::transport)?;
+                .map_err(Error::transport)?
+                .to_bytes();
 
             let stringified = String::from_utf8_lossy(&body);
             trace!("response body: {stringified}");
