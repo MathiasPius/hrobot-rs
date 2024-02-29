@@ -129,7 +129,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("boot-configuration")]
+        #[serial(boot_configuration)]
         async fn test_get_boot_configuration() {
             let _ = dotenvy::dotenv().ok();
 

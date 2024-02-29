@@ -225,7 +225,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("boot-configuration")]
+        #[serial(boot_configuration)]
         async fn test_get_vnc_configuration() {
             let _ = dotenvy::dotenv().ok();
 
@@ -242,7 +242,7 @@ mod tests {
 
         #[tokio::test]
         #[traced_test]
-        #[serial("boot-configuration")]
+        #[serial(boot_configuration)]
         async fn test_last_vnc_config() {
             let _ = dotenvy::dotenv().ok();
 
@@ -270,7 +270,7 @@ mod tests {
         #[tokio::test]
         #[ignore = "unexpected failure might leave the vnc installation system enabled."]
         #[traced_test]
-        #[serial("boot-configuration")]
+        #[serial(boot_configuration)]
         async fn test_enable_disable_vnc() {
             let _ = dotenvy::dotenv().ok();
 
