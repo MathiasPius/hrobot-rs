@@ -4,7 +4,7 @@
 
 * Replace Decimal export with rust_decimal re-export.
 * Replace ByteSize export with bytesize re-export.
-* Fix doc and tes references to the above exports.
+* Fix doc and test references to the above exports.
 * Remove explicit crate links where unnecessary.
 
 ## 1.1.0
