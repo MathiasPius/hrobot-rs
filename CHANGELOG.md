@@ -1,5 +1,11 @@
 # Changelog
 
+⚠️ indicates breaking changes.
+
+## 4.0.0
+
+* ⚠️ Update server pricing models to include the new [hourly pricing](https://docs.hetzner.com/general/others/new-billing-model/).
+
 ## 3.0.0
 
 * Update `hyper` dependency to `1.0`. This is considered a breaking change because we expose the ability to
