@@ -669,7 +669,7 @@ mod tests {
                 .fingerprint;
 
             let mut products = robot.list_market_products().await.unwrap();
-            products.sort_by_key(|product| product.price.monthly.net);
+            products.sort_by_key(|product| product.price.recurring.net);
 
             if let Some(cheapest) = products.first() {
                 let order = MarketProductOrder {
