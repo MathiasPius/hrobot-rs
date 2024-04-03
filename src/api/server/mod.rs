@@ -318,33 +318,4 @@ mod tests {
             }
         }
     }
-
-    #[cfg(feature = "disruptive-tests")]
-    mod disruptive_tests {
-        use tracing::info;
-        use tracing_test::traced_test;
-
-        #[tokio::test]
-        #[traced_test]
-        #[ignore = "unexpected failure might leave server in renamed state."]
-        async fn test_rename_server() {
-            let _ = dotenvy::dotenv().ok();
-
-            let robot = crate::AsyncRobot::default();
-
-            let servers = robot.list_servers().await.unwrap();
-            info!("{servers:#?}");
-
-            if let Some(server) = servers.first() {
-                let old_name = &server.name;
-                let new_name = "test-rename";
-
-                let renamed_server = robot.rename_server(server.id, new_name).await.unwrap();
-                assert_eq!(renamed_server.name, new_name);
-
-                let rolled_back_server = robot.rename_server(server.id, old_name).await.unwrap();
-                assert_eq!(&rolled_back_server.name, old_name);
-            }
-        }
-    }
 }

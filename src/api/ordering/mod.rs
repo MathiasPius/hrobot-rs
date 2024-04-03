@@ -641,6 +641,29 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "expensive-tests")]
+    mod expensive_tests {
+        use test_context::test_context;
+        use tracing::debug;
+        use tracing_test::traced_test;
+
+        use crate::{test::HetznerTestContext, AsyncRobot};
+
+        #[test_context(HetznerTestContext)]
+        #[tokio::test]
+        #[traced_test]
+        #[ignore = "this test is designed to not make a purchase, but who knows what might go wrong."]
+        async fn test_purchase_cheapest_server(context: &mut HetznerTestContext) {
+            let _ = dotenvy::dotenv().ok();
+
+            let robot = AsyncRobot::default();
+
+            let server = robot.get_server(context.id()).await.unwrap();
+
+            debug!("provisioned server is: {:#?}", server);
+        }
+    }
+
     #[cfg(feature = "disruptive-tests")]
     mod disruptive_tests {
         use crate::AsyncRobot;

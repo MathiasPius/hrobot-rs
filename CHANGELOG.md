@@ -2,6 +2,9 @@
 
 ⚠️ indicates breaking changes.
 
+## Next
+* Implement PartialEq & Eq for server `Status`, `SubnetReference` and `ServerFlags`
+
 ## 4.0.0
 
 * ⚠️ Update server pricing models to include the new [hourly pricing](https://docs.hetzner.com/general/others/new-billing-model/).

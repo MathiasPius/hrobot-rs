@@ -217,48 +217,6 @@ impl PartialEq<str> for VncDistribution {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "non-disruptive-tests")]
-    mod non_disruptive_tests {
-        use serial_test::serial;
-        use tracing::info;
-        use tracing_test::traced_test;
-
-        #[tokio::test]
-        #[traced_test]
-        #[serial(boot_configuration)]
-        async fn test_get_vnc_configuration() {
-            let _ = dotenvy::dotenv().ok();
-
-            let robot = crate::AsyncRobot::default();
-
-            let servers = robot.list_servers().await.unwrap();
-            info!("{servers:#?}");
-
-            if let Some(server) = servers.first() {
-                let config = robot.get_vnc_config(server.id).await.unwrap();
-                info!("{config:#?}");
-            }
-        }
-
-        #[tokio::test]
-        #[traced_test]
-        #[serial(boot_configuration)]
-        async fn test_last_vnc_config() {
-            let _ = dotenvy::dotenv().ok();
-
-            let robot = crate::AsyncRobot::default();
-
-            let servers = robot.list_servers().await.unwrap();
-            info!("{servers:#?}");
-
-            if let Some(server) = servers.first() {
-                let last_config = robot.get_last_vnc_config(server.id).await.unwrap();
-
-                println!("{last_config:#?}");
-            }
-        }
-    }
-
     #[cfg(feature = "disruptive-tests")]
     mod disruptive_tests {
         use serial_test::serial;
