@@ -42,7 +42,7 @@ impl PartialEq<u32> for ServerId {
 }
 
 /// Indicates the status of a server.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub enum Status {
     /// Server is ready for use.
     #[serde(rename = "ready")]
@@ -53,7 +53,7 @@ pub enum Status {
 }
 
 /// Reference to a Subnet.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct SubnetReference {
     /// Subnet Address
     #[serde(rename = "ip")]
@@ -64,7 +64,7 @@ pub struct SubnetReference {
 }
 
 /// Flags describe availability of a service or add-on for the server.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct ServerFlags {
     /// Server reset is available.
     pub reset: bool,
