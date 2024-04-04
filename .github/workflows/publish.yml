@@ -38,8 +38,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features
 
-  coverage:
-    name: Test Coverage
+  test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -59,6 +59,11 @@ jobs:
 
       - name: cargo llvm-cov
         run: cargo llvm-cov --locked --all-features --lcov --output-path lcov.info
+        env:
+          HROBOT_USERNAME: ${{ secrets.HROBOT_USERNAME }}
+          HROBOT_PASSWORD: ${{ secrets.HROBOT_PASSWORD }}
+          HETZNER_INTEGRATION_TEST_SERVER_ID: ${{ secrets.HETZNER_INTEGRATION_TEST_SERVER_ID }}
+          HETZNER_INTEGRATION_TEST_STORAGEBOX_ID: ${{ secrets.HETZNER_INTEGRATION_TEST_STORAGEBOX_ID }}
 
       - name: Record Rust version
         run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
@@ -69,49 +74,6 @@ jobs:
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
           env_vars: OS,RUST
-
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout master branch
-        uses: actions/checkout@master
-
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Ensure all tests compile
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --no-run --all-features
-
-      - name: Ensure all doc tests compile
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-features --doc
-
-      - name: Run unit tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --lib
-
-      - name: Run integration tests
-        uses: actions-rs/cargo@v1
-        env:
-          HROBOT_USERNAME: ${{ secrets.HROBOT_USERNAME }}
-          HROBOT_PASSWORD: ${{ secrets.HROBOT_PASSWORD }}
-          HETZNER_INTEGRATION_TEST_SERVER_ID: ${{ secrets.HETZNER_INTEGRATION_TEST_SERVER_ID }}
-          HETZNER_INTEGRATION_TEST_STORAGEBOX_ID: ${{ secrets.HETZNER_INTEGRATION_TEST_STORAGEBOX_ID }}
-        with:
-          command: test
-          args: --tests
 
   tag:
     name: Tag & Publish
