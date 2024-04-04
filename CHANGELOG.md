@@ -2,6 +2,10 @@
 
 ⚠️ indicates breaking changes.
 
+## 5.0.1
+
+* Fix improper deserialization of response from calling `trigger_reset`.
+
 ## 5.0.0
 
 * ⚠️ vSwitch cancellation's `date` argument is now optional. Omitting the parameter causes immediate cancellation.
