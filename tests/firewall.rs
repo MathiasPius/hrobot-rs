@@ -59,6 +59,7 @@ async fn set_firewall_configuration() {
 
     let robot = crate::AsyncRobot::default();
     let server = common::provisioned_server().await;
+    common::wait_firewall_ready(&robot, server.id).await;
 
     // Fetch the current firewall configuration.
     let original_firewall = robot.get_firewall(server.id).await.unwrap();
