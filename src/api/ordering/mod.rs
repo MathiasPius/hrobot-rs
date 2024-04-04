@@ -4,6 +4,7 @@ mod models;
 use std::ops::RangeBounds;
 
 pub use models::*;
+use rust_decimal::prelude::Zero;
 use serde::Serialize;
 
 use crate::{error::Error, urlencode::UrlEncode, AsyncRobot};
@@ -19,12 +20,21 @@ fn list_products(
     setup_price: impl RangeBounds<u32>,
     location: Option<&Location>,
 ) -> Result<UnauthenticatedRequest<List<Product>>, serde_html_form::ser::Error> {
+    fn is_max(value: &u32) -> bool {
+        *value == u32::MAX
+    }
+
     #[derive(Debug, Serialize)]
     struct ProductSearch<'a> {
+        #[serde(skip_serializing_if = "u32::is_zero")]
         min_price: u32,
+        #[serde(skip_serializing_if = "is_max")]
         max_price: u32,
+        #[serde(skip_serializing_if = "u32::is_zero")]
         min_price_setup: u32,
+        #[serde(skip_serializing_if = "is_max")]
         max_price_setup: u32,
+        #[serde(skip_serializing_if = "Option::is_none")]
         location: Option<&'a Location>,
     }
 
@@ -40,20 +50,21 @@ fn list_products(
             match range.end_bound() {
                 std::ops::Bound::Included(n) => *n,
                 std::ops::Bound::Excluded(n) => std::cmp::max(1, *n) - 1,
-                std::ops::Bound::Unbounded => 9999,
+                std::ops::Bound::Unbounded => u32::MAX,
             },
         )
     }
 
-    UnauthenticatedRequest::from("https://robot-ws.your-server.de/order/server/product").with_body(
-        ProductSearch {
-            min_price: capped(&monthly_price).0,
-            max_price: capped(&monthly_price).1,
-            min_price_setup: capped(&setup_price).0,
-            max_price_setup: capped(&setup_price).1,
-            location,
-        },
-    )
+    let search = ProductSearch {
+        min_price: capped(&monthly_price).0,
+        max_price: capped(&monthly_price).1,
+        min_price_setup: capped(&setup_price).0,
+        max_price_setup: capped(&setup_price).1,
+        location,
+    };
+
+    UnauthenticatedRequest::from("https://robot-ws.your-server.de/order/server/product")
+        .with_query_params(search)
 }
 
 fn get_product(id: &ProductId) -> UnauthenticatedRequest<Single<Product>> {
