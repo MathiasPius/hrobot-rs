@@ -24,12 +24,12 @@ fn get_reset_options(server_number: ServerId) -> UnauthenticatedRequest<Single<R
 fn trigger_reset(
     server_number: ServerId,
     reset: Reset,
-) -> Result<UnauthenticatedRequest<ExecutedReset>, serde_html_form::ser::Error> {
+) -> Result<UnauthenticatedRequest<Single<ExecuteReset>>, serde_html_form::ser::Error> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/reset/{server_number}"
     ))
     .with_method("POST")
-    .with_body(ExecutedReset { reset })
+    .with_body(ExecuteReset { reset })
 }
 
 impl AsyncRobot {
@@ -85,12 +85,12 @@ impl AsyncRobot {
         server_number: ServerId,
         reset: Reset,
     ) -> Result<Reset, Error> {
-        Ok(self.go(trigger_reset(server_number, reset)?).await?.reset)
+        Ok(self.go(trigger_reset(server_number, reset)?).await?.0.reset)
     }
 }
 
 #[derive(Serialize, Deserialize)]
-struct ExecutedReset {
+struct ExecuteReset {
     #[serde(rename = "type")]
     reset: Reset,
 }
