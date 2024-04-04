@@ -1,4 +1,4 @@
-on: 
+on:
   push:
     branches:
       - master
@@ -31,12 +31,44 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
-      
+
       - name: Run clippy
         uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features
+
+  coverage:
+    name: Test Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
+      - name: cargo install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: cargo generate-lockfile
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
+
+      - name: cargo llvm-cov
+        run: cargo llvm-cov --locked --all-features --lcov --output-path lcov.info
+
+      - name: Record Rust version
+        run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
+
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          env_vars: OS,RUST
 
   test:
     name: Test
@@ -57,13 +89,13 @@ jobs:
         with:
           command: test
           args: --no-run --all-features
-          
+
       - name: Ensure all doc tests compile
         uses: actions-rs/cargo@v1
         with:
           command: test
           args: --all-features --doc
-      
+
       - name: Run safe tests
         uses: actions-rs/cargo@v1
         with:
