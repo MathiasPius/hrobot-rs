@@ -223,3 +223,28 @@ impl<Response> AuthenticatedRequest<Response> {
         self.request.body.as_deref()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use serde::Serialize;
+
+    use super::UnauthenticatedRequest;
+
+    #[test]
+    fn extend_query_parameters() {
+        #[derive(Serialize)]
+        struct QueryParams {
+            example: &'static str,
+        }
+
+        assert_eq!(
+            UnauthenticatedRequest::<()>::new("https://google.com?test=lol".parse().unwrap())
+                .with_query_params(QueryParams {
+                    example: "Some example here",
+                })
+                .unwrap()
+                .uri,
+            "https://google.com?test=lol&example=Some+example+here"
+        );
+    }
+}

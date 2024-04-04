@@ -203,3 +203,16 @@ pub enum Cancellation {
     /// Server has not been cancelled.
     Cancellable(Cancellable),
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::api::server::ServerId;
+
+    #[test]
+    fn server_id_conversion() {
+        assert_eq!(ServerId(10), ServerId::from(10));
+
+        assert_eq!(u32::from(ServerId(10)), 10);
+        assert_eq!(ServerId(10), 10);
+    }
+}
