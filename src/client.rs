@@ -138,7 +138,7 @@ mod r#async {
                     "Authorization",
                     authenticated_request.authorization_header(),
                 )
-                .header("Content-Type", "application/x-www-form-urlencoded ")
+                .header("Content-Type", "application/x-www-form-urlencoded")
                 .header("Accept", "application/json")
                 .body(body)
                 .map_err(Error::transport)?;
