@@ -739,3 +739,277 @@ impl Rule {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{net::Ipv4Addr, ops::RangeInclusive};
+
+    use ipnet::Ipv4Net;
+
+    use crate::api::firewall::{
+        Filter, Ipv4Filter, Ipv6Filter, PortRange, Protocol, State, TemplateId,
+    };
+
+    use super::AnyFilter;
+
+    #[test]
+    fn template_conversions() {
+        assert_eq!(u32::from(TemplateId::from(1337u32)), 1337)
+    }
+
+    #[test]
+    fn template_id_equality() {
+        assert_eq!(TemplateId(1337), 1337u32);
+    }
+
+    #[test]
+    fn state_display() {
+        assert_eq!(State::Active.to_string(), "active");
+        assert_eq!(State::InProcess.to_string(), "in process");
+        assert_eq!(State::Disabled.to_string(), "disabled");
+    }
+
+    #[test]
+    fn protocol_construction() {
+        assert_eq!(
+            Protocol::tcp_with_flags("ack"),
+            Protocol::Tcp {
+                flags: Some("ack".to_string())
+            }
+        );
+
+        assert!(Protocol::tcp_with_flags("ack").flags().is_some());
+        assert!(Protocol::Tcp { flags: None }.flags().is_none());
+    }
+
+    #[test]
+    fn range_conversion() {
+        assert_eq!(
+            PortRange::from(1000..=1005),
+            PortRange::from(&(1000..=1005))
+        );
+
+        assert_eq!(PortRange::from(1000..=1000), PortRange::from(1000),);
+
+        assert_eq!(
+            RangeInclusive::from(PortRange::from(1000..=1005)),
+            1000..=1005
+        );
+
+        assert_eq!(
+            RangeInclusive::from(&(PortRange::from(1000..=1005))),
+            1000..=1005
+        );
+    }
+
+    #[test]
+    fn range_iteration() {
+        assert_eq!(
+            PortRange::from(100..=105).into_iter().collect::<Vec<_>>(),
+            vec![100, 101, 102, 103, 104, 105]
+        );
+    }
+
+    #[test]
+    fn ip_construction() {
+        assert_eq!(
+            Filter::from(Ipv6Filter::any()),
+            Filter::Ipv6(Ipv6Filter::any())
+        );
+
+        assert_eq!(
+            Filter::from(Ipv4Filter::any()),
+            Filter::Ipv4(Ipv4Filter::any())
+        );
+    }
+
+    #[test]
+    fn anyfilter_construction() {
+        assert_eq!(
+            AnyFilter::default().from_port(100).to_port(200),
+            AnyFilter {
+                src_port: Some(PortRange::from(100)),
+                dst_port: Some(PortRange::from(200)),
+            }
+        );
+    }
+
+    #[test]
+    fn ipv6filter_construction() {
+        assert_eq!(
+            Ipv6Filter::any(),
+            Ipv6Filter {
+                protocol: None,
+                dst_port: None,
+                src_port: None
+            }
+        );
+
+        assert_eq!(
+            Ipv6Filter::ah(),
+            Ipv6Filter {
+                protocol: Some(Protocol::Ah),
+                dst_port: None,
+                src_port: None
+            }
+        );
+
+        assert_eq!(
+            Ipv6Filter::esp(),
+            Ipv6Filter {
+                protocol: Some(Protocol::Esp),
+                dst_port: None,
+                src_port: None
+            }
+        );
+
+        assert_eq!(
+            Ipv6Filter::ipip(),
+            Ipv6Filter {
+                protocol: Some(Protocol::Ipip),
+                dst_port: None,
+                src_port: None
+            }
+        );
+
+        assert_eq!(
+            Ipv6Filter::gre(),
+            Ipv6Filter {
+                protocol: Some(Protocol::Gre),
+                dst_port: None,
+                src_port: None
+            }
+        );
+
+        assert_eq!(
+            Ipv6Filter::udp(),
+            Ipv6Filter {
+                protocol: Some(Protocol::Udp),
+                dst_port: None,
+                src_port: None
+            }
+        );
+
+        assert_eq!(
+            Ipv6Filter::tcp(None),
+            Ipv6Filter {
+                protocol: Some(Protocol::Tcp { flags: None }),
+                dst_port: None,
+                src_port: None
+            }
+        );
+
+        assert_eq!(
+            Ipv6Filter::any().from_port(100).to_port(200),
+            Ipv6Filter {
+                protocol: None,
+                dst_port: Some(PortRange::from(200)),
+                src_port: Some(PortRange::from(100))
+            }
+        )
+    }
+
+    #[test]
+    fn ipv4filter_construction() {
+        assert_eq!(
+            Ipv4Filter::any(),
+            Ipv4Filter {
+                protocol: None,
+                dst_port: None,
+                src_port: None,
+                src_ip: None,
+                dst_ip: None,
+            }
+        );
+
+        assert_eq!(
+            Ipv4Filter::ah(),
+            Ipv4Filter {
+                protocol: Some(Protocol::Ah),
+                dst_port: None,
+                src_port: None,
+                src_ip: None,
+                dst_ip: None,
+            }
+        );
+
+        assert_eq!(
+            Ipv4Filter::esp(),
+            Ipv4Filter {
+                protocol: Some(Protocol::Esp),
+                dst_port: None,
+                src_port: None,
+                src_ip: None,
+                dst_ip: None,
+            }
+        );
+
+        assert_eq!(
+            Ipv4Filter::ipip(),
+            Ipv4Filter {
+                protocol: Some(Protocol::Ipip),
+                dst_port: None,
+                src_port: None,
+                src_ip: None,
+                dst_ip: None,
+            }
+        );
+
+        assert_eq!(
+            Ipv4Filter::gre(),
+            Ipv4Filter {
+                protocol: Some(Protocol::Gre),
+                dst_port: None,
+                src_port: None,
+                src_ip: None,
+                dst_ip: None,
+            }
+        );
+
+        assert_eq!(
+            Ipv4Filter::udp(),
+            Ipv4Filter {
+                protocol: Some(Protocol::Udp),
+                dst_port: None,
+                src_port: None,
+                src_ip: None,
+                dst_ip: None,
+            }
+        );
+
+        assert_eq!(
+            Ipv4Filter::tcp(None),
+            Ipv4Filter {
+                protocol: Some(Protocol::Tcp { flags: None }),
+                dst_port: None,
+                src_port: None,
+                src_ip: None,
+                dst_ip: None,
+            }
+        );
+
+        assert_eq!(
+            Ipv4Filter::any().from_port(100).to_port(200),
+            Ipv4Filter {
+                protocol: None,
+                dst_port: Some(PortRange::from(200)),
+                src_port: Some(PortRange::from(100)),
+                src_ip: None,
+                dst_ip: None,
+            }
+        );
+
+        assert_eq!(
+            Ipv4Filter::any()
+                .from_ip(Ipv4Net::new(Ipv4Addr::new(127, 0, 0, 0), 8).unwrap())
+                .to_ip(Ipv4Net::new(Ipv4Addr::new(192, 168, 0, 0), 16).unwrap()),
+            Ipv4Filter {
+                protocol: None,
+                dst_port: None,
+                src_port: None,
+                src_ip: Some(Ipv4Net::new(Ipv4Addr::new(127, 0, 0, 0), 8).unwrap()),
+                dst_ip: Some(Ipv4Net::new(Ipv4Addr::new(192, 168, 0, 0), 16).unwrap()),
+            }
+        )
+    }
+}
