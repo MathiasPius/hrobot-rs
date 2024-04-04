@@ -119,6 +119,40 @@ impl<Response> UnauthenticatedRequest<Response> {
         self
     }
 
+    /// Append the provided query parameters to the request.
+    ///
+    /// Panics if the query parameters are malformed.
+    pub(crate) fn with_query_params<T: Serialize>(
+        mut self,
+        params: T,
+    ) -> Result<Self, serde_html_form::ser::Error> {
+        let params = serde_html_form::to_string(params)?;
+
+        let mut parts = self.uri.into_parts();
+
+        let path = parts
+            .path_and_query
+            .as_ref()
+            .map(|paq| paq.path())
+            .unwrap_or_default();
+
+        let query = parts
+            .path_and_query
+            .as_ref()
+            .and_then(|paq| paq.query())
+            .unwrap_or_default();
+
+        parts.path_and_query = Some(if query.is_empty() {
+            format!("{path}?{params}").parse().unwrap()
+        } else {
+            format!("{path}?{query}&{params}").parse().unwrap()
+        });
+
+        self.uri = Uri::from_parts(parts).unwrap();
+
+        Ok(self)
+    }
+
     /// Set the body of the request.
     ///
     /// Is automatically encoded as application/x-www-form-urlencoded.
