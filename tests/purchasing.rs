@@ -226,7 +226,7 @@ async fn dry_run_purchase_cheap_server() {
 
 #[tokio::test]
 #[traced_test]
-async fn purchase_cheapest_server() {
+async fn dry_run_purchase_auction_server() {
     let _ = dotenvy::dotenv().ok();
 
     let robot = AsyncRobot::default();
