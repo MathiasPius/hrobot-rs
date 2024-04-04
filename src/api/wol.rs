@@ -67,31 +67,3 @@ struct Wol {
     #[serde(rename = "server_number")]
     _server_number: ServerId,
 }
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "non-disruptive-tests")]
-    mod non_disruptive_tests {
-        use tracing::info;
-        use tracing_test::traced_test;
-
-        #[tokio::test]
-        #[traced_test]
-        async fn test_wake_on_lan_available() {
-            let _ = dotenvy::dotenv().ok();
-
-            let robot = crate::AsyncRobot::default();
-
-            let servers = robot.list_servers().await.unwrap();
-            info!("{servers:#?}");
-
-            if let Some(server) = servers.first() {
-                if robot.is_wake_on_lan_available(server.id).await.unwrap() {
-                    info!("{}: wake on lan is available", server.name);
-                } else {
-                    info!("{}: wake on lan is NOT available", server.name);
-                }
-            }
-        }
-    }
-}
