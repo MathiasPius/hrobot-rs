@@ -220,37 +220,23 @@ Detailed API overview.
 [^2]: Not officially documented by Hetzner, use at own risk.
 </details>
 
-# Testing
-Tests are divided into three categories:
-* **Isolated tests.**
+## Testing
+Tests are divided into two categories:
+* **Unit tests.**
+s
+    These do not touch the Hetzner API at all and generally test assumptions made in some of the constructs of the library
+    such as serialization/deserialization from known API output. These are always safe to run and do not require Hetzner credentials.
 
-  These do not touch the Hetzner API at all and generally test assumptions made in some of the constructs of the library
-  such as serialization/deserialization from known API output. These are always safe to run and do not require Hetzner credentials.
+* **Integration tests. ⚠️**
 
-* **Non-disruptive tests.**
+    These tests *do* interact with the Hetzner API, and therefore require the following two environment variables to be set:
 
-  These interact with the **live** Hetzner API using credentials provided via the environment variables
-  `HROBOT_USERNAME` and `HROBOT_PASSWORD`.
-  
-  The tests fail if these credentials are not available. These tests only perform actions that have no side-effects (such as get/list),
-  and are therefore *somewhat* safe to execute, but can trigger the rate limiting of the Hetzner API.
-  
-  These tests are only enabled if the feature `non-disruptive-tests` is enabled.
-  
-* **Disruptive tests.**
+    * `HROBOT_USERNAME`
+    * `HROBOT_PASSWORD`
 
-  These interact with the **live** Hetzner API using credentials provided via the environment variables
-  `HROBOT_USERNAME` and `HROBOT_PASSWORD`.
-  
-  Unlike non-disruptive tests, these tests **will interact with and modify existing resources** within the provided account, including but not limited to:
-  * Modifying and deleting the firewall of servers.
-  * Changing the backup schedule of storageboxes.
-  * Adding and deleting SSH Keys.
-  * Ordering and cancelling vSwitches, etc.
-  
-  Most of these tests are designed to return the resource to its initial state upon completion, but that assumes the test succeeds!
-  
-  Suffice to say, these tests are *incredibly dangerous* and should *never* be run in a production Hetzner account without explicit supervision.
-  
-  To make sure these are not run accidentally, you have to enable the `disruptive-tests` feature *AND* and pass the `--ignored` flag when
-  running `cargo test` as the tests have been explicitly marked as ignored along with reasoning as to why.
+    They interact ⚠️ **DESTRUCTIVELY** ⚠️ with the resources provided through the following environment variables:
+
+    * `HETZNER_INTEGRATION_TEST_SERVER_ID` specifies a pre-allocated server to run Server-related tests against.
+    * `HETZNER_INTEGRATION_TEST_STORAGEBOX_ID` specifies a pre-allocated storagebox resource which Storagebox-related tests are run against.
+    
+    You should **never** use an actual production server for this!

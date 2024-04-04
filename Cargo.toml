@@ -51,12 +51,3 @@ tracing-test = { version = "0.2.4", features = ["no-env-filter"] }
 tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread"] }
 dotenvy = "0.15"
 serial_test = { version = "3.0.0", features = ["file_locks"] }
-
-[features]
-# Enables non-disruptive tests and must be provided as a selected feature,
-# if you want to test endpoints like get/list, which do not have side-effects.
-non-disruptive-tests = []
-# Enables disruptive tests. These are tests which modify the current state
-# of RUNNING servers storageboxes, firewalls, etc., and MAY leave them in an
-# undesired state!
-disruptive-tests = []
