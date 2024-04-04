@@ -1,9 +1,10 @@
-# hrobot-rs [![Latest Version]][crates.io] [![Docs]][docs.rs]
+# hrobot-rs [![Latest Version]][crates.io] [![Docs]][docs.rs] ![codecov]
 
 [Latest Version]: https://img.shields.io/crates/v/hrobot
 [crates.io]: https://crates.io/crates/hrobot
 [Docs]: https://docs.rs/hrobot/badge.svg
 [docs.rs]: https://docs.rs/hrobot
+[codecov]: https://codecov.io/gh/MathiasPius/hrobot-rs/graph/badge.svg?token=AZZRACXKN1
 
 <!-- cargo-rdme start -->
 
