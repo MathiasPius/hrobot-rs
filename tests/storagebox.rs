@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use bytesize::ByteSize;
 use hrobot::{
-    api::storagebox::{Accessibility, Permission, PlanStatus, SnapshotPlan},
+    api::storagebox::{Accessibility, Permission, PlanStatus, SnapshotPlan, StorageBox},
     AsyncRobot,
 };
 use serial_test::file_serial;
@@ -113,6 +113,23 @@ async fn reset_password() {
 #[tokio::test]
 #[traced_test]
 #[file_serial]
+async fn rename_storagebox() {
+    let _ = dotenvy::dotenv().ok();
+
+    let robot = crate::AsyncRobot::default();
+
+    let storagebox = common::provisioned_storagebox().await;
+    robot
+        .rename_storagebox(storagebox.id, "new-name")
+        .await
+        .unwrap();
+
+    tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+}
+
+#[tokio::test]
+#[traced_test]
+#[file_serial]
 async fn toggle_all_settings() {
     let _ = dotenvy::dotenv().ok();
 
@@ -133,32 +150,56 @@ async fn toggle_all_settings() {
             .disable_storagebox_webdav(storagebox.id)
             .await
             .unwrap();
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+        assert_ne!(storagebox.accessibility.webdav, original_settings.webdav);
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let _ = robot.enable_storagebox_webdav(storagebox.id).await.unwrap();
     } else {
         let _ = robot.enable_storagebox_webdav(storagebox.id).await.unwrap();
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+        assert_ne!(storagebox.accessibility.webdav, original_settings.webdav);
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let _ = robot
+            .disable_storagebox_webdav(storagebox.id)
+            .await
+            .unwrap();
     }
-    tokio::time::sleep(std::time::Duration::from_secs(6)).await;
-    let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-    assert_ne!(storagebox.accessibility.webdav, original_settings.webdav);
 
     // Test Samba
     if original_settings.samba {
         let _ = robot.disable_storagebox_samba(storagebox.id).await.unwrap();
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+        assert_ne!(storagebox.accessibility.samba, original_settings.samba);
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let _ = robot.enable_storagebox_samba(storagebox.id).await.unwrap();
     } else {
         let _ = robot.enable_storagebox_samba(storagebox.id).await.unwrap();
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+        assert_ne!(storagebox.accessibility.samba, original_settings.samba);
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let _ = robot.disable_storagebox_samba(storagebox.id).await.unwrap();
     }
-    tokio::time::sleep(std::time::Duration::from_secs(6)).await;
-    let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-    assert_ne!(storagebox.accessibility.samba, original_settings.samba);
 
     // Test SSH
     if original_settings.ssh {
         let _ = robot.disable_storagebox_ssh(storagebox.id).await.unwrap();
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+        assert_ne!(storagebox.accessibility.ssh, original_settings.ssh);
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let _ = robot.enable_storagebox_ssh(storagebox.id).await.unwrap();
     } else {
         let _ = robot.enable_storagebox_ssh(storagebox.id).await.unwrap();
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+        assert_ne!(storagebox.accessibility.ssh, original_settings.ssh);
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let _ = robot.disable_storagebox_ssh(storagebox.id).await.unwrap();
     }
-    tokio::time::sleep(std::time::Duration::from_secs(6)).await;
-    let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-    assert_ne!(storagebox.accessibility.ssh, original_settings.ssh);
 
     // Test reachability
     if original_settings.external_reachability {
@@ -166,18 +207,59 @@ async fn toggle_all_settings() {
             .disable_storagebox_external_reachability(storagebox.id)
             .await
             .unwrap();
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+        assert_ne!(
+            storagebox.accessibility.external_reachability,
+            original_settings.external_reachability
+        );
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let _ = robot
+            .enable_storagebox_external_reachability(storagebox.id)
+            .await
+            .unwrap();
     } else {
         let _ = robot
             .enable_storagebox_external_reachability(storagebox.id)
             .await
             .unwrap();
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
+        assert_ne!(
+            storagebox.accessibility.external_reachability,
+            original_settings.external_reachability
+        );
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let _ = robot
+            .disable_storagebox_external_reachability(storagebox.id)
+            .await
+            .unwrap();
     }
     tokio::time::sleep(std::time::Duration::from_secs(6)).await;
-    let storagebox = robot.get_storagebox(storagebox.id).await.unwrap();
-    assert_ne!(
-        storagebox.accessibility.external_reachability,
-        original_settings.external_reachability
-    );
+
+    // Test WebDAV
+    if storagebox.snapshot_directory {
+        let _ = robot
+            .disable_storagebox_snapshot_directory(storagebox.id)
+            .await
+            .unwrap();
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let _ = robot
+            .enable_storagebox_snapshot_directory(storagebox.id)
+            .await
+            .unwrap();
+    } else {
+        let _ = robot
+            .enable_storagebox_snapshot_directory(storagebox.id)
+            .await
+            .unwrap();
+        tokio::time::sleep(std::time::Duration::from_secs(6)).await;
+        let _ = robot
+            .disable_storagebox_snapshot_directory(storagebox.id)
+            .await
+            .unwrap();
+    }
+    tokio::time::sleep(std::time::Duration::from_secs(6)).await;
 
     // Reset all configurations.
     let _ = robot
@@ -210,6 +292,14 @@ async fn create_revert_delete_snapshot() {
         .revert_to_snapshot(storagebox.id, &snapshot.name)
         .await
         .unwrap();
+
+    tokio::time::sleep(Duration::from_secs(6)).await;
+
+    assert!(!robot
+        .list_snapshots(storagebox.id)
+        .await
+        .unwrap()
+        .is_empty());
 
     tokio::time::sleep(Duration::from_secs(6)).await;
 
@@ -334,6 +424,17 @@ async fn create_update_delete_subaccount() {
             None,
             None,
             Some("test comment"),
+        )
+        .await
+        .unwrap();
+
+    tokio::time::sleep(Duration::from_secs(6)).await;
+
+    robot
+        .set_subaccount_home_directory(
+            storagebox.id,
+            &created_subaccount.username,
+            "/homedirs/sub1",
         )
         .await
         .unwrap();
