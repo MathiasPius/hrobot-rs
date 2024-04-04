@@ -457,7 +457,7 @@ impl From<InternalCloudNetwork> for CloudNetwork {
 }
 
 /// Identifies a Cloud Network connected to a vSwitch.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CloudNetwork {
     /// Unique ID for the Cloud Network the vSwitch is connected to.
     pub id: CloudNetworkId,
@@ -466,7 +466,7 @@ pub struct CloudNetwork {
     pub network: IpNet,
 }
 
-/// Cloud Netowrk unique ID.
+/// Cloud Network unique ID.
 ///
 /// Simple wrapper around a u32, to avoid confusion with for example [`VSwitchId`]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -498,6 +498,17 @@ impl PartialEq<u32> for CloudNetworkId {
 
 #[cfg(test)]
 mod tests {
+    use std::{
+        net::{IpAddr, Ipv4Addr},
+        str::FromStr,
+    };
+
+    use ipnet::{IpNet, Ipv4Net};
+
+    use crate::api::vswitch::{
+        CloudNetwork, CloudNetworkId, InternalCloudNetwork, InternalSubnet, VSwitchId, VlanId,
+    };
+
     use super::InternalVSwitch;
 
     #[test]
@@ -521,5 +532,50 @@ mod tests {
         }"#;
 
         let _ = serde_json::from_str::<InternalVSwitch>(json).unwrap();
+    }
+
+    #[test]
+    fn vlan_construction() {
+        assert_eq!(VlanId::from(4001u16), 4001);
+
+        assert_eq!(VlanId(4001).to_string(), "4001");
+    }
+
+    #[test]
+    fn vswitch_id_construction() {
+        assert_eq!(VSwitchId::from(10101u32), 101010u32);
+        assert_eq!(
+            VSwitchId::from(101010u32),
+            u32::from(VSwitchId::from(10101u32)),
+        );
+    }
+
+    #[test]
+    fn internal_subnet_conversion() {
+        assert_eq!(
+            IpNet::from(InternalSubnet {
+                ip: IpAddr::from_str("127.0.0.0").unwrap(),
+                mask: 24
+            }),
+            IpNet::V4(Ipv4Net::new(Ipv4Addr::new(127, 0, 0, 0), 24).unwrap())
+        );
+    }
+
+    #[test]
+    fn cloud_network_construction() {
+        assert_eq!(
+            CloudNetwork::from(InternalCloudNetwork {
+                id: CloudNetworkId::from(10),
+                ip: Ipv4Addr::LOCALHOST.into(),
+                mask: 8
+            }),
+            CloudNetwork {
+                id: CloudNetworkId(10),
+                network: IpNet::new(Ipv4Addr::LOCALHOST.into(), 8).unwrap()
+            }
+        );
+
+        assert_eq!(u32::from(CloudNetworkId(10)), 10);
+        assert_eq!(CloudNetworkId(10), 10);
     }
 }
