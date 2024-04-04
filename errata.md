@@ -79,3 +79,5 @@ This document aims to list some of the discrepancies, oddities, unexpected behav
 
 * [Update Snapshot Plan example](https://robot.hetzner.com/doc/webservice/en.html#post-storagebox-storagebox-id-snapshotplan) points to `snapshot/{snapshot}/comment`
   as the target URL, when it should be `snapshot/{snapshot}/snapshotplan`
+
+* [vSwitch Connected Servers](https://robot.hetzner.com/doc/webservice/en.html#get-vswitch) actually have the status  "processing" when neither ready nor failed, not "in process" as claimed.
