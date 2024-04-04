@@ -169,7 +169,7 @@ fn location_prices<'de, D: Deserializer<'de>>(
 }
 
 /// Price information for a single location.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub struct SingleLocationPrice {
     /// Location this price applies to.
     pub location: Location,
@@ -182,7 +182,7 @@ pub struct SingleLocationPrice {
 }
 
 /// Price (both setup and recurring) for a single location.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LocationPrice {
     /// Monthly price in euros.
     pub recurring: RecurringPrice,
@@ -191,7 +191,7 @@ pub struct LocationPrice {
 }
 
 /// A recurring price point, both excluding and including VAT.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub struct RecurringPrice {
     /// Monthly price excluding VAT.
     pub net: Decimal,
@@ -204,7 +204,7 @@ pub struct RecurringPrice {
 }
 
 /// A one-time setup price point, both excluding and including VAT.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub struct SetupPrice {
     /// Monthly price excluding VAT.
     pub net: Decimal,
