@@ -9,7 +9,7 @@ use tracing_test::traced_test;
 #[tokio::test]
 #[traced_test]
 #[file_serial]
-async fn test_list_vswitches() {
+async fn list_vswitches() {
     let _ = dotenvy::dotenv().ok();
 
     let robot = AsyncRobot::default();
@@ -21,7 +21,7 @@ async fn test_list_vswitches() {
 #[tokio::test]
 #[traced_test]
 #[file_serial]
-async fn test_get_vswitch() {
+async fn get_vswitch() {
     let _ = dotenvy::dotenv().ok();
 
     let robot = AsyncRobot::default();
