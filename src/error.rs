@@ -112,12 +112,12 @@ pub enum ApiError {
     },
 
     /// API Rate limit exceeded.
-    #[error("rate limit exceeded: {message} (max req: {max_request}, interval: {interval}")]
+    #[error("rate limit exceeded: {message} (max req: {max_requests}, interval: {interval}")]
     RateLimitExceeded {
         /// Human-readable message associated with the error.
         message: String,
         /// Maximum number of requests allowed within the specified interval.
-        max_request: u32,
+        max_requests: u32,
         /// Interval within which the max_requests are the limit.
         interval: u32,
     },
@@ -680,6 +680,30 @@ mod tests {
             err,
             MaybeTypedResponse {
                 error: MaybeTyped::Typed(ApiError::InvalidInput { .. })
+            }
+        ));
+    }
+
+    #[test]
+    fn test_deserialize_rate_limit_exceeded() {
+        let error = r#"
+            {
+                "error": {
+                    "status":403,
+                    "code":"RATE_LIMIT_EXCEEDED",
+                    "max_requests":1,
+                    "interval":5,
+                    "message":"rate limit exceeded"
+                }
+            }
+        "#;
+
+        let err: MaybeTypedResponse = serde_json::from_str(error).unwrap();
+
+        assert!(matches!(
+            err,
+            MaybeTypedResponse {
+                error: MaybeTyped::Typed(ApiError::RateLimitExceeded { .. })
             }
         ));
     }

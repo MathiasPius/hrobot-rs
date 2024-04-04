@@ -81,3 +81,5 @@ This document aims to list some of the discrepancies, oddities, unexpected behav
   as the target URL, when it should be `snapshot/{snapshot}/snapshotplan`
 
 * [vSwitch Connected Servers](https://robot.hetzner.com/doc/webservice/en.html#get-vswitch) actually have the status  "processing" when neither ready nor failed, not "in process" as claimed.
+
+* [Rate Limit Exceeded](https://robot.hetzner.com/doc/webservice/en.html#errors) errors claim to have a `max_request` field, but this field is actually called `max_requests` (plural).
