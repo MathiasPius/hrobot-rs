@@ -53,7 +53,11 @@ fn update_vswitch(
     })
 }
 
-fn delete_vswitch(vswitch_id: VSwitchId, date: Date) -> UnauthenticatedRequest<Empty> {
+fn delete_vswitch(vswitch_id: VSwitchId, date: Option<Date>) -> UnauthenticatedRequest<Empty> {
+    let date = date
+        .map(|date| date.to_string())
+        .unwrap_or("now".to_string());
+
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/vswitch/{vswitch_id}"
     ))
@@ -168,6 +172,8 @@ impl AsyncRobot {
 
     /// Cancel vSwitch.
     ///
+    /// If cancellation date is ommitted, the cancellation is immediate.
+    ///
     /// # Example
     /// ```rust,no_run
     /// # use hrobot::api::vswitch::VSwitchId;
@@ -177,14 +183,14 @@ impl AsyncRobot {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.cancel_vswitch(
     ///     VSwitchId(124567),
-    ///     Date::from_calendar_date(2023, Month::July, 10).unwrap()
+    ///     Some(Date::from_calendar_date(2023, Month::July, 10).unwrap())
     /// ).await.unwrap();
     /// # }
     /// ```
     pub async fn cancel_vswitch(
         &self,
         vswitch_id: VSwitchId,
-        cancellation_date: Date,
+        cancellation_date: Option<Date>,
     ) -> Result<(), Error> {
         self.go(delete_vswitch(vswitch_id, cancellation_date))
             .await?
@@ -408,14 +414,14 @@ pub struct VSwitch {
 /// Connecting or disconnecting a server to/from a vSwitch requires some
 /// processing time, and the server won't be immediately available on the vSwitch
 /// network.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub enum ConnectionStatus {
     /// Server is connected and ready.
     #[serde(rename = "ready")]
     Ready,
 
     /// Server is currently in the process of connecting or disconnecting from the vSwitch.
-    #[serde(rename = "in process")]
+    #[serde(rename = "in process", alias = "processing")]
     InProcess,
 
     /// Server connect/disconnect failed.
@@ -492,40 +498,29 @@ impl PartialEq<u32> for CloudNetworkId {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "non-disruptive-tests")]
-    mod non_disruptive_tests {
-        use serial_test::serial;
-        use tracing::info;
-        use tracing_test::traced_test;
+    use super::InternalVSwitch;
 
-        #[tokio::test]
-        #[traced_test]
-        #[serial(vswitch)]
-        async fn test_list_vswitches() {
-            let _ = dotenvy::dotenv().ok();
+    #[test]
+    fn deserialize_vswitch() {
+        let json = r#"
+        {
+            "id": 50301,
+            "name": "hrobot-test-vswitch-AOLwCPri-re",
+            "vlan":4001,
+            "cancelled":false,
+            "server":[
+                {
+                    "server_number": 2321379,
+                    "server_ip": "138.201.21.47",
+                    "server_ipv6_net": "2a01:4f8:171:2c2c::",
+                    "status": "processing"
+                }
+            ],
+            "subnet": [],
+            "cloud_network": []
+        }"#;
 
-            let robot = crate::AsyncRobot::default();
-
-            let vswitches = robot.list_vswitches().await.unwrap();
-            info!("{vswitches:#?}");
-        }
-
-        #[tokio::test]
-        #[traced_test]
-        #[serial(vswitch)]
-        async fn test_get_vswitch() {
-            let _ = dotenvy::dotenv().ok();
-
-            let robot = crate::AsyncRobot::default();
-
-            let vswitches = robot.list_vswitches().await.unwrap();
-            info!("{vswitches:#?}");
-
-            if let Some(vswitch) = vswitches.first() {
-                let vswitch = robot.get_vswitch(vswitch.id).await.unwrap();
-                info!("{vswitch:#?}");
-            }
-        }
+        let _ = serde_json::from_str::<InternalVSwitch>(json).unwrap();
     }
 
     #[cfg(feature = "disruptive-tests")]

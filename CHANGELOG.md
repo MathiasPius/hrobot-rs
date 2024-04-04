@@ -3,7 +3,9 @@
 ⚠️ indicates breaking changes.
 
 ## Next
-* Implement PartialEq & Eq for server `Status`, `SubnetReference` and `ServerFlags`
+* ⚠️ vSwitch cancellation's `date` argument is now optional. Omitting the parameter causes immediate cancellation.
+* Implement PartialEq & Eq for vSwitch/server `ConnectionStatus`.
+* Implement PartialEq & Eq for server `Status`, `SubnetReference` and `ServerFlags`.
 
 ## 4.0.0
 
