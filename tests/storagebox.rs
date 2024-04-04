@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use bytesize::ByteSize;
 use hrobot::{
-    api::storagebox::{Accessibility, Permission, PlanStatus, SnapshotPlan, StorageBox},
+    api::storagebox::{Accessibility, Permission, PlanStatus, SnapshotPlan},
     AsyncRobot,
 };
 use serial_test::file_serial;
