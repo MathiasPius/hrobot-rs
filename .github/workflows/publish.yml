@@ -103,6 +103,11 @@ jobs:
 
       - name: Run integration tests
         uses: actions-rs/cargo@v1
+        env:
+          HROBOT_USERNAME: ${{ secrets.HROBOT_USERNAME }}
+          HROBOT_PASSWORD: ${{ secrets.HROBOT_PASSWORD }}
+          HETZNER_INTEGRATION_TEST_SERVER_ID: ${{ secrets.HETZNER_INTEGRATION_TEST_SERVER_ID }}
+          HETZNER_INTEGRATION_TEST_STORAGEBOX_ID: ${{ secrets.HETZNER_INTEGRATION_TEST_STORAGEBOX_ID }}
         with:
           command: test --tests
 
