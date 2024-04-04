@@ -475,3 +475,212 @@ impl AsyncRobot {
         Ok(self.go(get_addon_transaction(transaction)).await?.0)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        api::{
+            ordering::{
+                AddonId, AddonOrder, AddonTransactionId, Datacenter, ImSeriousAboutSpendingMoney,
+                Location, MarketProductId, MarketProductOrder, MarketTransactionId, ProductId,
+                TransactionId,
+            },
+            server::ServerId,
+        },
+        urlencode::UrlEncode,
+    };
+
+    use super::ProductOrder;
+
+    #[test]
+    fn location_conversion() {
+        assert_eq!(Location::from("FSN1"), Location::from("FSN1".to_string()));
+
+        assert_eq!(&Location::from("FSN1"), "FSN1");
+    }
+
+    #[test]
+    fn datacenter_construction() {
+        assert_eq!(
+            Datacenter::from("FSN1-DC8"),
+            Datacenter::from("FSN1-DC8".to_string())
+        );
+
+        assert_eq!(&Datacenter::from("FSN1-DC8"), "FSN1-DC8");
+
+        assert_eq!(
+            Datacenter::from("FSN1-DC8").to_string(),
+            "FSN1-DC8".to_string()
+        );
+    }
+
+    #[test]
+    fn product_id_construction() {
+        assert_eq!(ProductId::from("AX41"), ProductId::from("AX41".to_string()));
+
+        assert_eq!(&ProductId::from("AX41"), "AX41");
+
+        assert_eq!(String::from(ProductId::from("AX41")), "AX41".to_string());
+    }
+
+    #[test]
+    fn market_product_id_construction() {
+        assert_eq!(MarketProductId::from(20150121), MarketProductId(20150121));
+
+        assert_eq!(u32::from(MarketProductId::from(20150121)), 20150121);
+
+        assert_eq!(MarketProductId(20150121).to_string(), "20150121");
+
+        assert_eq!(MarketProductId(20150121), 20150121);
+    }
+
+    #[test]
+    fn transaction_id_construction() {
+        assert_eq!(
+            TransactionId::from("B20150121-344957-251478"),
+            TransactionId::from("B20150121-344957-251478".to_string())
+        );
+
+        assert_eq!(
+            &TransactionId::from("B20150121-344957-251478"),
+            "B20150121-344957-251478"
+        );
+
+        assert_eq!(
+            String::from(TransactionId::from("B20150121-344957-251478")),
+            TransactionId::from("B20150121-344957-251478").to_string(),
+        );
+    }
+
+    #[test]
+    fn market_transaction_id_construction() {
+        assert_eq!(
+            MarketTransactionId::from("B20150121-344957-251478"),
+            MarketTransactionId::from("B20150121-344957-251478".to_string())
+        );
+
+        assert_eq!(
+            &MarketTransactionId::from("B20150121-344957-251478"),
+            "B20150121-344957-251478"
+        );
+
+        assert_eq!(
+            String::from(MarketTransactionId::from("B20150121-344957-251478")),
+            MarketTransactionId::from("B20150121-344957-251478").to_string(),
+        );
+    }
+
+    #[test]
+    fn addon_transaction_id() {
+        assert_eq!(
+            AddonTransactionId::from("B20150121-344957-251478"),
+            AddonTransactionId::from("B20150121-344957-251478".to_string())
+        );
+
+        assert_eq!(
+            &AddonTransactionId::from("B20150121-344957-251478"),
+            "B20150121-344957-251478"
+        );
+
+        assert_eq!(
+            String::from(AddonTransactionId::from("B20150121-344957-251478")),
+            AddonTransactionId::from("B20150121-344957-251478").to_string(),
+        );
+    }
+
+    #[test]
+    fn addon_id() {
+        assert_eq!(
+            AddonId::from("Ipv4-Primary"),
+            AddonId::from("Ipv4-Primary".to_string())
+        );
+
+        assert_eq!(&AddonId::from("Ipv4-Primary"), "Ipv4-Primary");
+
+        assert_eq!(
+            String::from(AddonId::from("Ipv4-Primary")),
+            AddonId::from("Ipv4-Primary").to_string(),
+        );
+    }
+
+    #[test]
+    fn product_order_encoding() {
+        let order = ProductOrder {
+            id: ProductId::from("AX41"),
+            auth: super::AuthorizationMethod::Password("trustno1".to_string()),
+            location: Location::from("FSN1"),
+            distribution: Some("CentOS-7.9".to_string()),
+            language: Some("en_US".to_string()),
+            comment: Some("Comment goes here".to_string()),
+            addons: vec![AddonId::from("Ipv4-Primary")],
+            i_want_to_spend_money_to_purchase_a_server:
+                super::ImSeriousAboutSpendingMoney::LetMeSpendMyMoneyAlready,
+        };
+
+        assert_eq!(
+            order.encode(),
+            [
+                "product_id=AX41",
+                "password=trustno1",
+                "location=FSN1",
+                "dist=CentOS-7.9",
+                "lang=en_US",
+                "comment=Comment+goes+here",
+                "addon%5B%5D=Ipv4-Primary",
+                "test=false"
+            ]
+            .join("&")
+        );
+    }
+
+    #[test]
+    fn market_product_order_encoding() {
+        let order = MarketProductOrder {
+            id: MarketProductId::from(101),
+            auth: super::AuthorizationMethod::Password("trustno1".to_string()),
+            distribution: Some("CentOS-7.9".to_string()),
+            language: Some("en_US".to_string()),
+            comment: Some("Comment goes here".to_string()),
+            addons: vec![AddonId::from("Ipv4-Primary")],
+            i_want_to_spend_money_to_purchase_a_server:
+                super::ImSeriousAboutSpendingMoney::LetMeSpendMyMoneyAlready,
+        };
+
+        assert_eq!(
+            order.encode(),
+            [
+                "product_id=101",
+                "password=trustno1",
+                "dist=CentOS-7.9",
+                "lang=en_US",
+                "comment=Comment+goes+here",
+                "addon%5B%5D=Ipv4-Primary",
+                "test=false"
+            ]
+            .join("&")
+        );
+    }
+
+    #[test]
+    fn addon_order_encoding() {
+        let order = AddonOrder {
+            id: AddonId::from("Ipv4-Primary"),
+            server: ServerId(2020202),
+            reason: Some("Ipv6 rollout is taking forever".to_string()),
+            gateway: None,
+            i_want_to_spend_money_to_purchase_an_addon:
+                ImSeriousAboutSpendingMoney::LetMeSpendMyMoneyAlready,
+        };
+
+        assert_eq!(
+            order.encode(),
+            [
+                "product_id=Ipv4-Primary",
+                "server_number=2020202",
+                "reason=Ipv6+rollout+is+taking+forever",
+                "test=false"
+            ]
+            .join("&")
+        );
+    }
+}
