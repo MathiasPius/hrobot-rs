@@ -99,7 +99,8 @@ jobs:
       - name: Run unit tests
         uses: actions-rs/cargo@v1
         with:
-          command: test --lib
+          command: test
+          args: --lib
 
       - name: Run integration tests
         uses: actions-rs/cargo@v1
@@ -109,7 +110,8 @@ jobs:
           HETZNER_INTEGRATION_TEST_SERVER_ID: ${{ secrets.HETZNER_INTEGRATION_TEST_SERVER_ID }}
           HETZNER_INTEGRATION_TEST_STORAGEBOX_ID: ${{ secrets.HETZNER_INTEGRATION_TEST_STORAGEBOX_ID }}
         with:
-          command: test --tests
+          command: test
+          args: --tests
 
   tag:
     name: Tag & Publish
