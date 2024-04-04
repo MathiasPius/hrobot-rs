@@ -545,7 +545,7 @@ mod tests {
     fn vswitch_id_construction() {
         assert_eq!(VSwitchId::from(10101u32), 10101u32);
         assert_eq!(
-            VSwitchId::from(101010u32),
+            VSwitchId::from(10101u32),
             u32::from(VSwitchId::from(10101u32)),
         );
     }
