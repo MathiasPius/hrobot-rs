@@ -74,6 +74,8 @@ async fn enable_and_disable_traffic_warnings() {
 
     let original_traffic_warning = ip.traffic_warnings;
 
+    robot.enable_ip_traffic_warnings(ip.ip, None).await.unwrap();
+
     let new_warnings = robot
         .enable_ip_traffic_warnings(ip.ip, Some(TrafficWarnings::default()))
         .await
