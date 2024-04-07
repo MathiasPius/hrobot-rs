@@ -413,3 +413,26 @@ impl<'de> Deserialize<'de> for Permission {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::api::storagebox::{StorageBoxId, SubaccountId};
+
+    #[test]
+    fn storagebox_id() {
+        assert_eq!(StorageBoxId(10), StorageBoxId::from(10));
+
+        assert_eq!(u32::from(StorageBoxId(10)), 10);
+        assert_eq!(StorageBoxId(10), 10);
+    }
+
+    #[test]
+    fn subaccount_id() {
+        assert_eq!(
+            SubaccountId::from("sub-1".to_string()),
+            SubaccountId::from("sub-1")
+        );
+
+        assert_eq!(&SubaccountId("sub-2".to_string()), "sub-2")
+    }
+}
