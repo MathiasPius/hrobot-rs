@@ -13,7 +13,7 @@ use hrobot::{
 use tracing::info;
 
 #[allow(unused)]
-pub fn provisioned_server_id() -> ServerId {
+pub async fn provisioned_server_id() -> ServerId {
     dotenvy::dotenv().ok();
 
     ServerId(
@@ -29,7 +29,7 @@ pub fn provisioned_server_id() -> ServerId {
 
 #[allow(unused)]
 pub async fn provisioned_server() -> Server {
-    let id = provisioned_server_id();
+    let id = provisioned_server_id().await;
     let robot = AsyncRobot::default();
 
     robot.get_server(id).await.unwrap()

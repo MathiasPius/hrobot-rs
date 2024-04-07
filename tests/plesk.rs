@@ -16,7 +16,7 @@ async fn get_plesk_configuration() {
 
     let robot = AsyncRobot::default();
 
-    let server_id = common::provisioned_server_id();
+    let server_id = common::provisioned_server_id().await;
     // Fetch the complete server object, so we can get check
     // if the Windows system is available for this server.
     let Some(availability) = robot.get_server(server_id).await.unwrap().availability else {
@@ -58,7 +58,7 @@ async fn enable_disable_plesk() {
 
     let robot = crate::AsyncRobot::default();
 
-    let server_id = common::provisioned_server_id();
+    let server_id = common::provisioned_server_id().await;
     let mut activated_config = robot
         .enable_plesk_config(
             server_id,

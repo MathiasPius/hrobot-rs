@@ -49,9 +49,11 @@ async fn create_update_delete_rdns() {
     let subnets = robot.list_subnets().await.unwrap();
     info!("{subnets:#?}");
 
+    let provisioned_server_id = common::provisioned_server_id().await;
+
     let ip = subnets
         .into_iter()
-        .filter(|(server_id, _)| *server_id == common::provisioned_server_id())
+        .filter(|(server_id, _)| *server_id == provisioned_server_id)
         .map(|(_, subnet)| subnet)
         .filter_map(|mut subnet| subnet.pop())
         .find_map(|subnet| {

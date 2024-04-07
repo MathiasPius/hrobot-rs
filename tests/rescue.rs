@@ -16,7 +16,7 @@ async fn rescue_configuration() {
 
     let robot = crate::AsyncRobot::default();
 
-    let server_id = common::provisioned_server_id();
+    let server_id = common::provisioned_server_id().await;
     let config = robot.get_rescue_config(server_id).await.unwrap();
     info!("{config:#?}");
 }

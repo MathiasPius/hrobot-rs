@@ -58,7 +58,7 @@ async fn enable_disable_cpanel() {
 
     let robot = crate::AsyncRobot::default();
 
-    let server_id = common::provisioned_server_id();
+    let server_id = common::provisioned_server_id().await;
 
     let mut activated_config = robot
         .enable_cpanel_config(

@@ -16,7 +16,7 @@ async fn get_firewall() {
 
     let robot = AsyncRobot::default();
 
-    let server_id = common::provisioned_server_id();
+    let server_id = common::provisioned_server_id().await;
     let firewall = robot.get_firewall(server_id).await.unwrap();
 
     info!("{firewall:#?}");

@@ -16,7 +16,7 @@ async fn get_vnc_configuration() {
 
     let robot = AsyncRobot::default();
 
-    let server_id = common::provisioned_server_id();
+    let server_id = common::provisioned_server_id().await;
 
     let config = robot.get_vnc_config(server_id).await.unwrap();
     info!("{config:#?}");
@@ -30,7 +30,7 @@ async fn test_enable_disable_vnc() {
 
     let robot = crate::AsyncRobot::default();
 
-    let server_id = common::provisioned_server_id();
+    let server_id = common::provisioned_server_id().await;
     let mut activated_config = robot
         .enable_vnc_config(
             server_id,

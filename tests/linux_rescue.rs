@@ -16,7 +16,7 @@ async fn enable_disable_linux() {
 
     let robot = AsyncRobot::default();
 
-    let server_id = common::provisioned_server_id();
+    let server_id = common::provisioned_server_id().await;
 
     let mut activated_config = robot
         .enable_linux_config(
@@ -60,7 +60,7 @@ async fn get_linux_configuration() {
 
     let robot = crate::AsyncRobot::default();
 
-    let server_id = common::provisioned_server_id();
+    let server_id = common::provisioned_server_id().await;
 
     let config = robot.get_linux_config(server_id).await.unwrap();
     info!("{config:#?}");

@@ -23,7 +23,7 @@ async fn get_reset_options() {
     let robot = crate::AsyncRobot::default();
 
     let reset_options = robot
-        .get_reset_options(common::provisioned_server_id())
+        .get_reset_options(common::provisioned_server_id().await)
         .await
         .unwrap();
 
@@ -38,7 +38,7 @@ async fn trigger_reset() {
     let robot = crate::AsyncRobot::default();
 
     robot
-        .trigger_reset(common::provisioned_server_id(), Reset::Hardware)
+        .trigger_reset(common::provisioned_server_id().await, Reset::Hardware)
         .await
         .unwrap();
 }

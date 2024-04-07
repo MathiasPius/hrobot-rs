@@ -13,7 +13,7 @@ async fn wake_on_lan_available() {
 
     let server = common::provisioned_server().await;
     if robot
-        .is_wake_on_lan_available(common::provisioned_server_id())
+        .is_wake_on_lan_available(common::provisioned_server_id().await)
         .await
         .unwrap()
     {
@@ -31,7 +31,7 @@ async fn trigger_wake_on_lan() {
     let robot = AsyncRobot::default();
 
     robot
-        .trigger_wake_on_lan(common::provisioned_server_id())
+        .trigger_wake_on_lan(common::provisioned_server_id().await)
         .await
         .unwrap();
 }

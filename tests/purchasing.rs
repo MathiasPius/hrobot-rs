@@ -267,7 +267,7 @@ async fn purchase_additional_ipv4() {
 
     let robot = AsyncRobot::default();
 
-    let server_id = common::provisioned_server_id();
+    let server_id = common::provisioned_server_id().await;
 
     let transaction = robot
         .place_addon_order(AddonOrder {
