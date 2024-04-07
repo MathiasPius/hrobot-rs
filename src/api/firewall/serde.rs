@@ -377,3 +377,148 @@ impl UrlEncode for InternalFirewallTemplateConfig {
         self.rules.encode_into(f.append("rules"));
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::net::Ipv4Addr;
+
+    use ipnet::Ipv4Net;
+
+    use crate::{
+        api::firewall::{Action, InternalProtocol, InternalRule, IpVersion, PortRange, Protocol},
+        urlencode::UrlEncode,
+    };
+
+    #[test]
+    fn internal_protocol_parsing() {
+        assert_eq!(InternalProtocol::Tcp.as_ref(), "tcp");
+        assert_eq!(InternalProtocol::Udp.as_ref(), "udp");
+        assert_eq!(InternalProtocol::Gre.as_ref(), "gre");
+        assert_eq!(InternalProtocol::Icmp.as_ref(), "icmp");
+        assert_eq!(InternalProtocol::Ipip.as_ref(), "ipip");
+        assert_eq!(InternalProtocol::Ah.as_ref(), "ah");
+        assert_eq!(InternalProtocol::Esp.as_ref(), "esp");
+    }
+
+    #[test]
+    fn protocol_conversion() {
+        assert_eq!(
+            InternalProtocol::from(&Protocol::Tcp { flags: None }),
+            InternalProtocol::Tcp
+        );
+
+        assert_eq!(
+            InternalProtocol::from(&Protocol::Udp),
+            InternalProtocol::Udp
+        );
+
+        assert_eq!(
+            InternalProtocol::from(&Protocol::Gre),
+            InternalProtocol::Gre
+        );
+
+        assert_eq!(
+            InternalProtocol::from(&Protocol::Icmp),
+            InternalProtocol::Icmp
+        );
+
+        assert_eq!(
+            InternalProtocol::from(&Protocol::Ipip),
+            InternalProtocol::Ipip
+        );
+
+        assert_eq!(InternalProtocol::from(&Protocol::Ah), InternalProtocol::Ah);
+
+        assert_eq!(
+            InternalProtocol::from(&Protocol::Esp),
+            InternalProtocol::Esp
+        );
+    }
+
+    #[test]
+    fn rule_encoding_ipv4() {
+        let rule = InternalRule {
+            ip_version: Some(IpVersion::Ipv4),
+            name: "IPv4 Rule".to_string(),
+            dst_ip: Some(Ipv4Net::new(Ipv4Addr::new(192, 168, 0, 0), 24).unwrap()),
+            src_ip: Some(Ipv4Net::new(Ipv4Addr::new(172, 16, 0, 0), 20).unwrap()),
+            dst_port: Some(PortRange::from(32000..=34000)),
+            src_port: Some(PortRange::from(10)),
+            protocol: Some(InternalProtocol::Tcp),
+            tcp_flags: Some("ACK".to_string()),
+            action: Action::Accept,
+        }
+        .encode();
+
+        assert_eq!(
+            rule,
+            [
+                "%5Bname%5D=IPv4+Rule",
+                "%5Bip_version%5D=ipv4",
+                "%5Bdst_ip%5D=192.168.0.0%2F24",
+                "%5Bsrc_ip%5D=172.16.0.0%2F20",
+                "%5Bdst_port%5D=32000-34000",
+                "%5Bsrc_port%5D=10",
+                "%5Bprotocol%5D=tcp",
+                "%5Btcp_flags%5D=ACK",
+                "%5Baction%5D=accept"
+            ]
+            .join("&")
+        );
+    }
+
+    #[test]
+    fn rule_encoding_ipv6() {
+        let rule = InternalRule {
+            ip_version: Some(IpVersion::Ipv6),
+            name: "IPv6 Rule".to_string(),
+            dst_ip: None,
+            src_ip: None,
+            dst_port: Some(PortRange::from(32000..=34000)),
+            src_port: Some(PortRange::from(10)),
+            protocol: Some(InternalProtocol::Udp),
+            tcp_flags: None,
+            action: Action::Discard,
+        }
+        .encode();
+
+        assert_eq!(
+            rule,
+            [
+                "%5Bname%5D=IPv6+Rule",
+                "%5Bip_version%5D=ipv6",
+                "%5Bdst_port%5D=32000-34000",
+                "%5Bsrc_port%5D=10",
+                "%5Bprotocol%5D=udp",
+                "%5Baction%5D=discard"
+            ]
+            .join("&")
+        );
+    }
+
+    #[test]
+    fn rule_encoding_icmp() {
+        let rule = InternalRule {
+            ip_version: None,
+            name: "Icmp Rule".to_string(),
+            dst_ip: None,
+            src_ip: None,
+            dst_port: None,
+            src_port: None,
+            protocol: Some(InternalProtocol::Icmp),
+            tcp_flags: None,
+            action: Action::Discard,
+        }
+        .encode();
+
+        assert_eq!(
+            rule,
+            [
+                "%5Bname%5D=Icmp+Rule",
+                "%5Bprotocol%5D=icmp",
+                "%5Baction%5D=discard"
+            ]
+            .join("&")
+        );
+    }
+}
