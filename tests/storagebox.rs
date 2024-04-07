@@ -360,9 +360,21 @@ async fn update_snapshot_plans() {
         tokio::time::sleep(Duration::from_secs(6)).await;
 
         let _ = robot
-            .update_snapshot_plan(storagebox.id, SnapshotPlan::weekly(Weekday::Monday, 10, 10))
+            .update_snapshot_plan(
+                storagebox.id,
+                SnapshotPlan::weekly(Weekday::Monday, 10, 10).with_limit(2),
+            )
             .await
             .unwrap();
+
+        tokio::time::sleep(Duration::from_secs(6)).await;
+
+        let plan = robot.get_snapshot_plan(storagebox.id).await.unwrap();
+
+        assert_eq!(
+            plan,
+            SnapshotPlan::weekly(Weekday::Monday, 10, 10).with_limit(2)
+        );
 
         tokio::time::sleep(Duration::from_secs(6)).await;
 

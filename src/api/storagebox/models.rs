@@ -206,7 +206,7 @@ pub struct CreatedSnapshot {
 }
 
 /// Snapshot plans periodically take snapshots of the underlying storagebox.
-#[derive(Default, Debug, Clone, Deserialize, Serialize)]
+#[derive(Default, Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub struct SnapshotPlan {
     /// Indicates whether the snapshot plan is enabled or not.
     pub status: PlanStatus,
