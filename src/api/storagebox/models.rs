@@ -418,6 +418,8 @@ impl<'de> Deserialize<'de> for Permission {
 mod tests {
     use crate::api::storagebox::{StorageBoxId, SubaccountId};
 
+    use super::Permission;
+
     #[test]
     fn storagebox_id() {
         assert_eq!(StorageBoxId(10), StorageBoxId::from(10));
@@ -434,5 +436,24 @@ mod tests {
         );
 
         assert_eq!(&SubaccountId("sub-2".to_string()), "sub-2")
+    }
+
+    #[test]
+    fn permission_deserialization() {
+        let permission = Permission::ReadOnly;
+
+        assert_eq!(
+            permission,
+            serde_json::from_str::<Permission>(&serde_json::to_string(&permission).unwrap())
+                .unwrap()
+        );
+
+        let permission = Permission::ReadWrite;
+
+        assert_eq!(
+            permission,
+            serde_json::from_str::<Permission>(&serde_json::to_string(&permission).unwrap())
+                .unwrap()
+        );
     }
 }
