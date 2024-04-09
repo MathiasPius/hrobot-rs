@@ -2,6 +2,10 @@
 
 ⚠️ indicates breaking changes.
 
+## Next
+
+* ⚠️ `withdraw_server_order` removed. The API endpoint appears to have been silently removed, meaning calls to it will fail.
+
 ## 5.0.1
 
 * Fix improper deserialization of response from calling `trigger_reset`.

@@ -68,25 +68,6 @@ fn withdraw_server_cancellation(
     .with_method("DELETE")
 }
 
-fn withdraw_server_order(
-    server_number: ServerId,
-    reason: Option<&str>,
-) -> Result<UnauthenticatedRequest<Single<Cancellation>>, serde_html_form::ser::Error> {
-    #[derive(Serialize)]
-    struct WithdrawalRequest<'a> {
-        #[serde(skip_serializing_if = "Option::is_none")]
-        reversal_reason: Option<&'a str>,
-    }
-
-    UnauthenticatedRequest::from(&format!(
-        "https://robot-ws.your-server.de/server/{server_number}/reversal"
-    ))
-    .with_method("POST")
-    .with_body(WithdrawalRequest {
-        reversal_reason: reason,
-    })
-}
-
 impl AsyncRobot {
     /// List all owned servers.
     ///
@@ -213,32 +194,6 @@ impl AsyncRobot {
     ) -> Result<Cancellation, Error> {
         Ok(self
             .go(withdraw_server_cancellation(server_number))
-            .await?
-            .0)
-    }
-
-    /// Withdraw a server order.
-    ///
-    /// # Example
-    /// ```rust,no_run
-    /// # use hrobot::api::server::{ServerId, Cancellation};
-    /// # #[tokio::main]
-    /// # async fn main() {
-    /// let robot = hrobot::AsyncRobot::default();
-    /// let cancellation = robot.withdraw_server_order(ServerId(1234567), Some("Accidental purchase.")).await.unwrap();
-    /// assert!(matches!(
-    ///     cancellation,
-    ///     Cancellation::Cancelled(_)
-    /// ));
-    /// # }
-    /// ```
-    pub async fn withdraw_server_order(
-        &self,
-        server_number: ServerId,
-        reason: Option<&str>,
-    ) -> Result<Cancellation, Error> {
-        Ok(self
-            .go(withdraw_server_order(server_number, reason)?)
             .await?
             .0)
     }
