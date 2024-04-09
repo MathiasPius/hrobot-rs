@@ -70,7 +70,7 @@ fn cancel_ip(ip: Ipv4Addr, date: Date) -> UnauthenticatedRequest<Single<Cancelle
     .with_serialized_body(format!("cancellation_date={date}"))
 }
 
-fn revoke_ip_cancellation(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<Cancellable>> {
+fn withdraw_ip_cancellation(ip: Ipv4Addr) -> UnauthenticatedRequest<Single<Cancellable>> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/ip/{ip}/cancellation"
     ))
@@ -239,18 +239,18 @@ impl AsyncRobot {
         Ok(self.go(cancel_ip(ip, date)).await?.0)
     }
 
-    /// Revoke IP address cancellation.
+    /// Withdraw IP address cancellation.
     ///
     /// # Example
     /// ```rust,no_run
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.revoke_ip_cancellation("123.123.123.123".parse().unwrap()).await.unwrap();
+    /// robot.withdraw_ip_cancellation("123.123.123.123".parse().unwrap()).await.unwrap();
     /// # }
     /// ```
-    pub async fn revoke_ip_cancellation(&self, ip: Ipv4Addr) -> Result<Cancellable, Error> {
-        Ok(self.go(revoke_ip_cancellation(ip)).await?.0)
+    pub async fn withdraw_ip_cancellation(&self, ip: Ipv4Addr) -> Result<Cancellable, Error> {
+        Ok(self.go(withdraw_ip_cancellation(ip)).await?.0)
     }
 }
 

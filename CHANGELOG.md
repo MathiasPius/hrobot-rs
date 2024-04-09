@@ -4,6 +4,8 @@
 
 ## 6.0.0
 
+* ⚠️ `revoke_ip_cancellation` renmaed to `withdraw_ip_cancellation` for consistency.
+* ⚠️ `revoke_subnet_cancellation` renamed to `withdraw_subnet_cancellation` for consistency.
 * ⚠️ `withdraw_server_cancellation` now returns `()` not `Cancellation`, as defined in the Robot API.
 * ⚠️ `cancel_server` now takes an `Option<Date>`, defaulting to *immediate* cancellation.
 * ⚠️ `withdraw_server_order` removed. The API endpoint appears to have been silently removed, meaning calls to it will fail.

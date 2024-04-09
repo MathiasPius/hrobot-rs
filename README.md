@@ -72,8 +72,8 @@ Detailed API overview.
     - [x] **Cancellation.**
         - [x] Get cancellation status.
         - [x] Cancel server.[^1]
-        - [x] Revoke cancellation.[^1]
-    - [x] Withdraw server order.[^1]
+        - [x] Withdraw cancellation.[^1]
+    - [x] ~~Withdraw server order.~~[^1] - Deprecated by Hetzner.
 - [x] **IP.**
     - [x] List IPs.
     - [x] Get IP.
@@ -85,7 +85,7 @@ Detailed API overview.
     - [x] **Cancellation.**
         - [x] Get cancellation status.
         - [x] Cancel IP address[^1]
-        - [x] Revoke cancellation[^1]
+        - [x] Withdraw cancellation[^1]
 - [x] **Subnet.**
     - [x] List subnets.
     - [x] Get subnet.
@@ -96,7 +96,7 @@ Detailed API overview.
     - [x] **Cancellation.**[^1]
         - [x] Get cancellation status.[^1]
         - [x] Cancel subnet.[^1]
-        - [x] Revoke cancellation.[^1]
+        - [x] Withdraw cancellation.[^1]
 - [x] **Reset**
     - [x] List reset options for all servers.
     - [x] Get reset options for single server
