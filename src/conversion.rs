@@ -233,5 +233,11 @@ mod tests {
             )
             .unwrap()
         );
+
+        assert_eq!(
+            Option::<Weekday>::None,
+            serde_json::from_str(&serde_json::to_string(&Option::<Weekday>::None).unwrap())
+                .unwrap()
+        )
     }
 }
