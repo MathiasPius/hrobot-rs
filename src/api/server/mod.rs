@@ -50,8 +50,9 @@ fn get_server_cancellation(
 
 fn cancel_server(
     server_number: ServerId,
-    cancellation: Cancelled,
+    cancellation: Cancel,
 ) -> Result<UnauthenticatedRequest<Single<Cancelled>>, serde_html_form::ser::Error> {
+    let cancellation: InternalCancel = cancellation.into();
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/server/{server_number}/cancellation"
     ))
@@ -156,7 +157,7 @@ impl AsyncRobot {
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
     /// robot.cancel_server(ServerId(1234567), Cancelled {
-    ///     date: Date::from_calendar_date(2023, Month::June, 10).unwrap(),
+    ///     date: Some(Date::from_calendar_date(2023, Month::June, 10).unwrap()),
     ///     reason: Some("Server no longer necessary due to project ending".to_string()),
     ///     reserved: false
     /// }).await.unwrap();
@@ -165,7 +166,7 @@ impl AsyncRobot {
     pub async fn cancel_server(
         &self,
         server_number: ServerId,
-        cancellation: Cancelled,
+        cancellation: Cancel,
     ) -> Result<Cancelled, Error> {
         Ok(self
             .go(cancel_server(server_number, cancellation)?)

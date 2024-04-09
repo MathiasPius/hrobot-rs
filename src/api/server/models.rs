@@ -177,6 +177,41 @@ pub struct Cancelled {
     pub reserved: bool,
 }
 
+/// Describes a server cancellation order.
+#[derive(Debug)]
+pub struct Cancel {
+    /// Date on which the cancellation will take effect.
+    pub date: Option<Date>,
+
+    /// Reason for the cancellation.
+    pub reason: Option<String>,
+
+    /// Indicates if the server location will be reserved after server cancellation.
+    pub reserved: bool,
+}
+
+#[derive(Serialize)]
+pub(crate) struct InternalCancel {
+    #[serde(rename = "cancellation_date")]
+    pub date: String,
+    #[serde(rename = "cancellation_reason")]
+    pub reason: Option<String>,
+    pub reserved: bool,
+}
+
+impl From<Cancel> for InternalCancel {
+    fn from(value: Cancel) -> Self {
+        InternalCancel {
+            date: value
+                .date
+                .map(|date| date.to_string())
+                .unwrap_or("now".to_string()),
+            reason: value.reason,
+            reserved: value.reserved,
+        }
+    }
+}
+
 /// Describes possibility of cancellation for a server.
 #[derive(Debug, Deserialize)]
 pub struct Cancellable {
