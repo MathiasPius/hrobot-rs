@@ -12,19 +12,23 @@ use hrobot::{
 };
 use tracing::info;
 
+pub const PROVISIONED_SERVER_ID_PATH: &str = "provisioned-server";
+
+/// Attempts to retrieve the provisioned server ID from a temporary file for 30 minutes.
+/// Panics if the file is never populated.
 #[allow(unused)]
 pub async fn provisioned_server_id() -> ServerId {
     dotenvy::dotenv().ok();
 
-    ServerId(
-        u32::from_str_radix(
-            std::env::var("HETZNER_INTEGRATION_TEST_SERVER_ID")
-                .as_deref()
-                .unwrap(),
-            10,
-        )
-        .unwrap(),
-    )
+    for i in 0..60 {
+        if let Ok(contents) = std::fs::read_to_string(PROVISIONED_SERVER_ID_PATH) {
+            return ServerId(u32::from_str_radix(&contents, 10).unwrap());
+        }
+
+        tokio::time::sleep(Duration::from_secs(30)).await;
+    }
+
+    panic!("server was never provisioned.");
 }
 
 #[allow(unused)]

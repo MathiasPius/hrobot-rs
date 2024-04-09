@@ -235,9 +235,9 @@ s
     * `HROBOT_USERNAME`
     * `HROBOT_PASSWORD`
 
+    These tests will ⚠️ **PURCHASE AN AUCTION SERVER** ⚠️ and (ideally) *cancel* the server once tests have run.
+
     They interact ⚠️ **DESTRUCTIVELY** ⚠️ with the resources provided through the following environment variables:
 
-    * `HETZNER_INTEGRATION_TEST_SERVER_ID` specifies a pre-allocated server to run Server-related tests against.
     * `HETZNER_INTEGRATION_TEST_STORAGEBOX_ID` specifies a pre-allocated storagebox resource which Storagebox-related tests are run against.
-    
-    You should **never** use an actual production server for this!
+
