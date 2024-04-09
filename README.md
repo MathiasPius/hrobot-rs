@@ -240,4 +240,3 @@ s
     They interact ⚠️ **DESTRUCTIVELY** ⚠️ with the resources provided through the following environment variables:
 
     * `HETZNER_INTEGRATION_TEST_STORAGEBOX_ID` specifies a pre-allocated storagebox resource which Storagebox-related tests are run against.
-
