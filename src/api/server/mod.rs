@@ -12,7 +12,7 @@ use serde::Serialize;
 
 pub use models::*;
 
-use super::UnauthenticatedRequest;
+use super::{wrapper::Empty, UnauthenticatedRequest};
 
 fn list_servers() -> UnauthenticatedRequest<List<Server>> {
     UnauthenticatedRequest::new(Uri::from_static("https://robot-ws.your-server.de/server"))
@@ -60,9 +60,7 @@ fn cancel_server(
     .with_body(cancellation)
 }
 
-fn withdraw_server_cancellation(
-    server_number: ServerId,
-) -> UnauthenticatedRequest<Single<Cancellation>> {
+fn withdraw_server_cancellation(server_number: ServerId) -> UnauthenticatedRequest<Empty> {
     UnauthenticatedRequest::from(&format!(
         "https://robot-ws.your-server.de/server/{server_number}/cancellation"
     ))
@@ -189,13 +187,10 @@ impl AsyncRobot {
     /// ));
     /// # }
     /// ```
-    pub async fn withdraw_server_cancellation(
-        &self,
-        server_number: ServerId,
-    ) -> Result<Cancellation, Error> {
+    pub async fn withdraw_server_cancellation(&self, server_number: ServerId) -> Result<(), Error> {
         Ok(self
             .go(withdraw_server_cancellation(server_number))
             .await?
-            .0)
+            .throw_away())
     }
 }

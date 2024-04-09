@@ -4,6 +4,7 @@
 
 ## 6.0.0
 
+* ⚠️ `withdraw_server_cancellation` now returns `()` not `Cancellation`, as defined in the Robot API.
 * ⚠️ `cancel_server` now takes an `Option<Date>`, defaulting to *immediate* cancellation.
 * ⚠️ `withdraw_server_order` removed. The API endpoint appears to have been silently removed, meaning calls to it will fail.
 

@@ -14,7 +14,7 @@ use tracing::info;
 
 pub const PROVISIONED_SERVER_ID_PATH: &str = "provisioned-server";
 
-/// Attempts to retrieve the provisioned server ID from a temporary file for 30 minutes.
+/// Attempts to retrieve the provisioned server ID from a temporary file for 60 minutes.
 /// Panics if the file is never populated.
 #[allow(unused)]
 pub async fn provisioned_server_id() -> ServerId {
@@ -28,11 +28,17 @@ pub async fn provisioned_server_id() -> ServerId {
             if let Ok(server) = robot.get_server(server_id).await {
                 if server.status == server::Status::Ready {
                     return server_id;
+                } else {
+                    info!("server available, but not yet marked as ready.");
                 }
+            } else {
+                info!("got server id, but server is not available in robot interface yet.");
             }
+        } else {
+            info!("provisoned server id has not been written to path yet.");
         }
 
-        tokio::time::sleep(Duration::from_secs(30)).await;
+        tokio::time::sleep(Duration::from_secs(60)).await;
     }
 
     panic!("server was never provisioned.");
