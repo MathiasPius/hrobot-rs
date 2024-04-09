@@ -13,11 +13,8 @@ async fn boot_configuration() {
 
     let robot = AsyncRobot::default();
 
-    let servers = robot.list_servers().await.unwrap();
-    info!("{servers:#?}");
+    let server = common::provisioned_server().await;
 
-    if let Some(server) = servers.first() {
-        let config = robot.get_boot_config(server.id).await.unwrap();
-        info!("{config:#?}");
-    }
+    let config = robot.get_boot_config(server.id).await.unwrap();
+    info!("{config:#?}");
 }
