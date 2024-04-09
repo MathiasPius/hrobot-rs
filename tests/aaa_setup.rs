@@ -35,8 +35,8 @@ async fn provision_cheapest_server() {
     let order = MarketProductOrder {
         id: cheapest.id,
         auth: AuthorizationMethod::Keys(vec![fingerprint.clone()]),
-        distribution: Some("Rescue system".to_string()),
-        language: Some("en".to_string()),
+        distribution: None,
+        language: None,
         addons: vec![AddonId::from("primary_ipv4")],
         comment: None,
         i_want_to_spend_money_to_purchase_a_server:
