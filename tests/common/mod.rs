@@ -3,7 +3,7 @@ use std::time::Duration;
 use hrobot::{
     api::{
         firewall::State,
-        server::{Server, ServerId},
+        server::{self, Server, ServerId},
         storagebox::{StorageBox, StorageBoxId},
         vswitch::{ConnectionStatus, VSwitch, VSwitchId},
     },
@@ -19,10 +19,17 @@ pub const PROVISIONED_SERVER_ID_PATH: &str = "provisioned-server";
 #[allow(unused)]
 pub async fn provisioned_server_id() -> ServerId {
     dotenvy::dotenv().ok();
+    let robot = AsyncRobot::default();
 
     for i in 0..60 {
         if let Ok(contents) = std::fs::read_to_string(PROVISIONED_SERVER_ID_PATH) {
-            return ServerId(u32::from_str_radix(&contents, 10).unwrap());
+            let server_id = ServerId(u32::from_str_radix(&contents, 10).unwrap());
+
+            if let Ok(server) = robot.get_server(server_id).await {
+                if server.status == server::Status::Ready {
+                    return server_id;
+                }
+            }
         }
 
         tokio::time::sleep(Duration::from_secs(30)).await;
