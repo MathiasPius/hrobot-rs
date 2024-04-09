@@ -2,7 +2,7 @@
 
 ⚠️ indicates breaking changes.
 
-## Next
+## 6.0.0
 
 * ⚠️ `cancel_server` now takes an `Option<Date>`, defaulting to *immediate* cancellation.
 * ⚠️ `withdraw_server_order` removed. The API endpoint appears to have been silently removed, meaning calls to it will fail.
