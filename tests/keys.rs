@@ -1,11 +1,9 @@
 use hrobot::AsyncRobot;
-use serial_test::file_serial;
 use tracing::info;
 use tracing_test::traced_test;
 
 #[tokio::test]
 #[traced_test]
-#[file_serial]
 async fn test_create_delete_key() {
     let _ = dotenvy::dotenv().ok();
 

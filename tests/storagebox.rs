@@ -14,7 +14,7 @@ use tracing_test::traced_test;
 
 #[tokio::test]
 #[traced_test]
-#[file_serial]
+#[file_serial(storagebox)]
 async fn get_storageboxes() {
     let _ = dotenvy::dotenv().ok();
 
@@ -28,7 +28,7 @@ async fn get_storageboxes() {
 
 #[tokio::test]
 #[traced_test]
-#[file_serial]
+#[file_serial(storagebox)]
 async fn get_storagebox() {
     let _ = dotenvy::dotenv().ok();
 
@@ -46,7 +46,7 @@ async fn get_storagebox() {
 
 #[tokio::test]
 #[traced_test]
-#[file_serial]
+#[file_serial(storagebox)]
 async fn list_snapshots() {
     let _ = dotenvy::dotenv().ok();
 
@@ -57,7 +57,7 @@ async fn list_snapshots() {
 
 #[tokio::test]
 #[traced_test]
-#[file_serial]
+#[file_serial(storagebox)]
 async fn get_snapshotplans() {
     let _ = dotenvy::dotenv().ok();
 
@@ -73,7 +73,7 @@ async fn get_snapshotplans() {
 
 #[tokio::test]
 #[traced_test]
-#[file_serial]
+#[file_serial(storagebox)]
 async fn list_subaccounts() {
     let _ = dotenvy::dotenv().ok();
 
@@ -94,7 +94,7 @@ async fn list_subaccounts() {
 
 #[tokio::test]
 #[traced_test]
-#[file_serial]
+#[file_serial(storagebox)]
 async fn reset_password() {
     let _ = dotenvy::dotenv().ok();
 
@@ -112,7 +112,7 @@ async fn reset_password() {
 
 #[tokio::test]
 #[traced_test]
-#[file_serial]
+#[file_serial(storagebox)]
 async fn rename_storagebox() {
     let _ = dotenvy::dotenv().ok();
 
@@ -129,7 +129,7 @@ async fn rename_storagebox() {
 
 #[tokio::test]
 #[traced_test]
-#[file_serial]
+#[file_serial(storagebox)]
 async fn toggle_all_settings() {
     let _ = dotenvy::dotenv().ok();
 
@@ -277,7 +277,7 @@ async fn toggle_all_settings() {
 
 #[tokio::test]
 #[traced_test]
-#[file_serial]
+#[file_serial(storagebox)]
 async fn create_revert_delete_snapshot() {
     let _ = dotenvy::dotenv().ok();
 
@@ -313,7 +313,7 @@ async fn create_revert_delete_snapshot() {
 
 #[tokio::test]
 #[traced_test]
-#[file_serial]
+#[file_serial(storagebox)]
 async fn create_comment_delete_snapshot() {
     let _ = dotenvy::dotenv().ok();
 
@@ -341,7 +341,7 @@ async fn create_comment_delete_snapshot() {
 
 #[tokio::test]
 #[traced_test]
-#[file_serial]
+#[file_serial(storagebox)]
 async fn update_snapshot_plans() {
     let _ = dotenvy::dotenv().ok();
 
@@ -398,7 +398,7 @@ async fn update_snapshot_plans() {
 
 #[tokio::test]
 #[traced_test]
-#[file_serial]
+#[file_serial(storagebox)]
 async fn create_update_delete_subaccount() {
     let _ = dotenvy::dotenv().ok();
 

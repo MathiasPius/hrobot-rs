@@ -188,9 +188,10 @@ impl AsyncRobot {
     /// # }
     /// ```
     pub async fn withdraw_server_cancellation(&self, server_number: ServerId) -> Result<(), Error> {
-        Ok(self
-            .go(withdraw_server_cancellation(server_number))
+        self.go(withdraw_server_cancellation(server_number))
             .await?
-            .throw_away())
+            .throw_away();
+
+        Ok(())
     }
 }
