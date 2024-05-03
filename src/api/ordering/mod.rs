@@ -614,7 +614,7 @@ mod tests {
             comment: Some("Comment goes here".to_string()),
             addons: vec![AddonId::from("Ipv4-Primary")],
             i_want_to_spend_money_to_purchase_a_server:
-                super::ImSeriousAboutSpendingMoney::LetMeSpendMyMoneyAlready,
+                ImSeriousAboutSpendingMoney::LetMeSpendMyMoneyAlready,
         };
 
         assert_eq!(
@@ -643,7 +643,7 @@ mod tests {
             comment: Some("Comment goes here".to_string()),
             addons: vec![AddonId::from("Ipv4-Primary")],
             i_want_to_spend_money_to_purchase_a_server:
-                super::ImSeriousAboutSpendingMoney::LetMeSpendMyMoneyAlready,
+                ImSeriousAboutSpendingMoney::LetMeSpendMyMoneyAlready,
         };
 
         assert_eq!(
