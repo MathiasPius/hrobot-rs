@@ -3,7 +3,7 @@ use std::{collections::HashMap, net::IpAddr};
 
 use bytesize::ByteSize;
 use ipnet::IpNet;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use time::{Date, Month};
 
 use crate::{error::Error, urlencode::UrlEncode, AsyncRobot};
@@ -98,7 +98,7 @@ impl AsyncRobot {
 }
 
 /// Traffic statistics for a single "unit". For hourly range, this is a single hour. For monthly it's a day, for yearly it's a month.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrafficStatistic {
     /// Amount of ingress (incoming) traffic within the specified time range.
     #[serde(rename = "in", deserialize_with = "crate::conversion::gib_float")]
@@ -111,7 +111,7 @@ pub struct TrafficStatistic {
     pub total: ByteSize,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct StatisticContainer {
     data: HashMap<String, HashMap<String, TrafficStatistic>>,
 }

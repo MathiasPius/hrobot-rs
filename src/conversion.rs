@@ -137,7 +137,7 @@ mod tests {
                 "timestamp": "2023-06-10 21:34:12"
             }"#;
 
-        #[derive(Debug, Deserialize, PartialEq)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq)]
         struct Container {
             #[serde(deserialize_with = "super::assume_berlin_timezone")]
             timestamp: OffsetDateTime,
@@ -158,7 +158,7 @@ mod tests {
                 "date": "2023-06-10"
             }"#;
 
-        #[derive(Debug, Deserialize, PartialEq)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq)]
         struct Container {
             date: Date,
         }

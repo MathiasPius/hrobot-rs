@@ -2,14 +2,14 @@ use std::{collections::HashMap, fmt::Display, net::IpAddr};
 
 use bytesize::ByteSize;
 use rust_decimal::Decimal;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use time::{OffsetDateTime, PrimitiveDateTime};
 use time_tz::PrimitiveDateTimeExt;
 
 use crate::{api::server::ServerId, urlencode::UrlEncode};
 
 /// Describes a product available for purchase.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Product {
     /// Unique identifier for this product type.
     pub id: ProductId,
@@ -37,7 +37,7 @@ pub struct Product {
     pub locations: Vec<Location>,
 
     /// Prices for this product in each location
-    #[serde(deserialize_with = "location_prices")]
+    #[serde(with = "location_prices")]
     pub prices: HashMap<Location, LocationPrice>,
 
     /// Addons which can be purchased for this product.
@@ -45,7 +45,7 @@ pub struct Product {
 }
 
 /// Describes a product purchase, as listed in a [`ProductTransaction`].
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PurchasedProduct {
     /// Unique identifier for this product type.
     pub id: ProductId,
@@ -74,7 +74,7 @@ pub struct PurchasedProduct {
 }
 
 /// Describes a purchased market (auction) product, as described in a [`MarketTransaction`]
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PurchasedMarketProduct {
     /// Unique identifier for this product type.
     pub id: MarketProductId,
@@ -143,33 +143,57 @@ pub struct PurchasedMarketProduct {
     pub primary_hdd_count: u8,
 }
 
-fn location_prices<'de, D: Deserializer<'de>>(
-    deserializer: D,
-) -> Result<HashMap<Location, LocationPrice>, D::Error> {
-    let prices = Vec::<SingleLocationPrice>::deserialize(deserializer)?;
+mod location_prices {
+    use super::*;
+    use serde::{Deserializer, Serializer};
 
-    Ok(prices
-        .into_iter()
-        .map(
-            |SingleLocationPrice {
-                 location,
-                 recurring: monthly,
-                 setup,
-             }| {
-                (
-                    location,
-                    LocationPrice {
-                        recurring: monthly,
-                        setup,
-                    },
-                )
-            },
-        )
-        .collect())
+    pub fn deserialize<'de, D: Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<HashMap<Location, LocationPrice>, D::Error> {
+        let prices = Vec::<SingleLocationPrice>::deserialize(deserializer)?;
+
+        Ok(prices
+            .into_iter()
+            .map(
+                |SingleLocationPrice {
+                     location,
+                     recurring: monthly,
+                     setup,
+                 }| {
+                    (
+                        location,
+                        LocationPrice {
+                            recurring: monthly,
+                            setup,
+                        },
+                    )
+                },
+            )
+            .collect())
+    }
+
+    pub fn serialize<S>(
+        prices: &HashMap<Location, LocationPrice>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let prices: Vec<_> = prices
+            .iter()
+            .map(|(location, price)| SingleLocationPrice {
+                location: location.clone(),
+                recurring: price.recurring.clone(),
+                setup: price.setup.clone(),
+            })
+            .collect();
+
+        prices.serialize(serializer)
+    }
 }
 
 /// Price information for a single location.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SingleLocationPrice {
     /// Location this price applies to.
     pub location: Location,
@@ -191,7 +215,7 @@ pub struct LocationPrice {
 }
 
 /// A recurring price point, both excluding and including VAT.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RecurringPrice {
     /// Monthly price excluding VAT.
     pub net: Decimal,
@@ -204,7 +228,7 @@ pub struct RecurringPrice {
 }
 
 /// A one-time setup price point, both excluding and including VAT.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SetupPrice {
     /// Monthly price excluding VAT.
     pub net: Decimal,
@@ -213,7 +237,7 @@ pub struct SetupPrice {
 }
 
 /// Describes an addon which can be purchased.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Addon {
     /// Unique identifier for this addon.
     pub id: AddonId,
@@ -231,12 +255,12 @@ pub struct Addon {
     pub max: u32,
 
     /// Prices for this addon in each location.
-    #[serde(deserialize_with = "location_prices")]
+    #[serde(with = "location_prices")]
     pub prices: HashMap<Location, LocationPrice>,
 }
 
 /// Describes an addon available for purchase for a specific server.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AvailableAddon {
     /// Unique ID for this addon.
     pub id: AddonId,
@@ -360,7 +384,7 @@ impl PartialEq<str> for ProductId {
 }
 
 /// Describes the purchase of a single standard hetzner product.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProductTransaction {
     /// Unique transaction ID.
     pub id: TransactionId,
@@ -401,7 +425,7 @@ pub struct ProductTransaction {
 }
 
 /// Status of the transaction.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TransactionStatus {
     /// Transaction completed.
     #[serde(rename = "ready")]
@@ -451,7 +475,7 @@ impl PartialEq<str> for TransactionId {
 }
 
 /// Describes the purchase of a single Hetzner market (auction) server.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MarketTransaction {
     /// Unique transaction ID.
     pub id: MarketTransactionId,
@@ -557,7 +581,7 @@ impl PartialEq<str> for AddonTransactionId {
 }
 
 /// Describes the purchase of a single addon.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AddonTransaction {
     /// Unique transacton ID.
     pub id: AddonTransactionId,
@@ -581,7 +605,7 @@ pub struct AddonTransaction {
 }
 
 /// Resource associated with an addon purchase.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Resource {
     /// Indicates the type of the resource. e.g. `subnet`
     pub r#type: String,
@@ -590,7 +614,7 @@ pub struct Resource {
 }
 
 /// Describes a purchased addon as it appears in an [`AddonTransaction`]
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PurchasedAddon {
     /// Unique identifier for this product type.
     pub id: AddonId,
@@ -643,7 +667,7 @@ impl PartialEq<str> for AddonId {
 /// This is just key metadata, it does not contain the key itself. To retrieve the key, see [`AsyncRobot::get_ssh_key`](crate::AsyncRobot::get_ssh_key).
 ///
 /// Similar to the [`SshKeyReference`](crate::api::keys::SshKeyReference), but does not return the time at which the key was created.
-#[derive(Debug, Clone, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub struct InitialProductSshKey {
     /// Unique name for the key.
     pub name: String,
@@ -661,7 +685,7 @@ pub struct InitialProductSshKey {
 }
 
 /// SSH Host Key
-#[derive(Debug, Clone, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub struct HostKey {
     /// Fingerprint of the public key.
     pub fingerprint: String,
@@ -675,7 +699,7 @@ pub struct HostKey {
     pub bits: u16,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct InternalMarketProduct {
     pub id: MarketProductId,
     pub name: String,
@@ -1313,7 +1337,6 @@ mod tests {
             ]"#;
 
         let transactions: List<MarketTransaction> = serde_json::from_str(example_data).unwrap();
-
         info!("{transactions:#?}");
     }
 

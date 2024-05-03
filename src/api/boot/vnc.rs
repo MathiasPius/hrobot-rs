@@ -147,7 +147,7 @@ pub struct VncConfig {
 }
 
 /// Describes available VNC configuration options.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AvailableVncConfig {
     /// Available distributions for VNC installation.
     #[serde(rename = "dist")]
@@ -159,7 +159,7 @@ pub struct AvailableVncConfig {
 }
 
 /// Currently active VNC configuration.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ActiveVncConfig {
     /// Distribution selected in currently active VNC installation.
     #[serde(rename = "dist")]
@@ -178,7 +178,7 @@ pub struct ActiveVncConfig {
 /// If a VNC installation system is active, it ([`ActiveVncConfig`]) will be returned,
 /// otherwise a struct ([`AvailableVncConfig`]) representing the available VNC distributions
 /// and languages is returned.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Vnc {
     /// Currently active VNC configuration.

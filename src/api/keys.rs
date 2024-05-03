@@ -11,7 +11,7 @@ use super::{
 };
 
 /// SSH Public Key
-#[derive(Debug, Clone, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub struct SshKey {
     /// Unique name for the key.
     pub name: String,
@@ -40,7 +40,7 @@ pub struct SshKey {
 /// This is just key metadata, it does not contain the key itself.
 ///
 /// To retrieve the key, see [`AsyncRobot::get_ssh_key`].
-#[derive(Debug, Clone, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub struct SshKeyReference {
     /// Unique name for the key.
     pub name: String,

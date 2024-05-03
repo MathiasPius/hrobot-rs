@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 use std::{fmt::Display, ops::RangeInclusive};
 
 pub use ipnet::Ipv4Net;
@@ -40,7 +40,7 @@ impl PartialEq<u32> for TemplateId {
 }
 
 /// Desired or current state of the server's firewall.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum State {
     /// Firewall is active.
     #[serde(rename = "active")]
@@ -70,7 +70,7 @@ impl Display for State {
 }
 
 /// Switch port of the server.
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum SwitchPort {
     #[default]
@@ -127,7 +127,7 @@ impl Protocol {
 }
 
 /// Course of action to take when a rule matches.
-#[derive(Default, Clone, Copy, PartialEq, Eq, Debug, Deserialize, Serialize)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Action {
     /// Explicitly accept the packet.
@@ -157,7 +157,7 @@ impl Display for Action {
 ///
 /// This is only a descriptor for a template, it does not contain
 /// any firewall rules.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FirewallTemplateReference {
     /// Unique template ID. Can be used to fetch the entire rule
     /// list using [`AsyncRobot::get_firewall_template()`](crate::AsyncRobot::get_firewall_template)
@@ -417,6 +417,19 @@ impl<'de> Deserialize<'de> for PortRange {
             let port = value.parse::<u16>().map_err(D::Error::custom)?;
 
             Ok(PortRange(RangeInclusive::new(port, port)))
+        }
+    }
+}
+
+impl Serialize for PortRange {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        if self.0.start() == self.0.end() {
+            serializer.serialize_str(&format!("{}", self.start()))
+        } else {
+            serializer.serialize_str(&format!("{}-{}", self.start(), self.end()))
         }
     }
 }

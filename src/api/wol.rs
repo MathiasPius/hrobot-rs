@@ -1,6 +1,6 @@
 //! Wake-on-LAN structs and implementation.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     error::{ApiError, Error},
@@ -62,7 +62,7 @@ impl AsyncRobot {
 
 // The API endpoint returns a struct with information about the server,
 // but we only care about the presence of a non-404 response.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Wol {
     #[serde(rename = "server_number")]
     _server_number: ServerId,

@@ -137,7 +137,7 @@ pub struct Failover {
     pub server_address: Option<IpAddr>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct InternalFailoverIp {
     pub ip: IpAddr,
     pub mask: u8,

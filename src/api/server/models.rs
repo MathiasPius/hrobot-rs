@@ -42,7 +42,7 @@ impl PartialEq<u32> for ServerId {
 }
 
 /// Indicates the status of a server.
-#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Status {
     /// Server is ready for use.
     #[serde(rename = "ready")]
@@ -53,7 +53,7 @@ pub enum Status {
 }
 
 /// Reference to a Subnet.
-#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SubnetReference {
     /// Subnet Address
     #[serde(rename = "ip")]
@@ -64,7 +64,7 @@ pub struct SubnetReference {
 }
 
 /// Flags describe availability of a service or add-on for the server.
-#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ServerFlags {
     /// Server reset is available.
     pub reset: bool,
@@ -95,7 +95,7 @@ pub struct ServerFlags {
 }
 
 /// Describes a Hetzner Dedicated Server instance.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Server {
     /// *Primary* IPv4 address.
     ///
@@ -163,7 +163,7 @@ pub struct Server {
 }
 
 /// Describes the terms under which a server was cancelled.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Cancelled {
     /// Date on which the cancellation will take effect.
     #[serde(rename = "cancellation_date")]
@@ -213,7 +213,7 @@ impl From<Cancel> for InternalCancel {
 }
 
 /// Describes possibility of cancellation for a server.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Cancellable {
     /// Earliest date at which it is possible to
     /// cancel the server.
@@ -230,7 +230,7 @@ pub struct Cancellable {
 }
 
 /// Indicates the cancellation status of the server.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Cancellation {
     /// Server has been cancelled.

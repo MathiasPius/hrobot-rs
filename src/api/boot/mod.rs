@@ -19,12 +19,12 @@ use crate::{
     error::Error,
     AsyncRobot,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::server::ServerId;
 
 /// Describes the status of each of the available boot configuration systems.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     /// Active or available rescue system configurations.
     pub rescue: Option<Rescue>,

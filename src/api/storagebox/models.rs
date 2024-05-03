@@ -44,7 +44,7 @@ impl PartialEq<u32> for StorageBoxId {
 /// Reference to a storagebox.
 ///
 /// Does not contain disk, access or reachability information.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StorageBoxReference {
     /// Unique ID for this storagebox.
     pub id: StorageBoxId,
@@ -75,7 +75,7 @@ pub struct StorageBoxReference {
 }
 
 /// Storage Box
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StorageBox {
     /// Unique ID for this storagebox.
     pub id: StorageBoxId,
@@ -127,7 +127,7 @@ pub struct StorageBox {
 }
 
 /// Disk usage and quota information for a storagebox.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Disk {
     /// Storage quota.
     #[serde(rename = "disk_quota", with = "crate::conversion::mib")]
@@ -165,7 +165,7 @@ pub struct Accessibility {
 
 /// A snapshot is a point-in-time backup of the storagebox, which can be
 /// used to restore the storagebox to the captured state..
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Snapshot {
     /// Name of the snapshot.
     pub name: String,
@@ -191,7 +191,7 @@ pub struct Snapshot {
 }
 
 /// Short summary of the newly created snapshot.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreatedSnapshot {
     /// Name of the snapshot.
     pub name: String,
@@ -206,7 +206,7 @@ pub struct CreatedSnapshot {
 }
 
 /// Snapshot plans periodically take snapshots of the underlying storagebox.
-#[derive(Default, Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SnapshotPlan {
     /// Indicates whether the snapshot plan is enabled or not.
     pub status: PlanStatus,
@@ -287,7 +287,7 @@ impl SnapshotPlan {
 }
 
 /// Indicates whether the snapshot plan is enabled or not.
-#[derive(Default, Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum PlanStatus {
     /// Plan is enabled.
@@ -298,7 +298,7 @@ pub enum PlanStatus {
 }
 
 /// Describes a sub-account for the storabox.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Subaccount {
     /// Username for the sub-account.
     pub username: SubaccountId,
@@ -328,7 +328,7 @@ pub struct Subaccount {
 }
 
 /// Describes a sub-account for the storabox.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreatedSubaccount {
     /// Username for the sub-account.
     pub username: SubaccountId,

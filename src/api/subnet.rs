@@ -6,7 +6,7 @@ use std::{
 };
 
 use ipnet::IpNet;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use time::Date;
 
 use crate::{error::Error, AsyncRobot};
@@ -260,7 +260,7 @@ impl AsyncRobot {
 
 // Used to convert from the plain IP representation provided by Hetzner
 // and condensing it into [`ipnet`] structures.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct InternalSubnet {
     pub server_number: ServerId,
     pub ip: IpAddr,
@@ -287,7 +287,7 @@ impl From<InternalSubnet> for Subnet {
 }
 
 /// IPv4/IPv6 subnet.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Subnet {
     /// Address
     pub ip: IpNet,
@@ -310,7 +310,7 @@ pub struct Subnet {
 }
 
 /// IP address has been cancelled.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Cancelled {
     /// Date at which the IP address is terminated.
     #[serde(rename = "cancellation_date")]
@@ -318,7 +318,7 @@ pub struct Cancelled {
 }
 
 /// IP address has not yet been cancelled.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Cancellable {
     /// Earliest possible date at which the IP address can be cancelled.
     pub earliest_cancellation_date: Date,
@@ -329,7 +329,7 @@ pub struct Cancellable {
 /// If the address has already been cancelled, this contains a [`Cancelled`]
 /// otherwise a [`Cancellable`] structure which describes the earliest date
 /// at which the IP address can be cancelled.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Cancellation {
     /// IP address has been cancelled.

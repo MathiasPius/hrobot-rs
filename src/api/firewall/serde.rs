@@ -11,7 +11,7 @@ use super::{
 };
 
 /// Describes an entire firewall template.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct InternalFirewallTemplate {
     pub id: TemplateId,
     pub name: String,
@@ -56,7 +56,7 @@ impl From<FirewallTemplateConfig> for InternalFirewallTemplateConfig {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct InternalFirewall {
     pub status: State,
     pub filter_ipv6: bool,
@@ -96,7 +96,7 @@ impl From<&FirewallConfig> for InternalFirewallConfig {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct InternalRules {
     #[serde(rename = "input", default, skip_serializing_if = "Vec::is_empty")]
     pub ingress: Vec<InternalRule>,
@@ -132,7 +132,7 @@ impl From<InternalRules> for Rules {
 }
 
 /// Describes a single Firewall rule.
-#[derive(Default, Clone, Debug, Deserialize)]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct InternalRule {
     pub ip_version: Option<IpVersion>,
     pub name: String,
@@ -222,7 +222,7 @@ impl From<InternalRule> for Rule {
 }
 
 /// Version of the Internet Protocol supported by the firewall.
-#[derive(Default, Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+#[derive(Default, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum IpVersion {
     /// IPv4

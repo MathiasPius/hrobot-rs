@@ -160,7 +160,7 @@ pub struct LinuxConfig {
 }
 
 /// Active Linux installation configuration.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ActiveLinuxConfig {
     /// Distribution to be installed.
     #[serde(rename = "dist")]
@@ -191,7 +191,7 @@ pub struct ActiveLinuxConfig {
 
 /// Describes the Linux distributions and languages
 /// available for installation.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AvailableLinuxConfig {
     /// Available linux distributions for installation.
     #[serde(rename = "dist")]
@@ -207,7 +207,7 @@ pub struct AvailableLinuxConfig {
 /// If a Linux installation system is active, it ([`ActiveLinuxConfig`]) will be returned,
 /// otherwise a struct ([`AvailableLinuxConfig`]) representing the available Linux distributions
 /// and languages are returned.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Linux {
     /// Linux installation config is active.

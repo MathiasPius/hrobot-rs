@@ -95,7 +95,7 @@ struct ExecuteReset {
     reset: Reset,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct ResetOptions {
     server_number: ServerId,
     #[serde(rename = "type")]

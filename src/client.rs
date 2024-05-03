@@ -161,7 +161,7 @@ mod r#async {
 
             // We do explicit deserialization here, since some endpoints can return empty responses.
             //
-            // I initialize used a #[derive(Deserialize)] enum which encapsulated both success and
+            // I initialize used a #[derive(Serialize, Deserialize)] enum which encapsulated both success and
             // error states, but deserializing an untagged enum, even when the encapsulated "Ok"
             // result is just a unit type (), deserialization will fail on empty input.
             if let Ok(result) = serde_json::from_str::<Response>(&stringified) {

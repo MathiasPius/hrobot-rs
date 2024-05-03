@@ -255,7 +255,7 @@ impl AsyncRobot {
 }
 
 /// Traffic warning configuration.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(try_from = "InternalTrafficWarnings")]
 pub struct TrafficWarnings {
     /// Produce a warning if the hourly traffic exceeds this limit.
@@ -288,7 +288,7 @@ impl Default for TrafficWarnings {
 
 // This structure is used to deserialize and convert from for traffic warnings,
 // yielding None if the traffic warnings are disabled.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct InternalTrafficWarnings {
     traffic_warnings: bool,
     #[serde(with = "crate::conversion::mib")]
@@ -327,7 +327,7 @@ impl From<TrafficWarnings> for InternalTrafficWarnings {
 }
 
 /// Describes a network.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Network {
     /// Gateway for the IP address.
     pub gateway: Ipv4Addr,
@@ -340,7 +340,7 @@ pub struct Network {
 }
 
 /// Describes a single server-attached IPv4 Address.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Ip {
     /// Address
     pub ip: Ipv4Addr,
@@ -366,7 +366,7 @@ pub struct Ip {
     pub traffic_warnings: Option<TrafficWarnings>,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub(crate) struct InternalMac {
     pub mac: String,
 }
@@ -375,14 +375,14 @@ pub(crate) struct InternalMac {
 /// with the MAC address set to null. Since our internal representation
 /// of a MAC address is not nullable, we use this struct here for that
 /// specific response, and then just void the information.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub(crate) struct ExecutedMacRemoval {
     #[serde(rename = "ip")]
     _ip: Ipv4Addr,
 }
 
 /// IP address has been cancelled.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Cancelled {
     /// Date at which the IP address is terminated.
     #[serde(rename = "cancellation_date")]
@@ -390,7 +390,7 @@ pub struct Cancelled {
 }
 
 /// IP address has not yet been cancelled.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Cancellable {
     /// Earliest possible date at which the IP address can be cancelled.
     pub earliest_cancellation_date: Date,
@@ -401,7 +401,7 @@ pub struct Cancellable {
 /// If the address has already been cancelled, this contains a [`Cancelled`]
 /// otherwise a [`Cancellable`] structure which describes the earliest date
 /// at which the IP address can be cancelled.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Cancellation {
     /// IP address has been cancelled.

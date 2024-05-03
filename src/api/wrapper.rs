@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::{de::DeserializeOwned, Deserialize, Deserializer};
+use serde::{de::DeserializeOwned, Deserialize, Deserializer, Serialize};
 
 /// Deserialize an array of objects where each object is nested
 /// under a key indicating its type.
@@ -60,13 +60,13 @@ fn deserialize_inner<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
 }
 
 /// Deserialize a list of [`T`], where each T is wrapped.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct List<T: DeserializeOwned>(
     #[serde(deserialize_with = "deserialize_inner_vec")] pub Vec<T>,
 );
 
 /// Deserialize a single wrapped [`T`].
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Single<T: DeserializeOwned>(#[serde(deserialize_with = "deserialize_inner")] pub T);
 
 /// Some endpoints don't return anything.
@@ -96,7 +96,7 @@ impl<'de> Deserialize<'de> for Empty {
 
 #[cfg(test)]
 mod tests {
-    use serde::Deserialize;
+    use serde::{Deserialize, Serialize};
 
     use crate::api::server::Server;
 
@@ -123,7 +123,7 @@ mod tests {
             }
         }"#;
 
-        #[derive(Debug, Deserialize)]
+        #[derive(Debug, Serialize, Deserialize)]
         struct UnwrappingSingleServer {
             #[serde(deserialize_with = "crate::api::wrapper::deserialize_inner", flatten)]
             server: Server,
@@ -203,7 +203,7 @@ mod tests {
             }
         ]"#;
 
-        #[derive(Debug, Deserialize)]
+        #[derive(Debug, Serialize, Deserialize)]
         struct UnwrappingManyServers(
             #[serde(deserialize_with = "crate::api::wrapper::deserialize_inner_vec")] Vec<Server>,
         );

@@ -2,11 +2,11 @@
 
 use std::fmt::Display;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 /// Error returned by the Hetzner Robot API.
-#[derive(Debug, Deserialize, Error)]
+#[derive(Debug, Serialize, Deserialize, Error)]
 #[serde(tag = "code", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ApiError {
     /// Resource Unavailable.
@@ -441,7 +441,7 @@ pub enum ApiError {
 }
 
 /// Provided input parameters were either incomplete or invalid.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct InvalidInputError {
     /// Missing input fields.
     #[serde(default)]
@@ -453,7 +453,7 @@ pub struct InvalidInputError {
 }
 
 /// Hetzner Robot API rate-limit has been exceeded.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RateLimitError {
     /// Time interval in which the [`max_request`](RateLimitError::max_request)
     /// limit applies.
@@ -464,7 +464,7 @@ pub struct RateLimitError {
 }
 
 /// Catches generic error cases not explicitly defined in [`ApiError`]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GenericError {
     /// HTTP Status Code, e.g. `404`.
     pub status: u32,
@@ -502,14 +502,14 @@ impl Display for GenericError {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub(crate) enum MaybeTyped {
     Typed(ApiError),
     Untyped(GenericError),
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct MaybeTypedResponse {
     pub error: MaybeTyped,
 }

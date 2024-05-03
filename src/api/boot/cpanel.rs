@@ -158,7 +158,7 @@ pub struct CpanelConfig {
 }
 
 /// Describes available Cpanel configuration options.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AvailableCpanelConfig {
     /// Available distributions for Cpanel installation.
     #[serde(rename = "dist")]
@@ -170,7 +170,7 @@ pub struct AvailableCpanelConfig {
 }
 
 /// Currently active Cpanel configuration.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ActiveCpanelConfig {
     /// Distribution selected in currently active Cpanel installation.
     #[serde(rename = "dist")]
@@ -192,7 +192,7 @@ pub struct ActiveCpanelConfig {
 /// If a Cpanel installation system is active, it ([`ActiveCpanelConfig`]) will be returned,
 /// otherwise a struct ([`AvailableCpanelConfig`]) representing the available Cpanel distributions
 /// and languages is returned.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Cpanel {
     /// Currently active Cpanel configuration.

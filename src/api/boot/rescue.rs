@@ -189,7 +189,7 @@ pub struct RescueConfig {
 }
 
 /// Currently active rescue system configuration.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ActiveRescueConfig {
     /// Active rescue operating system.
     #[serde(rename = "os")]
@@ -211,7 +211,7 @@ pub struct ActiveRescueConfig {
 }
 
 /// Available rescue system configurations
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AvailableRescueConfig {
     /// Available rescue operating systems.
     #[serde(rename = "os")]
@@ -220,7 +220,7 @@ pub struct AvailableRescueConfig {
 
 /// Represents the currently active rescue configuration,
 /// or if inactive, the available rescue systems.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Rescue {
     /// Currently active rescue system

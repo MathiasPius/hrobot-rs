@@ -139,7 +139,7 @@ impl AsyncRobot {
 }
 
 /// Currently active Windows installation configuration.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ActiveWindowsConfig {
     /// Active Windows installation distribution.
     #[serde(rename = "dist")]
@@ -155,7 +155,7 @@ pub struct ActiveWindowsConfig {
 }
 
 /// availble Windows installation configuration options.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AvailableWindowsConfig {
     /// Available Windows installation distributions.
     #[serde(rename = "dist")]
@@ -167,7 +167,7 @@ pub struct AvailableWindowsConfig {
 }
 
 /// Describes either the active or available Windows configurations.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Windows {
     /// Currently active Windows installation configuration.
     Active(ActiveWindowsConfig),

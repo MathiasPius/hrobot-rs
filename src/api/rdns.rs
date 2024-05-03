@@ -124,7 +124,7 @@ impl AsyncRobot {
 /// Reverse DNS Entry.
 ///
 /// Maps an IP address to a single domain.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RdnsEntry {
     /// IP Address this entry represents.
     pub ip: IpAddr,

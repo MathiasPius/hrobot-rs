@@ -156,7 +156,7 @@ pub struct PleskConfig {
 }
 
 /// Describes available Plesk configuration options.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AvailablePleskConfig {
     /// Available distributions for Plesk installation.
     #[serde(rename = "dist")]
@@ -168,7 +168,7 @@ pub struct AvailablePleskConfig {
 }
 
 /// Currently active Plesk configuration.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ActivePleskConfig {
     /// Distribution selected in currently active Plesk installation.
     #[serde(rename = "dist")]
@@ -190,7 +190,7 @@ pub struct ActivePleskConfig {
 /// If a Plesk installation system is active, it ([`ActivePleskConfig`]) will be returned,
 /// otherwise a struct ([`AvailablePleskConfig`]) representing the available Plesk distributions
 /// and languages is returned.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Plesk {
     /// Currently active Plesk configuration.

@@ -326,7 +326,7 @@ impl PartialEq<u32> for VSwitchId {
 /// This is returned when [listing](AsyncRobot::list_vswitches()) vSwitches, and only contains
 /// the basic vSwitch configuration options. For information on which servers, subnets and
 /// cloud networks are connected to the vSwitch see [`AsyncRobot::get_vswitch`]
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VSwitchReference {
     /// Unique vSwitch ID.
     pub id: VSwitchId,
@@ -343,7 +343,7 @@ pub struct VSwitchReference {
     pub cancelled: bool,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct InternalVSwitch {
     pub id: VSwitchId,
     pub name: String,
@@ -372,7 +372,7 @@ impl From<InternalVSwitch> for VSwitch {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct InternalSubnet {
     pub ip: IpAddr,
     pub mask: u8,
@@ -414,7 +414,7 @@ pub struct VSwitch {
 /// Connecting or disconnecting a server to/from a vSwitch requires some
 /// processing time, and the server won't be immediately available on the vSwitch
 /// network.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ConnectionStatus {
     /// Server is connected and ready.
     #[serde(rename = "ready")]
@@ -430,7 +430,7 @@ pub enum ConnectionStatus {
 }
 
 /// Connection status of a server to a vSwitch.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VSwitchServer {
     /// Server's unique ID.
     #[serde(rename = "server_number")]
@@ -440,7 +440,7 @@ pub struct VSwitchServer {
     pub status: ConnectionStatus,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct InternalCloudNetwork {
     pub id: CloudNetworkId,
     pub ip: IpAddr,
