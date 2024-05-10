@@ -116,6 +116,28 @@ mod r#async {
             }
         }
 
+        /// Construct a new [`AsyncRobot`], using the default [`hyper_util::client::legacy::Client`]
+        /// and the provided username and password.
+        ///
+        /// # Example
+        /// Construct an [`AsyncRobot`] using a given username and password
+        /// ```rust
+        /// # #[tokio::main]
+        /// # async fn main() {
+        /// let robot = hrobot::AsyncRobot::new_with_default_client("#ws+username", "p@ssw0rd");
+        /// # }
+        /// ```
+        pub fn new_with_default_client(username: &str, password: &str) -> Self {
+            let https: HttpsConnector<HttpConnector> = hyper_rustls::HttpsConnectorBuilder::new()
+                .with_webpki_roots()
+                .https_only()
+                .enable_http1()
+                .build();
+            let client = Client::builder(TokioExecutor::new()).build(https);
+
+            Self::new(client, username, password)
+        }
+
         /// Shorthand for authenticating and sending the request.
         #[tracing::instrument]
         pub(crate) async fn go<Response: DeserializeOwned + Send + 'static>(

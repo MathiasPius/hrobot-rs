@@ -149,12 +149,12 @@ impl AsyncRobot {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::server::{ServerId, Cancelled};
+    /// # use hrobot::api::server::{ServerId, Cancel};
     /// # use time::{Date, Month};
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// robot.cancel_server(ServerId(1234567), Cancelled {
+    /// robot.cancel_server(ServerId(1234567), Cancel {
     ///     date: Some(Date::from_calendar_date(2023, Month::June, 10).unwrap()),
     ///     reason: Some("Server no longer necessary due to project ending".to_string()),
     ///     reserved: false
@@ -176,15 +176,11 @@ impl AsyncRobot {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use hrobot::api::server::{ServerId, Cancellation};
+    /// # use hrobot::api::server::ServerId;
     /// # #[tokio::main]
     /// # async fn main() {
     /// let robot = hrobot::AsyncRobot::default();
-    /// let cancellation = robot.withdraw_server_cancellation(ServerId(1234567)).await.unwrap();
-    /// assert!(matches!(
-    ///     cancellation,
-    ///     Cancellation::Cancellable(_)
-    /// ));
+    /// robot.withdraw_server_cancellation(ServerId(1234567)).await.unwrap();
     /// # }
     /// ```
     pub async fn withdraw_server_cancellation(&self, server_number: ServerId) -> Result<(), Error> {
