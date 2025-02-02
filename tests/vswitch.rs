@@ -1,7 +1,7 @@
 mod common;
 
 use hrobot::{api::vswitch::VlanId, AsyncRobot};
-use rand::{distributions::Alphanumeric, Rng as _};
+use rand::{distr::Alphanumeric, Rng as _};
 use serial_test::file_serial;
 use tracing::info;
 use tracing_test::traced_test;
@@ -43,7 +43,7 @@ async fn switch_end_to_end() {
 
     let robot = crate::AsyncRobot::default();
 
-    let unique_id: String = rand::thread_rng()
+    let unique_id: String = rand::rng()
         .sample_iter(&Alphanumeric)
         .take(8)
         .map(char::from)

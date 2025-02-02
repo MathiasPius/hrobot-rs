@@ -166,7 +166,7 @@ impl TimeRange {
             year,
             month,
             from: 1,
-            to: time::util::days_in_year_month(year as i32, month),
+            to: time::util::days_in_month(month, year as i32),
         }
     }
 

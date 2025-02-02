@@ -2,6 +2,11 @@
 
 ⚠️ indicates breaking changes.
 
+## 6.1.1
+
+* Updated `thiserror` to 2.0
+* Updated `rand` to 0.9
+
 ## 6.1.0
 
 * Added `AsyncRobot::new_with_default_client` for constructing a client using only username and password, and the default client.
