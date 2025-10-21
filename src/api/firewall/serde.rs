@@ -58,6 +58,10 @@ impl From<FirewallTemplateConfig> for InternalFirewallTemplateConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct InternalFirewall {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub server_ip: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub server_number: Option<u32>,
     pub status: State,
     pub filter_ipv6: bool,
     #[serde(rename = "whitelist_hos")]

@@ -408,12 +408,22 @@ impl<'de> Deserialize<'de> for PortRange {
 
         let value: &str = Deserialize::deserialize(deserializer)?;
 
+        // Handle range with dash (e.g., "80-90")
         if let Some((start, end)) = value.split_once('-') {
             let start = start.parse::<u16>().map_err(D::Error::custom)?;
             let end = end.parse::<u16>().map_err(D::Error::custom)?;
 
             Ok(PortRange(RangeInclusive::new(start, end)))
-        } else {
+        }
+        // Handle comma-separated ports - use first port only for now
+        // TODO: This is a limitation - API can return multiple discrete ports but PortRange only supports ranges
+        else if let Some((first, _rest)) = value.split_once(',') {
+            let port = first.parse::<u16>().map_err(D::Error::custom)?;
+
+            Ok(PortRange(RangeInclusive::new(port, port)))
+        }
+        // Handle single port
+        else {
             let port = value.parse::<u16>().map_err(D::Error::custom)?;
 
             Ok(PortRange(RangeInclusive::new(port, port)))
