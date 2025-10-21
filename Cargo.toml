@@ -9,7 +9,23 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "hrobot"
+path = "src/bin/main.rs"
+
 [dependencies]
+# CLI dependencies (only compiled for the binary)
+clap = { version = "4.5", features = ["derive", "env"], optional = true }
+clap_complete = { version = "4.5", optional = true }
+tabled = { version = "0.16", optional = true }
+tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread"], optional = true }
+toml = { version = "0.8", optional = true }
+dirs = { version = "5.0", optional = true }
+shellexpand = { version = "3.1", optional = true }
+rpassword = { version = "7.3", optional = true }
+tracing-subscriber = { version = "0.3.17", optional = true }
+
+# Existing library dependencies
 tracing = "0.1.37"
 thiserror = "2.0.11"
 
@@ -42,6 +58,10 @@ hyper-util = { version = "0.1.3", features = [
     "http1",
 ] }
 http-body-util = "0.1.0"
+
+[features]
+default = []
+cli = ["clap", "clap_complete", "tabled", "tokio", "toml", "dirs", "shellexpand", "rpassword", "tracing-subscriber"]
 
 [dev-dependencies]
 rand = "0.9.0"

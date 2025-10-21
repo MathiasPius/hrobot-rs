@@ -20,6 +20,33 @@ A Hetzner WebService/app user is required to make use of this library.
 
 If you already have a Hetzner account, you can create one through the [Hetzner Robot](https://robot.your-server.de) web interface under [Settings/Preferences](https://robot.your-server.de/preferences/index).
 
+## CLI usage
+In addition to the API library the project contains a CLI.
+
+Here's how you can build it
+```sh
+cargo build --release --features cli --bin hrobot
+```
+
+Here's how you can use it:
+```sh
+# Get credentials from https://robot.your-server.de/preferences/index
+$ export HROBOT_USERNAME='...' HROBOT_PASSWORD='...'
+
+# List your servers
+$ ./target/release/hrobot server list
++-----------+---------------+-------------+----------------+----------+--------+
+| SERVER ID | SERVER IP     | NAME        | PRODUCT        | DC       | STATUS |
++-----------+---------------+-------------+----------------+----------+--------+
+| 12345678  | XX.YY.ZZZ.WWW | my-server   | Server Auction | FSN1-DC1 | active |
++-----------+---------------+-------------+----------------+----------+--------+
+
+# Enable rescue mode on the server
+$ ./target/release/hrobot boot rescue enable 12345678
+# Reboot to boot to the rescue mode
+$ ./target/release/hrobot reset trigger 12345678 hw
+```
+
 ## Example
 Here's a quick example showing how to instantiate the `AsyncRobot` client object
 and fetching a list of all dedicated servers owned by the account identified by `username`
