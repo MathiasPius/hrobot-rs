@@ -6,6 +6,7 @@
 
 * Added support for firewall rules supporting multiple disjoint port ranges, e.g.: `80,443,8080-8081`. #13
 * Fixed intermittent errors where the Hetzner API would close connections mid-request due to mismatched client pool idle times.
+* Added `Default` implementation for server `Reset` (Hardware).
 
 ## 6.1.1
 
