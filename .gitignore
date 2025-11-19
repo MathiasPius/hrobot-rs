@@ -2,3 +2,4 @@
 /target
 .env
 Cargo.lock
+provisioned-server

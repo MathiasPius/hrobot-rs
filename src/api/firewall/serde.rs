@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt::{Display, Write};
 
 use ipnet::Ipv4Net;
 use serde::{Deserialize, Serialize};
@@ -138,8 +138,10 @@ pub(crate) struct InternalRule {
     pub name: String,
     pub dst_ip: Option<Ipv4Net>,
     pub src_ip: Option<Ipv4Net>,
-    pub dst_port: Option<PortRange>,
-    pub src_port: Option<PortRange>,
+    #[serde(with = "port_ranges")]
+    pub dst_port: Vec<PortRange>,
+    #[serde(with = "port_ranges")]
+    pub src_port: Vec<PortRange>,
     pub protocol: Option<InternalProtocol>,
     pub tcp_flags: Option<String>,
     pub action: Action,
@@ -218,6 +220,36 @@ impl From<InternalRule> for Rule {
                 src_port: value.src_port,
             }),
         })
+    }
+}
+
+/// Deserialize a series of comma-delimited [`PortRange`]s in a string.
+pub(crate) mod port_ranges {
+    use serde::{de::Error, Deserialize, Deserializer, Serializer};
+    use std::str::FromStr;
+
+    use super::PortRange;
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<PortRange>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        if let Some(ports) = Option::<String>::deserialize(deserializer)? {
+            Result::from_iter(ports.split(',').map(PortRange::from_str)).map_err(D::Error::custom)
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn serialize<S>(ports: &Vec<PortRange>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        if ports.is_empty() {
+            serializer.serialize_none()
+        } else {
+            serializer.serialize_str(&super::PortRanges(&ports).to_string())
+        }
     }
 }
 
@@ -307,6 +339,21 @@ impl From<&Protocol> for InternalProtocol {
     }
 }
 
+pub(crate) struct PortRanges<'a>(pub &'a Vec<PortRange>);
+
+impl Display for PortRanges<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (i, port) in self.0.iter().enumerate() {
+            if i != 0 {
+                f.write_char(',')?
+            }
+            port.fmt(f)?
+        }
+
+        Ok(())
+    }
+}
+
 impl UrlEncode for InternalRule {
     fn encode_into(&self, mut f: UrlEncodingBuffer<'_>) {
         f.set("[name]", &self.name);
@@ -323,12 +370,12 @@ impl UrlEncode for InternalRule {
             f.set("[src_ip]", src_ip)
         }
 
-        if let Some(dst_port) = self.dst_port.as_ref() {
-            f.set("[dst_port]", dst_port)
+        if !self.dst_port.is_empty() {
+            f.set("[dst_port]", PortRanges(&self.dst_port))
         }
 
-        if let Some(src_port) = self.src_port.as_ref() {
-            f.set("[src_port]", src_port)
+        if !self.src_port.is_empty() {
+            f.set("[src_port]", PortRanges(&self.src_port))
         }
 
         if let Some(protocol) = self.protocol.as_ref() {
@@ -442,8 +489,8 @@ mod tests {
             name: "IPv4 Rule".to_string(),
             dst_ip: Some(Ipv4Net::new(Ipv4Addr::new(192, 168, 0, 0), 24).unwrap()),
             src_ip: Some(Ipv4Net::new(Ipv4Addr::new(172, 16, 0, 0), 20).unwrap()),
-            dst_port: Some(PortRange::from(32000..=34000)),
-            src_port: Some(PortRange::from(10)),
+            dst_port: vec![PortRange::from(32000..=34000)],
+            src_port: vec![PortRange::from(10)],
             protocol: Some(InternalProtocol::Tcp),
             tcp_flags: Some("ACK".to_string()),
             action: Action::Accept,
@@ -474,8 +521,8 @@ mod tests {
             name: "IPv6 Rule".to_string(),
             dst_ip: None,
             src_ip: None,
-            dst_port: Some(PortRange::from(32000..=34000)),
-            src_port: Some(PortRange::from(10)),
+            dst_port: vec![PortRange::from(32000..=34000)],
+            src_port: vec![PortRange::from(10)],
             protocol: Some(InternalProtocol::Udp),
             tcp_flags: None,
             action: Action::Discard,
@@ -503,8 +550,8 @@ mod tests {
             name: "Icmp Rule".to_string(),
             dst_ip: None,
             src_ip: None,
-            dst_port: None,
-            src_port: None,
+            dst_port: vec![],
+            src_port: vec![],
             protocol: Some(InternalProtocol::Icmp),
             tcp_flags: None,
             action: Action::Discard,
