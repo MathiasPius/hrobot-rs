@@ -3,7 +3,7 @@ name = "hrobot"
 description = "Unofficial Hetzner Robot API client"
 keywords = ["hetzner", "robot", "api", "client", "async"]
 repository = "https://github.com/MathiasPius/hrobot-rs"
-version = "6.1.0"
+version = "7.0.0"
 license = "MIT"
 edition = "2021"
 
@@ -20,7 +20,7 @@ time = { version = "0.3.23", features = [
     "parsing",
 ] }
 time-tz = { version = "2.0.0" }
-bytesize = { version = "1.2.0", features = ["serde"] }
+bytesize = { version = "2.2.0", features = ["serde"] }
 rust_decimal = { version = "1.30.0", features = ["serde"] }
 
 serde = { version = "1", features = ["derive"] }
