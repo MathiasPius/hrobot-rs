@@ -248,7 +248,7 @@ pub(crate) mod port_ranges {
         if ports.is_empty() {
             serializer.serialize_none()
         } else {
-            serializer.serialize_str(&super::PortRanges(&ports).to_string())
+            serializer.serialize_str(&super::PortRanges(ports).to_string())
         }
     }
 }

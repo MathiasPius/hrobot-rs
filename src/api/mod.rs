@@ -17,7 +17,6 @@ pub mod ordering;
 pub mod rdns;
 pub mod reset;
 pub mod server;
-pub mod storagebox;
 pub mod subnet;
 pub mod traffic;
 pub mod vswitch;
