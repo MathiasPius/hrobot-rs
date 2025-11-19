@@ -55,4 +55,4 @@ serial_test = { version = "3.0.0", features = ["file_locks"] }
 
 [features]
 # This is only ever used during testing to order/cancel servers as part of the test procedure.
-test-ordering = []
+_tests_order_servers = []

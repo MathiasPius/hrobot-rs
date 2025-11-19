@@ -1,4 +1,4 @@
-#![cfg(feature = "test-ordering")]
+#![cfg(feature = "_tests_order_servers")]
 use std::time::Duration;
 
 use hrobot::{
@@ -46,16 +46,16 @@ async fn cancel_provisoned_server() {
 
     tokio::time::sleep(Duration::from_secs(30)).await;
 
-    // // Cancel server immediately.
-    // robot
-    //     .cancel_server(
-    //         server_id,
-    //         Cancel {
-    //             date: None,
-    //             reason: None,
-    //             reserved: false,
-    //         },
-    //     )
-    //     .await
-    //     .unwrap();
+    // Cancel server immediately.
+    robot
+        .cancel_server(
+            server_id,
+            Cancel {
+                date: None,
+                reason: None,
+                reserved: false,
+            },
+        )
+        .await
+        .unwrap();
 }
