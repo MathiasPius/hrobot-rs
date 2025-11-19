@@ -103,7 +103,7 @@ struct ResetOptions {
 }
 
 /// Kind of reset to perform.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub enum Reset {
     /// Request a manual power cycle, by Hetzner staff.
     ///
@@ -145,6 +145,7 @@ pub enum Reset {
     /// What happens in the background here is exactly the same as when you press the
     /// reset button on your home PC.
     #[serde(rename = "hw")]
+    #[default]
     Hardware,
 
     /// Press power button of server.

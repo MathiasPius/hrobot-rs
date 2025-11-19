@@ -1,3 +1,4 @@
+#![cfg(feature = "_tests_order_servers")]
 use std::time::Duration;
 
 use hrobot::{

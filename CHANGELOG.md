@@ -2,6 +2,14 @@
 
 ⚠️ indicates breaking changes.
 
+## Unreleased
+
+* ⚠️ Removed Storage Box APis, since they are being migrated to Hetzner Cloud console. See [hcloud-rust](https://github.com/HenningHolmDE/hcloud-rust) for a replacement.
+* ⚠️ #13: Added support for firewall rules supporting multiple disjoint port ranges, e.g.: `80,443,8080-8081`. Because Firewall Rules now use `Vec<PortRange>` instead of `Option<PortRange>` this is considered a breaking change.
+
+* Fixed intermittent errors where the Hetzner API would close connections mid-request due to mismatched client pool idle times.
+* Added `Default` implementation for server `Reset` (Hardware).
+
 ## 6.1.1
 
 * Updated `thiserror` to 2.0

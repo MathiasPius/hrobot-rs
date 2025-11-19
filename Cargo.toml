@@ -51,3 +51,8 @@ tracing-test = { version = "0.2.4", features = ["no-env-filter"] }
 tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread"] }
 dotenvy = "0.15"
 serial_test = { version = "3.0.0", features = ["file_locks"] }
+
+
+[features]
+# This is only ever used during testing to order/cancel servers as part of the test procedure.
+_tests_order_servers = []

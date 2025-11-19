@@ -4,7 +4,6 @@ use hrobot::{
     api::{
         firewall::State,
         server::{self, Server, ServerId},
-        storagebox::{StorageBox, StorageBoxId},
         vswitch::{ConnectionStatus, VSwitch, VSwitchId},
     },
     error::{ApiError, Error},
@@ -50,31 +49,6 @@ pub async fn provisioned_server() -> Server {
     let robot = AsyncRobot::default();
 
     robot.get_server(id).await.unwrap()
-}
-
-#[allow(unused)]
-pub fn provisioned_storagebox_id() -> StorageBoxId {
-    dotenvy::dotenv().ok();
-
-    StorageBoxId(
-        u32::from_str_radix(
-            std::env::var("HETZNER_INTEGRATION_TEST_STORAGEBOX_ID")
-                .as_deref()
-                .unwrap(),
-            10,
-        )
-        .unwrap(),
-    )
-}
-
-#[allow(unused)]
-pub async fn provisioned_storagebox() -> StorageBox {
-    let robot = AsyncRobot::default();
-
-    robot
-        .get_storagebox(provisioned_storagebox_id())
-        .await
-        .unwrap()
 }
 
 #[allow(unused)]

@@ -172,30 +172,7 @@ Detailed API overview.
         - [x] List recent addon transactions.[^1]
         - [x] Get specific addon transaction information.[^1]
         - [x] Order addon for server.
-- [x] **Storage Box.**
-    - [x] List storageboxes.
-    - [x] Get specific storage box.
-    - [x] Change storage box password.
-    - [x] Toggle storage box services.
-        - [x] Enable/disable Samba
-        - [x] Enable/disable WebDAV
-        - [x] Enable/disable SSH
-        - [x] Enable/disable External reachability
-        - [x] Enable/disable snapshot directory visibility.
-    - [x] **Snapshots.**
-        - [x] List storagebox snapshots.
-        - [x] Create storagebox snapshot.
-        - [x] Delete storagebox snapshot.
-        - [x] Revert storagebox to snapshot.
-        - [x] Change comment for snapshot.
-        - [x] Get storagebox snapshot plan.
-        - [x] Edit storagebox snapshot plan.
-    - [x] **Subaccounts.**
-        - [x] List subaccounts.
-        - [x] Create subaccount.
-        - [x] Update subaccount configuration.
-        - [x] Delete subaccount.
-        - [x] Change subaccount password.
+- [ ] **Storage Box.** Has been migrated to Hetzner Cloud, please see [hcloud-rust](https://github.com/HenningHolmDE/hcloud-rust)
 - [x] **Firewall.**
     - [x] Get firewall configuration for server.
     - [x] Apply firewall configuration to server.
@@ -240,4 +217,3 @@ s
 
     They interact ⚠️ **DESTRUCTIVELY** ⚠️ with the resources provided through the following environment variables:
 
-    * `HETZNER_INTEGRATION_TEST_STORAGEBOX_ID` specifies a pre-allocated storagebox resource which Storagebox-related tests are run against.
