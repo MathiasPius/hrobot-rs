@@ -1,3 +1,4 @@
+#![cfg(feature = "test-ordering")]
 use hrobot::{
     api::{
         ordering::{AddonId, AuthorizationMethod, ImSeriousAboutSpendingMoney, MarketProductOrder},
