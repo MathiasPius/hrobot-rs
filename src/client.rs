@@ -1,4 +1,6 @@
 mod r#async {
+    use std::time::Duration;
+
     use http_body_util::{BodyExt, Full};
     use hyper::body::Bytes;
     use hyper_rustls::HttpsConnector;
@@ -46,7 +48,9 @@ mod r#async {
                 .https_only()
                 .enable_http1()
                 .build();
-            let client = Client::builder(TokioExecutor::new()).build(https);
+            let client = Client::builder(TokioExecutor::new())
+                .pool_idle_timeout(Some(Duration::from_secs(15)))
+                .build(https);
 
             Self::from_env(client).unwrap()
         }
@@ -133,6 +137,7 @@ mod r#async {
                 .https_only()
                 .enable_http1()
                 .build();
+
             let client = Client::builder(TokioExecutor::new()).build(https);
 
             Self::new(client, username, password)

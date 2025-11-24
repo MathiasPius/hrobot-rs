@@ -72,13 +72,15 @@ This document aims to list some of the discrepancies, oddities, unexpected behav
 * Active boot configuration options contain a `boot_time` field, which presumably indicates the time at which this boot configuration was booted into.
   I say presumably because the field is always `null` if the system has been enabled, but the server hasn't been rebooted. I haven't had a chance to test this yet.
 
+### Firewall
+
+* Both the Hetzner Firewall and the templates for it, appear to support specifying multiple comma-delimited ports & ranges, but this is not explicitly stated anywhere.
+  Because the Hetzner Robot firewalls are limited to 10 rules, this could be a big feature for use cases that might otherwise hit this limit.
+
 
 ## Typos & minor mistakes
 * [IP Cancellation examples](https://robot.hetzner.com/doc/webservice/en.html#get-ip-ip-cancellation) indicate that the returned structure contains a field
   named `cancellation-date` (note the hyphen), but the documentation and every other field uses underscores.
-
-* [Update Snapshot Plan example](https://robot.hetzner.com/doc/webservice/en.html#post-storagebox-storagebox-id-snapshotplan) points to `snapshot/{snapshot}/comment`
-  as the target URL, when it should be `snapshot/{snapshot}/snapshotplan`.
 
 * [vSwitch Connected Servers](https://robot.hetzner.com/doc/webservice/en.html#get-vswitch) actually have the status  "processing" when neither ready nor failed, not "in process" as claimed.
 

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize, Serializer};
-use std::{fmt::Display, ops::RangeInclusive};
+use std::{fmt::Display, ops::RangeInclusive, str::FromStr};
 
 pub use ipnet::Ipv4Net;
 
@@ -389,6 +389,12 @@ impl From<&PortRange> for RangeInclusive<u16> {
     }
 }
 
+impl From<&PortRange> for Vec<PortRange> {
+    fn from(value: &PortRange) -> Self {
+        vec![value.clone()]
+    }
+}
+
 impl IntoIterator for PortRange {
     type Item = u16;
 
@@ -396,6 +402,34 @@ impl IntoIterator for PortRange {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0
+    }
+}
+
+/// Returned when attempting to parse a port range from an invalid string.
+#[derive(Debug, thiserror::Error)]
+#[error("invalid port '{0}': {1}")]
+pub struct InvalidPort(String, <u16 as FromStr>::Err);
+
+impl FromStr for PortRange {
+    type Err = InvalidPort;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        if let Some((start, end)) = value.split_once('-') {
+            let start = start
+                .parse::<u16>()
+                .map_err(|err| InvalidPort(start.to_string(), err))?;
+            let end = end
+                .parse::<u16>()
+                .map_err(|err| InvalidPort(end.to_string(), err))?;
+
+            Ok(PortRange(RangeInclusive::new(start, end)))
+        } else {
+            let port = value
+                .parse::<u16>()
+                .map_err(|err| InvalidPort(value.to_string(), err))?;
+
+            Ok(PortRange(RangeInclusive::new(port, port)))
+        }
     }
 }
 
@@ -408,16 +442,7 @@ impl<'de> Deserialize<'de> for PortRange {
 
         let value: &str = Deserialize::deserialize(deserializer)?;
 
-        if let Some((start, end)) = value.split_once('-') {
-            let start = start.parse::<u16>().map_err(D::Error::custom)?;
-            let end = end.parse::<u16>().map_err(D::Error::custom)?;
-
-            Ok(PortRange(RangeInclusive::new(start, end)))
-        } else {
-            let port = value.parse::<u16>().map_err(D::Error::custom)?;
-
-            Ok(PortRange(RangeInclusive::new(port, port)))
-        }
+        PortRange::from_str(value).map_err(D::Error::custom)
     }
 }
 
@@ -466,23 +491,23 @@ impl From<Ipv6Filter> for Filter {
 /// Filters both IPv4 and IPv6 traffic.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct AnyFilter {
-    /// Destination Port.
-    pub dst_port: Option<PortRange>,
+    /// Destination Port(s).
+    pub dst_port: Vec<PortRange>,
 
-    /// Source Port.
-    pub src_port: Option<PortRange>,
+    /// Source Port(s).
+    pub src_port: Vec<PortRange>,
 }
 
 impl AnyFilter {
     /// Narrow filter to only match the given source port or port range.
     pub fn from_port<IntoPortRange: Into<PortRange>>(mut self, range: IntoPortRange) -> Self {
-        self.src_port = Some(range.into());
+        self.src_port = vec![range.into()];
         self
     }
 
     /// Narrow filter to only match the given destination port or port range.
     pub fn to_port<IntoPortRange: Into<PortRange>>(mut self, range: IntoPortRange) -> Self {
-        self.dst_port = Some(range.into());
+        self.dst_port = vec![range.into()];
         self
     }
 }
@@ -494,10 +519,10 @@ pub struct Ipv6Filter {
     pub protocol: Option<Protocol>,
 
     /// Destination Port.
-    pub dst_port: Option<PortRange>,
+    pub dst_port: Vec<PortRange>,
 
     /// Source Port.
-    pub src_port: Option<PortRange>,
+    pub src_port: Vec<PortRange>,
 }
 
 impl Ipv6Filter {
@@ -505,8 +530,8 @@ impl Ipv6Filter {
     pub fn any() -> Self {
         Ipv6Filter {
             protocol: None,
-            dst_port: None,
-            src_port: None,
+            dst_port: Vec::new(),
+            src_port: Vec::new(),
         }
     }
 
@@ -514,8 +539,8 @@ impl Ipv6Filter {
     pub fn ah() -> Self {
         Ipv6Filter {
             protocol: Some(Protocol::Ah),
-            dst_port: None,
-            src_port: None,
+            dst_port: Vec::new(),
+            src_port: Vec::new(),
         }
     }
 
@@ -523,8 +548,8 @@ impl Ipv6Filter {
     pub fn esp() -> Self {
         Ipv6Filter {
             protocol: Some(Protocol::Esp),
-            dst_port: None,
-            src_port: None,
+            dst_port: Vec::new(),
+            src_port: Vec::new(),
         }
     }
 
@@ -532,8 +557,8 @@ impl Ipv6Filter {
     pub fn ipip() -> Self {
         Ipv6Filter {
             protocol: Some(Protocol::Ipip),
-            dst_port: None,
-            src_port: None,
+            dst_port: Vec::new(),
+            src_port: Vec::new(),
         }
     }
 
@@ -541,8 +566,8 @@ impl Ipv6Filter {
     pub fn gre() -> Self {
         Ipv6Filter {
             protocol: Some(Protocol::Gre),
-            dst_port: None,
-            src_port: None,
+            dst_port: Vec::new(),
+            src_port: Vec::new(),
         }
     }
 
@@ -550,8 +575,8 @@ impl Ipv6Filter {
     pub fn udp() -> Self {
         Ipv6Filter {
             protocol: Some(Protocol::Udp),
-            dst_port: None,
-            src_port: None,
+            dst_port: Vec::new(),
+            src_port: Vec::new(),
         }
     }
 
@@ -559,20 +584,20 @@ impl Ipv6Filter {
     pub fn tcp(flags: Option<String>) -> Self {
         Ipv6Filter {
             protocol: Some(Protocol::Tcp { flags }),
-            dst_port: None,
-            src_port: None,
+            dst_port: Vec::new(),
+            src_port: Vec::new(),
         }
     }
 
     /// Narrow filter to only match the given source port or port range.
     pub fn from_port<IntoPortRange: Into<PortRange>>(mut self, range: IntoPortRange) -> Self {
-        self.src_port = Some(range.into());
+        self.src_port.push(range.into());
         self
     }
 
     /// Narrow filter to only match the given destination port or port range.
     pub fn to_port<IntoPortRange: Into<PortRange>>(mut self, range: IntoPortRange) -> Self {
-        self.dst_port = Some(range.into());
+        self.dst_port.push(range.into());
         self
     }
 }
@@ -589,14 +614,11 @@ pub struct Ipv4Filter {
     /// hence why this is an [`Ipv4Net`], and not an [`IpNet`](ipnet::IpNet).
     pub src_ip: Option<Ipv4Net>,
 
-    /// Destination Port.
-    ///
-    /// Hetzner [does not support IPv6 address filtering](https://docs.hetzner.com/robot/dedicated-server/firewall#limitations-ipv6),
-    /// hence why this is an [`Ipv4Net`], and not an [`IpNet`](ipnet::IpNet).
-    pub dst_port: Option<PortRange>,
+    /// Destination Port(s).
+    pub dst_port: Vec<PortRange>,
 
-    /// Source Port.
-    pub src_port: Option<PortRange>,
+    /// Source Port(s).
+    pub src_port: Vec<PortRange>,
 
     /// Protocol
     pub protocol: Option<Protocol>,
@@ -607,8 +629,8 @@ impl Ipv4Filter {
     pub fn any() -> Self {
         Ipv4Filter {
             protocol: None,
-            dst_port: None,
-            src_port: None,
+            dst_port: Vec::new(),
+            src_port: Vec::new(),
             src_ip: None,
             dst_ip: None,
         }
@@ -618,8 +640,8 @@ impl Ipv4Filter {
     pub fn ah() -> Self {
         Ipv4Filter {
             protocol: Some(Protocol::Ah),
-            dst_port: None,
-            src_port: None,
+            dst_port: Vec::new(),
+            src_port: Vec::new(),
             src_ip: None,
             dst_ip: None,
         }
@@ -629,8 +651,8 @@ impl Ipv4Filter {
     pub fn esp() -> Self {
         Ipv4Filter {
             protocol: Some(Protocol::Esp),
-            dst_port: None,
-            src_port: None,
+            dst_port: Vec::new(),
+            src_port: Vec::new(),
             src_ip: None,
             dst_ip: None,
         }
@@ -640,8 +662,8 @@ impl Ipv4Filter {
     pub fn ipip() -> Self {
         Ipv4Filter {
             protocol: Some(Protocol::Ipip),
-            dst_port: None,
-            src_port: None,
+            dst_port: Vec::new(),
+            src_port: Vec::new(),
             src_ip: None,
             dst_ip: None,
         }
@@ -651,8 +673,8 @@ impl Ipv4Filter {
     pub fn gre() -> Self {
         Ipv4Filter {
             protocol: Some(Protocol::Gre),
-            dst_port: None,
-            src_port: None,
+            dst_port: Vec::new(),
+            src_port: Vec::new(),
             src_ip: None,
             dst_ip: None,
         }
@@ -662,8 +684,8 @@ impl Ipv4Filter {
     pub fn udp() -> Self {
         Ipv4Filter {
             protocol: Some(Protocol::Udp),
-            dst_port: None,
-            src_port: None,
+            dst_port: Vec::new(),
+            src_port: Vec::new(),
             src_ip: None,
             dst_ip: None,
         }
@@ -673,8 +695,8 @@ impl Ipv4Filter {
     pub fn tcp(flags: Option<String>) -> Self {
         Ipv4Filter {
             protocol: Some(Protocol::Tcp { flags }),
-            dst_port: None,
-            src_port: None,
+            dst_port: Vec::new(),
+            src_port: Vec::new(),
             src_ip: None,
             dst_ip: None,
         }
@@ -682,13 +704,13 @@ impl Ipv4Filter {
 
     /// Narrow filter to only match the given source port or port range.
     pub fn from_port<IntoPortRange: Into<PortRange>>(mut self, range: IntoPortRange) -> Self {
-        self.src_port = Some(range.into());
+        self.src_port.push(range.into());
         self
     }
 
     /// Narrow filter to only match the given destination port or port range.
     pub fn to_port<IntoPortRange: Into<PortRange>>(mut self, range: IntoPortRange) -> Self {
-        self.dst_port = Some(range.into());
+        self.dst_port.push(range.into());
         self
     }
 
@@ -841,8 +863,8 @@ mod tests {
         assert_eq!(
             AnyFilter::default().from_port(100).to_port(200),
             AnyFilter {
-                src_port: Some(PortRange::from(100)),
-                dst_port: Some(PortRange::from(200)),
+                src_port: vec![PortRange::from(100)],
+                dst_port: vec![PortRange::from(200)],
             }
         );
     }
@@ -853,8 +875,8 @@ mod tests {
             Ipv6Filter::any(),
             Ipv6Filter {
                 protocol: None,
-                dst_port: None,
-                src_port: None
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
             }
         );
 
@@ -862,8 +884,8 @@ mod tests {
             Ipv6Filter::ah(),
             Ipv6Filter {
                 protocol: Some(Protocol::Ah),
-                dst_port: None,
-                src_port: None
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
             }
         );
 
@@ -871,8 +893,8 @@ mod tests {
             Ipv6Filter::esp(),
             Ipv6Filter {
                 protocol: Some(Protocol::Esp),
-                dst_port: None,
-                src_port: None
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
             }
         );
 
@@ -880,8 +902,8 @@ mod tests {
             Ipv6Filter::ipip(),
             Ipv6Filter {
                 protocol: Some(Protocol::Ipip),
-                dst_port: None,
-                src_port: None
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
             }
         );
 
@@ -889,8 +911,8 @@ mod tests {
             Ipv6Filter::gre(),
             Ipv6Filter {
                 protocol: Some(Protocol::Gre),
-                dst_port: None,
-                src_port: None
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
             }
         );
 
@@ -898,8 +920,8 @@ mod tests {
             Ipv6Filter::udp(),
             Ipv6Filter {
                 protocol: Some(Protocol::Udp),
-                dst_port: None,
-                src_port: None
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
             }
         );
 
@@ -907,8 +929,8 @@ mod tests {
             Ipv6Filter::tcp(None),
             Ipv6Filter {
                 protocol: Some(Protocol::Tcp { flags: None }),
-                dst_port: None,
-                src_port: None
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
             }
         );
 
@@ -916,8 +938,8 @@ mod tests {
             Ipv6Filter::any().from_port(100).to_port(200),
             Ipv6Filter {
                 protocol: None,
-                dst_port: Some(PortRange::from(200)),
-                src_port: Some(PortRange::from(100))
+                dst_port: vec![PortRange::from(200)],
+                src_port: vec![PortRange::from(100)]
             }
         )
     }
@@ -928,8 +950,8 @@ mod tests {
             Ipv4Filter::any(),
             Ipv4Filter {
                 protocol: None,
-                dst_port: None,
-                src_port: None,
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
                 src_ip: None,
                 dst_ip: None,
             }
@@ -939,8 +961,8 @@ mod tests {
             Ipv4Filter::ah(),
             Ipv4Filter {
                 protocol: Some(Protocol::Ah),
-                dst_port: None,
-                src_port: None,
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
                 src_ip: None,
                 dst_ip: None,
             }
@@ -950,8 +972,8 @@ mod tests {
             Ipv4Filter::esp(),
             Ipv4Filter {
                 protocol: Some(Protocol::Esp),
-                dst_port: None,
-                src_port: None,
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
                 src_ip: None,
                 dst_ip: None,
             }
@@ -961,8 +983,8 @@ mod tests {
             Ipv4Filter::ipip(),
             Ipv4Filter {
                 protocol: Some(Protocol::Ipip),
-                dst_port: None,
-                src_port: None,
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
                 src_ip: None,
                 dst_ip: None,
             }
@@ -972,8 +994,8 @@ mod tests {
             Ipv4Filter::gre(),
             Ipv4Filter {
                 protocol: Some(Protocol::Gre),
-                dst_port: None,
-                src_port: None,
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
                 src_ip: None,
                 dst_ip: None,
             }
@@ -983,8 +1005,8 @@ mod tests {
             Ipv4Filter::udp(),
             Ipv4Filter {
                 protocol: Some(Protocol::Udp),
-                dst_port: None,
-                src_port: None,
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
                 src_ip: None,
                 dst_ip: None,
             }
@@ -994,8 +1016,8 @@ mod tests {
             Ipv4Filter::tcp(None),
             Ipv4Filter {
                 protocol: Some(Protocol::Tcp { flags: None }),
-                dst_port: None,
-                src_port: None,
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
                 src_ip: None,
                 dst_ip: None,
             }
@@ -1005,8 +1027,8 @@ mod tests {
             Ipv4Filter::any().from_port(100).to_port(200),
             Ipv4Filter {
                 protocol: None,
-                dst_port: Some(PortRange::from(200)),
-                src_port: Some(PortRange::from(100)),
+                dst_port: vec![PortRange::from(200)],
+                src_port: vec![PortRange::from(100)],
                 src_ip: None,
                 dst_ip: None,
             }
@@ -1018,8 +1040,8 @@ mod tests {
                 .to_ip(Ipv4Net::new(Ipv4Addr::new(192, 168, 0, 0), 16).unwrap()),
             Ipv4Filter {
                 protocol: None,
-                dst_port: None,
-                src_port: None,
+                dst_port: Vec::new(),
+                src_port: Vec::new(),
                 src_ip: Some(Ipv4Net::new(Ipv4Addr::new(127, 0, 0, 0), 8).unwrap()),
                 dst_ip: Some(Ipv4Net::new(Ipv4Addr::new(192, 168, 0, 0), 16).unwrap()),
             }

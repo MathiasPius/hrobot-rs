@@ -1,3 +1,4 @@
+#![cfg(feature = "_tests_order_servers")]
 use hrobot::{
     api::{
         ordering::{AddonId, AuthorizationMethod, ImSeriousAboutSpendingMoney, MarketProductOrder},
